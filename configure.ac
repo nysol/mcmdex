@@ -7,7 +7,7 @@
 #  autoreconf -i ; automake --add-missing
 
 # AC_PREREQ([2.69])
-AC_INIT(nysol_mining, 3.0, info@nysol.jp)
+AC_INIT(nysol_mcmdex, 3.0, info@nysol.jp)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([mbonsai/cmd/aiqueue.cpp])
 
