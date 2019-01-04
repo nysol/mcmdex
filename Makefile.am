@@ -1,1 +1,1 @@
-SUBDIRS = mbonsai mcm medist mlcs mroc 
+SUBDIRS = mbonsai mcm medist mlcs mroc mkmeans 

@@ -80,11 +80,13 @@ AC_CONFIG_FILES([Makefile
                  medist/Makefile
                  mroc/Makefile
                  mlcs/Makefile
+                 mkmeans/Makefile
 								 mbonsai/cmd/Makefile
                  mcm/cmd/Makefile
                  medist/cmd/Makefile
                  mroc/cmd/Makefile
-                 mlcs/cmd/Makefile])
+                 mlcs/cmd/Makefile
+                 mkmeans/cmd/Makefile])
 
 AC_OUTPUT
 
