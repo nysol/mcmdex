@@ -37,8 +37,8 @@ namespace kgmod { ////////////////////////////////////////////// start namespace
 
 /*入力データ関連*/
 class DataInfo {
-  size_t  _cnt;    /*データ行数*/
-  size_t  _fldsize;    /*項目サイズ*/
+
+  size_t  _rec;    /*データ行数*/
   vector<double> _maxNum; /*数値項目の最大値*/
   vector<double> _minNum; /*数値項目の最小値*/
   vector<double> _rngNum; /*数値項目の最大値-最小値*/
@@ -46,12 +46,10 @@ class DataInfo {
   vector<int>    _cntNum; /*数値項目の件数(nullを省く)*/
   vector<double> _avgNum; /*数値項目の平均値*/
   public:
-		DataInfo():_cnt(0){}
+		DataInfo():_rec(0){}
 		
-	size_t getCnt(void){ return _cnt;}
-	void sizeSet(size_t size){
-		_cnt=0;
-		_fldsize = size;
+	void init(size_t size){
+		_rec=0;
 		_maxNum.clear();_maxNum.resize(size,-DBL_MAX); /*数値項目の最大値*/
   	_minNum.clear();_minNum.resize(size,DBL_MAX); /*数値項目の最小値*/
   	_rngNum.clear();_rngNum.resize(size,0); /*数値項目の最大値-最小値*/
@@ -60,31 +58,37 @@ class DataInfo {
   	_avgNum.clear();_avgNum.resize(size,0); /*数値項目の平均値*/
 	}
 	
-	double getAvg(size_t i){return _avgNum[i];}
-	double getRng(size_t i){return _rngNum[i];}
-	double getMin(size_t i){return _minNum[i];}
+	size_t Rec(void){ return _rec;}
+	double Avg(size_t i){return _avgNum[i];}
+	double Rng(size_t i){return _rngNum[i];}
+	double Min(size_t i){return _minNum[i];}
 
 	
-	void info_set(size_t i,double v) {
+	void vSet(size_t i,double v) {
 		_cntNum[i]++;
 		_sumNum[i]+=v;
 		if ( _maxNum[i] < v ) { _maxNum[i] = v;  } 
 		if ( _minNum[i] > v ) { _minNum[i] = v;  } 
 	}
-	void cal_rng_avg(void) { // range , avg
 
-		for(size_t i=0;i<_fldsize;i++){
+	void calc(void) { // range , avg
+
+		for(size_t i=0;i<_avgNum.size();i++){
 			_rngNum[i] = _maxNum[i] - _minNum[i];
 			_avgNum[i] = _sumNum[i] / _cntNum[i];
 		}
 	}
-	void cnt_inc(){ _cnt++; }
 
-	bool existAllData(){
+	DataInfo& operator++(){
+    ++_rec;
+    return *this;
+  }
 
-		if(_fldsize==0){ return false;}
 
-		for(size_t i=0;i<_fldsize;i++){
+	// 全てNULLはNG
+	bool valid(){
+
+		for(size_t i=0;i<_cntNum.size();i++){
 			if(_cntNum[i]==0) return false;
 		}
 
@@ -93,8 +97,8 @@ class DataInfo {
 	
 	// debug
 	void print(){
-		cerr << "line " << _cnt << endl;
-		for (size_t i=0;i<_fldsize;i++){
+		cerr << "rec " << _rec << endl;
+		for (size_t i=0;i<_minNum.size();i++){
 			cerr << " min:" << _minNum[i]; 
 			cerr << " max:" << _maxNum[i]; 
 			cerr << " rng:" << _rngNum[i];
@@ -102,17 +106,39 @@ class DataInfo {
 			cerr << " cnt:" << _cntNum[i];
 			cerr << " avg:" << _avgNum[i];
 			cerr << endl;
-		}
-
-	
+		}	
 	}
 	
 	
 };
 
+class Sample {
+	vector < vector<double> > _SmpRec;
+  size_t _recCnt;
+  size_t _fCnt;
+  
+	public:
+
+	void setSize(size_t reccnt,size_t fcnt ){
+		_SmpRec.resize(reccnt);
+		for(size_t i=0;i<reccnt;i++){
+			_SmpRec[i].resize(fcnt);
+		}
+		_recCnt = reccnt;
+		_fCnt = fcnt;
+	}
+
+	void   vSet(int i,int j,double v){ _SmpRec[i][j] = v;}
+	double vGet(int i,int j){ return _SmpRec[i][j]; }
+
+	int Cnt(){ return _recCnt; }
+	int fCnt(){ return _fCnt; }
+
+};
+
 class CalNum {
   double _accum;
-  int   _cnt;
+  size_t _cnt;
   public:
   void clear(){
   	_cnt=0;
@@ -122,17 +148,26 @@ class CalNum {
 	  _accum += val;
   	_cnt ++;
   }
-  int getCnt(void){ return _cnt;}
-  double getAvg(void){ return _accum/_cnt;}
-  double getAccm(void){ return _accum;}
+
+	CalNum& operator+=(const double val)
+	{
+	  _accum += val;
+  	_cnt ++;
+		return *this;
+	}
+
+
+  size_t Cnt(void){ return _cnt;}
+  double Avg(void){ return _accum/_cnt;}
+  double Accm(void){ return _accum;}
 
 };
 
 class Cluster {
 
-  int _cnt;               /*クラスタに属するレコード数*/
-  vector<CalNum> _calNum; /*重心の計算用*/
-  vector<kgVal>  _cenNum; /*重心*/
+  size_t _rcnt;           // クラスタに属するレコード数
+  vector<CalNum> _calNum; // 重心の計算用
+  vector<kgVal>  _cenNum; // 重心
 
 	public:
 
@@ -141,13 +176,13 @@ class Cluster {
 		_cenNum.resize(fcnt,kgVal('N'));
 	}
 
-	void set_cenNum(int i ,double v){ _cenNum[i].r(v);}
+	void   gSet(int i ,double v){ _cenNum[i].r(v);}
+	bool   gExist(int i ){ return _cenNum[i].null();}
+	double gGet(int i ){ return _cenNum[i].r();}
 
-	double get_cenNum(int i ){ return _cenNum[i].r();}
-	double is_cenNum(int i ){ return _cenNum[i].null();}
 
-	void resetCnt(){_cnt=0;}
-	void incCnt(){_cnt++;}
+	void resetCnt(){ _rcnt=0;}
+	void incCnt(){ _rcnt++;}
 
 	void resetCalnum(){
 		for(size_t i=0 ; i<_calNum.size();i++){
@@ -155,34 +190,81 @@ class Cluster {
 		}
 	}
 	
-	void addAccm(int i ,double v){
-  	_calNum[i].add(v);
-  }
-  int getCalCnt(size_t i){ return _calNum[i].getCnt();} 
-	double getCalAvg(size_t i){ return _calNum[i].getAvg();} 
-	int getCnt(){ return _cnt;}
+	void acum(int i ,double v){ _calNum[i] += v; }
 
-	double getAccm(int i ){
-  	return _calNum[i].getAccm();
-  }
+  size_t Cnt (size_t i){ return _calNum[i].Cnt();} 
+	double Avg (size_t i){ return _calNum[i].Avg();} 
+	double Accm(size_t i){ return _calNum[i].Accm();}
+
+	int getCnt(){ return _rcnt;}
+
 
 };
 
 class Clusters {
 
+	size_t _fCnt;
 	vector < Cluster > _cluster;
 
+	void setSmp2Cluster(int k,int s,Sample &sample)
+	{
+	  for(size_t i=0; i<_fCnt; i++){
+		  _cluster[k].gSet(i,sample.vGet(s,i));
+  	}
+	}
+
+	void cResize(int clsCnt,int fCnt){
+		_cluster.resize(clsCnt);
+		for(int i=0;i<clsCnt;i++){
+	  	_cluster[i].setSize(fCnt);
+	  }
+	  _fCnt=fCnt;
+	}
+
+	int getCenInstance(Sample &sample,DataInfo &dinfo);
+	double calDist(Cluster &cluster,Sample& sample,size_t rno ,DataInfo & dinfo);
+	double get_dji(Sample& sample, DataInfo& dinfo, int m, int n);
+	double get_Dj (Sample& sample, DataInfo& dinfo, int k, int j);
+
+	int nearestClusterSmp(Sample& sample,int rpos,DataInfo &dinfo);
+	void setClusterSmp(Sample& sample,DataInfo &dinfo);
+	int movCenter();
+	double calDistanceClsSmp(int k, int n,  Sample & sample, DataInfo &dinfo);
+	void farthest(int k,Sample & sample,  DataInfo &dinfo);
+	
+	
+	
 	public:
+
+	
+	void initRA( 
+		size_t cCnt ,
+		Sample & sample,
+		boost::variate_generator< boost::mt19937,boost::uniform_int<>  > * rmod
+	);
+
+	void initKA(
+		size_t cCnt ,
+		Sample & sample,
+		DataInfo &_dinfo
+	);
+	Clusters* initBFbyRA(
+		size_t cCnt , vector < Sample > & sample, DataInfo &dinfo,
+		boost::variate_generator< boost::mt19937,boost::uniform_int<>  > * rmod
+	);
+	
 
 	void resize(int clsCnt,int fCnt){
 		_cluster.resize(clsCnt);
 		for(int i=0;i<clsCnt;i++){
 	  	_cluster[i].setSize(fCnt);
 	  }
+	  _fCnt=fCnt;
 	}
+
 	Cluster& at(int i){ return _cluster[i]; }
 
-	void reset(){
+	void wrkReset(){
 		for(int i=0; i<_cluster.size();i++){
 	    _cluster[i].resetCnt();
   	  _cluster[i].resetCalnum();
@@ -193,14 +275,14 @@ class Clusters {
   }
 
 
-	void set_cenNum(int k,int i,double v){ _cluster[k].set_cenNum(i,v); }
-	int getCalCnt(int k,int i)    { return _cluster[k].getCalCnt(i); }
-	double getCalAvg (int k,int i){ return _cluster[k].getCalAvg(i); }
-	double get_cenNum(int k,int i){ return _cluster[k].get_cenNum(i);}
-	double getAccm (int k,int i)  { return _cluster[k].getAccm(i); }
+	void set_cenNum(int k,int i,double v){ _cluster[k].gSet(i,v); }
+	int getCalCnt(int k,int i)    { return _cluster[k].Cnt(i); }
+	double getCalAvg (int k,int i){ return _cluster[k].Avg(i); }
+	double get_cenNum(int k,int i){ return _cluster[k].gGet(i);}
+	double getAccm (int k,int i)  { return _cluster[k].Accm(i); }
 
 	void addAccm(int k,int i ,double v){
-  	_cluster[k].addAccm(i , v);
+  	_cluster[k].acum(i , v);
   }
 
 
@@ -208,27 +290,6 @@ class Clusters {
 	int getCnt(int k){ return _cluster[k].getCnt(); }
 };
 
-
-class Sample {
-	vector < vector<kgVal> > _SmpRec;
-  int _recCnt;
-  //int _numFldCnt;
-  
-	public:
-	void setSize(size_t reccnt,size_t fcnt ){
-		_SmpRec.resize(reccnt);
-		for(size_t i=0;i<reccnt;i++){
-			_SmpRec[i].resize(fcnt,kgVal('N'));
-		}
-	}
-	void setVal(int i,int j,double v){ _SmpRec[i][j].r(v);}
-	double getVal(int i,int j){ return _SmpRec[i][j].r(); }
-	int getCnt(){ return _recCnt; }
-	void setCnt(int v){ _recCnt=v; }
-	//void setFCnt(int v){ _numFldCnt=v; }
-	void incCnt(){_recCnt++;}
-
-};
 
 class kgKmeans : public kgMod {
 
@@ -248,12 +309,18 @@ class kgKmeans : public kgMod {
 	
 	Clusters _clusters;
 
-	kgAutoPtr1<boost::variate_generator< boost::mt19937,boost::uniform_int<>  > > _rand_mod;	
+	kgAutoPtr1< boost::variate_generator< boost::mt19937,boost::uniform_int<>  > > _rand_mod;	
 
-	DataInfo _datainfo;
+	DataInfo _dinfo;
+
 	// 引数セット
 	void setArgs(void);
-	void getDatInfo(void);
+	// read data
+	void getDataInfo(void);
+	
+	
+	
+	
 	//void samplingSmp(Sample *sample, int recCnt);
 	void setSmp2Cluster(int k,Sample  *sample,int s,Clusters* cls);
 	void initClusterRA(int i,Clusters* cls);
