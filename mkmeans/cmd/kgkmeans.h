@@ -323,22 +323,11 @@ class kgKmeans : public kgMod {
 	
 	//void samplingSmp(Sample *sample, int recCnt);
 	void setSmp2Cluster(int k,Sample  *sample,int s,Clusters* cls);
-	void initClusterRA(int i,Clusters* cls);
-	void initClusterKA(int i,Clusters* cls);
-	Clusters* initClusterBF();
+
 	void sampling( int mul,int recCnt);
 	int movCenter(Clusters *clusters);
 	int nearestCluster();
 	void setCluster();
-	double calDistanceClsSmp(Cluster &cluster, int n,int spos);
-	int getCenInstance(int pos);
-	double get_dji(Sample *sample, int m, int n );
-	double get_Dj(int k,int j);
-
-
-	void farthest(Clusters *clusters,int k,int spos);
-	void setClusterSmp(Clusters *clusters,  Sample*  sample);
-	int nearestClusterSmp(Clusters *clusters,Sample *sample,int rpos);
 
   public:
   // コンストラクタ
