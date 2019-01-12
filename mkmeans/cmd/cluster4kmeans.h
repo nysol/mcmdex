@@ -16,6 +16,7 @@
  * for more details.
 
  ////////// LICENSE INFO ////////////////////*/
+#pragma once
 #include <string>
 #include <vector>
 #include <set>
@@ -27,85 +28,11 @@
 #include <kgArgFld.h>
 #include <kgCSV.h>
 #include <kgCSVout.h>
+#include "datainfo.h"
+
 
 namespace kgmod { ////////////////////////////////////////////// start namespace
 
-/*入力データ関連*/
-class DataInfo {
-
-  size_t  _rec;    /*データ行数*/
-  vector<double> _maxNum; /*数値項目の最大値*/
-  vector<double> _minNum; /*数値項目の最小値*/
-  vector<double> _rngNum; /*数値項目の最大値-最小値*/
-  vector<double> _sumNum; /*数値項目の合計値*/
-  vector<int>    _cntNum; /*数値項目の件数(nullを省く)*/
-  vector<double> _avgNum; /*数値項目の平均値*/
-  public:
-		DataInfo():_rec(0){}
-		
-	void init(size_t size){
-		_rec=0;
-		_maxNum.clear();_maxNum.resize(size,-DBL_MAX); /*数値項目の最大値*/
-  	_minNum.clear();_minNum.resize(size,DBL_MAX); /*数値項目の最小値*/
-  	_rngNum.clear();_rngNum.resize(size,0); /*数値項目の最大値-最小値*/
-  	_sumNum.clear();_sumNum.resize(size,0); /*数値項目の合計値*/
-  	_cntNum.clear();_cntNum.resize(size,0); /*数値項目の件数(nullを省く)*/
-  	_avgNum.clear();_avgNum.resize(size,0); /*数値項目の平均値*/
-	}
-	
-	size_t Rec(void){ return _rec;}
-	double Avg(size_t i){return _avgNum[i];}
-	double Rng(size_t i){return _rngNum[i];}
-	double Min(size_t i){return _minNum[i];}
-
-	
-	void vSet(size_t i,double v) {
-		_cntNum[i]++;
-		_sumNum[i]+=v;
-		if ( _maxNum[i] < v ) { _maxNum[i] = v;  } 
-		if ( _minNum[i] > v ) { _minNum[i] = v;  } 
-	}
-
-	void calc(void) { // range , avg
-
-		for(size_t i=0;i<_avgNum.size();i++){
-			_rngNum[i] = _maxNum[i] - _minNum[i];
-			_avgNum[i] = _sumNum[i] / _cntNum[i];
-		}
-	}
-
-	DataInfo& operator++(){
-    ++_rec;
-    return *this;
-  }
-
-
-	// 全てNULLはNG
-	bool valid(){
-
-		for(size_t i=0;i<_cntNum.size();i++){
-			if(_cntNum[i]==0) return false;
-		}
-
-		return true;
-	}
-	
-	// debug
-	void print(){
-		cerr << "rec " << _rec << endl;
-		for (size_t i=0;i<_minNum.size();i++){
-			cerr << " min:" << _minNum[i]; 
-			cerr << " max:" << _maxNum[i]; 
-			cerr << " rng:" << _rngNum[i];
-			cerr << " sum:" << _sumNum[i];
-			cerr << " cnt:" << _cntNum[i];
-			cerr << " avg:" << _avgNum[i];
-			cerr << endl;
-		}	
-	}
-	
-	
-};
 
 class Sample {
 	vector < vector<double> > _SmpRec;
@@ -193,20 +120,25 @@ class Cluster {
 	int getCnt(){ return _rcnt;}
 	bool recEmpty(){ return (_rcnt==0);}
 
-	double calDist(Sample& sample,size_t rno ,DataInfo & dinfo);
+	double calDist(Sample& sample,size_t rno ,DataInfo * dinfo);
 
 
 };
 
-class Clusters {
-
+class ClustersBASE{
+	protected:
 	vector < Cluster > _cluster;
 	size_t _fCnt;
 	size_t _cCnt;
-	kgArgFld *_ffld;
-	kgCSVfld *_icsv;
-	DataInfo _dinfo;
 
+	int movCenter();
+
+	void wrkReset(){
+		for(int i=0; i<_cluster.size();i++){
+	    _cluster[i].resetCnt();
+  	  _cluster[i].resetCalnum();
+		}
+	}
 
 	void setSmp2Cluster(int k,int s,Sample &sample)
 	{
@@ -214,6 +146,10 @@ class Clusters {
 		  _cluster[k].gSet(i,sample.vGet(s,i));
   	}
 	}
+
+
+	public:
+
 
 	void cResize(int clsCnt,int fCnt){
 		_cluster.clear();
@@ -225,44 +161,8 @@ class Clusters {
 	  _cCnt = clsCnt;
 	  
 	}
-	void clscopy(Clusters &cls){
-		_cluster = cls._cluster;
-	}
 
-	void wrkReset(){
-		for(int i=0; i<_cluster.size();i++){
-	    _cluster[i].resetCnt();
-  	  _cluster[i].resetCalnum();
-		}
-	}
-
-
-	void getDataInfo(void);
-	void csv2sample(
-		vector<Sample> & samp,int recCnt, 
-		boost::variate_generator< boost::mt19937,boost::uniform_int<>  > * rmod 
-	); 
-
-
-
-	int getCenInstance(Sample &sample,DataInfo &dinfo);
-
-	int movCenter();
-
-	void farthest(int k,Sample & sample,  DataInfo &dinfo);
-
-
-	double get_dji(Sample& sample, DataInfo& dinfo, int m, int n);
-	double get_Dj (Sample& sample, DataInfo& dinfo, int k, int j);
-
-	int nearestCid(Sample& sample,int rpos,DataInfo &dinfo);
-
-	//void setClusterSmp(Sample& sample,DataInfo &dinfo);
-
-	void convergentBySmp(Sample& sample,DataInfo &dinfo);
-
-	//int nearestCid(Sample& sample,int rpos);
-
+	bool recEmpty(size_t i) { return _cluster[i].recEmpty(); }
 
 
 	void initRA_MAIN(
@@ -270,27 +170,6 @@ class Clusters {
 		boost::variate_generator< boost::mt19937,boost::uniform_int<>  > * rmod
 	);
 
-	bool recEmpty(size_t i) { return _cluster[i].recEmpty(); }
-
-	public:
-
-	size_t initKA(
-		kgCSVfld *csv, kgArgFld *fld, size_t cCnt , 
-		unsigned long seed, size_t cnt, size_t rcnt);
-
-	size_t initRA( 
-		kgCSVfld *csv, kgArgFld *fld, size_t cCnt , 
-		unsigned long seed, size_t cnt, size_t rcnt);
-
-	size_t initBFbyRA(
-		kgCSVfld *csv, kgArgFld *fld, size_t cCnt , 
-		unsigned long seed, size_t cnt, size_t rcnt);
-
-
-	int nearestCid();
-	void convergent();
-
-	
 	double gGet(int k,int i){ return _cluster[k].gGet(i);}
 	void   gSet(int k,int i,double v){ _cluster[k].gSet(i,v); }
 
@@ -303,23 +182,79 @@ class Clusters {
     }
     return ttl;
   }
-
 	void show(){
-  	int i,j;
+		int i,j;
 
-	  printf("----------------- showCluster\n");
- 		for(i=0; i<_cluster.size(); i++){
-    printf("c[%d] cnt=%d : ",i,_cluster[i].getCnt());
-    for(j=0; j<_fCnt; j++){
-    	printf("%g",_cluster[i].gGet(j));
-      printf("(");
-    	printf("%g",_cluster[i].Accm(j));
-      printf(",%lu)",_cluster[i].Cnt(j));
-      printf(")");
-    }
-    printf("\n");
-  }
-}
+		printf("----------------- showCluster\n");
+		for(i=0; i<_cluster.size(); i++){
+			printf("c[%d] cnt=%d : ",i,_cluster[i].getCnt());
+			for(j=0; j<_fCnt; j++){
+				printf("%g",_cluster[i].gGet(j));
+				printf("(");
+				printf("%g",_cluster[i].Accm(j));
+				printf(",%lu)",_cluster[i].Cnt(j));
+				printf(")");
+			}
+			printf("\n");
+		}
+	}
+
+};
+
+
+class ClustersTmp4BFA;
+
+class Clusters : public ClustersBASE {
+
+	kgArgFld *_ffld;
+	kgCSVfld *_icsv;
+	DataInfo *_dinfo;
+
+
+	void csv2sample(
+		vector<Sample> & samp,int recCnt, 
+		boost::variate_generator< boost::mt19937,boost::uniform_int<>  > * rmod 
+	); 
+
+	// using initKA
+	int getCenInstance(Sample &sample);
+	double get_dji(Sample& sample, int m, int n);
+	double get_Dj (Sample& sample, int k, int j);
+
+	public:
+
+	void clscopy( ClustersTmp4BFA  &cls);
+
+	size_t initKA(
+		kgCSVfld *csv, kgArgFld *fld ,DataInfo *dinfo, size_t cCnt , 
+		unsigned long seed, size_t cnt, size_t rcnt);
+
+	size_t initRA( 
+		kgCSVfld *csv, kgArgFld *fld ,DataInfo *dinfo , size_t cCnt , 
+		unsigned long seed, size_t cnt, size_t rcnt);
+
+	size_t initBFbyRA(
+		kgCSVfld *csv, kgArgFld *fld ,DataInfo *dinfo , size_t cCnt , 
+		unsigned long seed, size_t cnt, size_t rcnt);
+
+
+	int  nearestCid();
+	void convergent();
+
+};
+
+class ClustersTmp4BFA : public ClustersBASE{
+
+	DataInfo *_dinfo;
+
+	friend void Clusters::clscopy( ClustersTmp4BFA &cls);
+
+	public:
+	ClustersTmp4BFA(DataInfo *dinfo):_dinfo(dinfo){};
+	
+	void farthest(int k,Sample & sample,  DataInfo *dinfo);
+	void convergent(Sample& sample,DataInfo *dinfo);
+	int  nearestCid(Sample& sample,int rpos,DataInfo *dinfo);
 
 };
 

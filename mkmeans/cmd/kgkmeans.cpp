@@ -117,25 +117,29 @@ int kgKmeans::run(void) try {
 
 	setArgs();
 
+	// データ初期読込 & クラスタサイズ調整
+	size_t rec = _dinfo.getDatInfo(_iFile,_fField);
+	if( rec <_cCnt ) _cCnt = rec; 
+
 	// 初期設定
   switch(_dType){
 		// inputdata ,項目位置情報 , クラスタ数  , 乱数seed , サンプリング数 ,  サンプリングセット数
 
   	case 0: /*---------------------------- ランダム*/
 			
-	    _cCnt = _clusters.initRA(&_iFile , &_fField , _cCnt,  _seed , 1, 100);
+	    _cCnt = _clusters.initRA(&_iFile , &_fField , &_dinfo , _cCnt,  _seed , 1, 100);
 
 	    break;
 
   	case 1: /*---------------------------- Kaufman Approach*/
 
-	    _cCnt = _clusters.initKA(&_iFile , &_fField , _cCnt,  _seed , 1, 100);
+	    _cCnt = _clusters.initKA(&_iFile , &_fField , &_dinfo, _cCnt,  _seed , 1, 100);
 
 	    break;
 
 	  case 2: /*---------------------------- Bradley & Fayyad Approach*/
 	  
-	    _cCnt = _clusters.initBFbyRA(&_iFile , &_fField , _cCnt,  _seed , _mcnt, 100);
+	    _cCnt = _clusters.initBFbyRA(&_iFile , &_fField , &_dinfo, _cCnt,  _seed , _mcnt, 100);
 
 	    break;
 	  

@@ -35,6 +35,10 @@ int main(int argc, const char *argv[]) try {
       cout << kgmod.doc() << endl;
 	    exit(0);
     }
+    if(0==strcmp("--helpl",argv[i]) || 0==strcmp("-helpl",argv[i])){
+      cout << kgmod.docl() << endl;
+	    exit(0);
+    }
 		if(0==strcmp("--version",argv[i]) || 0==strcmp("-version",argv[i])){
 			cout << kgmod.lver() << endl;
 			exit(0);

@@ -75,33 +75,6 @@ static bool isInCluster(int s,vector<int> &sList, int k)
   return(false);
 }
 
-//----------------------------------------------------------------------------
-// 入力データのsumary情報取得
-// ( cnt ,sum ,min, max)
-//----------------------------------------------------------------------------
-void Clusters::getDataInfo(){
-
-	_dinfo.init(_fCnt);
-
-	while(_icsv->read()!=EOF){
-		for(size_t i=0 ; i<_fCnt ; i++){ 
-			char *str = _icsv->getVal(_ffld->num(i));
-			if(*str!='\0'){
-				_dinfo.vSet(i,atof(str));
-			}
-		}
-		++_dinfo;
-	}
-
-	if(!_dinfo.valid()){
-		throw kgError("value not found on some fields");
-	}
-
-	_dinfo.calc();
-
-  if( _dinfo.Rec()<_cCnt ) _cCnt = _dinfo.Rec();
-	
-}
 
 //----------------------------------------------------------------------------
 // ファイルからrecCnt件サンプリングし、sample[]にセットする                   
@@ -116,7 +89,7 @@ void Clusters::csv2sample(
   /*サンプリング件数の調整*/
   if(recCnt < 100      ) recCnt=100;
   if(recCnt > 5000     ) recCnt=5000;
-  if(recCnt > _dinfo.Rec()) recCnt=_dinfo.Rec();
+  if(recCnt > _dinfo->Rec()) recCnt=_dinfo->Rec();
 
   /*領域確保*/
   size_t mul = samp.size();
@@ -126,7 +99,7 @@ void Clusters::csv2sample(
   for(int i=0; i<mul; i++){
   	samp[i].setSize(recCnt,_fCnt);
     select[i]=recCnt;
-    remaining[i]=_dinfo.Rec();
+    remaining[i]=_dinfo->Rec();
   }
 
 	_icsv->seekTop();
@@ -143,7 +116,7 @@ void Clusters::csv2sample(
 	          samp[i].vSet(recCnt-select[i],j,atof(str));
         	}
         	else{
-	          samp[i].vSet(recCnt-select[i],j,_dinfo.Avg(i));
+	          samp[i].vSet(recCnt-select[i],j,_dinfo->Avg(i));
         	}
         	
         }
@@ -173,16 +146,16 @@ int Clusters::nearestCid(){
     int j=0;
     for(size_t i=0; i<_fCnt; i++){
 
-    	if( _dinfo.Rng(i) == 0 ) continue;
+    	if( _dinfo->Rng(i) == 0 ) continue;
 
-      a=norm(_cluster[c].gGet(i), _dinfo.Min(i), _dinfo.Rng(i));
+      a=norm(_cluster[c].gGet(i), _dinfo->Min(i), _dinfo->Rng(i));
 
 			char *str = _icsv->getVal(_ffld->num(i));
 			
-      if(*str=='\0') { b = _dinfo.Avg(i);}
+      if(*str=='\0') { b = _dinfo->Avg(i);}
       else        { b=atof(str);}
 
-      b=norm(b,_dinfo.Min(i), _dinfo.Rng(i));
+      b=norm(b,_dinfo->Min(i), _dinfo->Rng(i));
       disFld[j++] = disNum(a,b);
  
     }
@@ -218,7 +191,7 @@ void Clusters::convergent(){
       
       	for(int i=0; i<_fCnt; i++){
 					char *s = _icsv->getVal(_ffld->num(i));
-					if(*s=='\0'){ _cluster[k].acum(i , _dinfo.Avg(i)); }
+					if(*s=='\0'){ _cluster[k].acum(i , _dinfo->Avg(i)); }
 	      	else{ _cluster[k].acum(i , atof(s)); }
       	}
     	}
@@ -232,7 +205,7 @@ void Clusters::convergent(){
 // cluster と rno 番のサンプルとの距離                                 
 //----------------------------------------------------------------------------
 
-double Cluster::calDist(Sample& sample,size_t rno ,DataInfo & dinfo)
+double Cluster::calDist(Sample& sample,size_t rno ,DataInfo * dinfo)
 {
 
 	vector<double> disFld(_cenNum.size());
@@ -240,9 +213,9 @@ double Cluster::calDist(Sample& sample,size_t rno ,DataInfo & dinfo)
   int j=0;
 
   for(int i=0; i<_cenNum.size(); i++){
-  	if( _cenNum[i].null() || dinfo.Rng(i) ==0 ) continue;
-    double a=norm( _cenNum[i].r()     , dinfo.Min(i), dinfo.Rng(i));
-    double b=norm( sample.vGet(rno,i) , dinfo.Min(i), dinfo.Rng(i));
+  	if( _cenNum[i].null() || dinfo->Rng(i) ==0 ) continue;
+    double a=norm( _cenNum[i].r()     , dinfo->Min(i), dinfo->Rng(i));
+    double b=norm( sample.vGet(rno,i) , dinfo->Min(i), dinfo->Rng(i));
     disFld[j++]=disNum(a,b);
   }
   if(j==0){ return DBL_MAX;}
@@ -257,7 +230,7 @@ double Cluster::calDist(Sample& sample,size_t rno ,DataInfo & dinfo)
 //----------------------------------------------------------------------------
 // 重心に最も近いレコード番号を取得 
 //----------------------------------------------------------------------------
-int Clusters::getCenInstance(Sample& sample,DataInfo &dinfo){
+int Clusters::getCenInstance(Sample& sample){
 
   Cluster clusterT;
   clusterT.setSize(sample.fCnt());
@@ -278,7 +251,7 @@ int Clusters::getCenInstance(Sample& sample,DataInfo &dinfo){
   double disTmp,distance=DBL_MAX;
 
   for(int i=0 ; i<sample.Cnt() ; i++){
-    disTmp=clusterT.calDist(sample,i,dinfo);
+    disTmp=clusterT.calDist(sample,i,_dinfo);
     if( distance > disTmp ){
       distance=disTmp;
       k=i;
@@ -290,15 +263,15 @@ int Clusters::getCenInstance(Sample& sample,DataInfo &dinfo){
 //----------------------------------------------------------------------------
 // m番目のサンプル と n番目のサンプルとの距離                                
 //----------------------------------------------------------------------------
-double Clusters::get_dji( Sample& sample,  DataInfo& dinfo, int m, int n )
+double Clusters::get_dji( Sample& sample, int m, int n )
 {
 	vector<double> disFld(sample.fCnt());
 	
   int j=0;
   /*数値項目*/
   for(int i=0; i<sample.fCnt(); i++){
-    double a=norm(sample.vGet(m,i), dinfo.Min(i), dinfo.Rng(i));
-    double b=norm(sample.vGet(n,i), dinfo.Min(i), dinfo.Rng(i));
+    double a=norm(sample.vGet(m,i), _dinfo->Min(i), _dinfo->Rng(i));
+    double b=norm(sample.vGet(n,i), _dinfo->Min(i), _dinfo->Rng(i));
     disFld[j++]=disNum(a,b);
   }
 
@@ -309,7 +282,7 @@ double Clusters::get_dji( Sample& sample,  DataInfo& dinfo, int m, int n )
 //----------------------------------------------------------------------------
 // 現在登録されている各クラスタとサンプルjとの最短距離を返す 
 //----------------------------------------------------------------------------
-double Clusters::get_Dj(Sample& sample,DataInfo& dinfo,int k,int j)
+double Clusters::get_Dj(Sample& sample,int k,int j)
 {
   double dis;
   double disMin;
@@ -319,7 +292,7 @@ double Clusters::get_Dj(Sample& sample,DataInfo& dinfo,int k,int j)
   disMin=DBL_MAX;
 
   for(s=0; s<k; s++){
-    dis = _cluster[s].calDist(sample,j,dinfo);
+    dis = _cluster[s].calDist(sample,j,_dinfo);
     if(disMin>dis){
       disMin=dis;
     }
@@ -334,10 +307,10 @@ double Clusters::get_Dj(Sample& sample,DataInfo& dinfo,int k,int j)
 //  クラスタの項目とデータの項目がうまくNULLでかみあった場合は-1を返すことに  
 //  なる。すなわち、近いクラスタは分からないということになる                  
 //----------------------------------------------------------------------------
-int Clusters::nearestCid(Sample& sample,int rpos,DataInfo &dinfo){
+int ClustersTmp4BFA::nearestCid(Sample& sample,int rpos,DataInfo* dinfo){
 
   double distanceTmp;
-  double distance=9999;
+  double distance=DBL_MAX;
 
   int k=-1;
 
@@ -349,8 +322,8 @@ int Clusters::nearestCid(Sample& sample,int rpos,DataInfo &dinfo){
 
     /*数値項目*/
     for(int i=0; i< _fCnt; i++){
-      double a=norm( _cluster[c].gGet(i) ,dinfo.Min(i),dinfo.Rng(i));
-      double b=norm( sample.vGet(rpos,i) ,dinfo.Min(i),dinfo.Rng(i));
+      double a=norm( _cluster[c].gGet(i) ,dinfo->Min(i),dinfo->Rng(i));
+      double b=norm( sample.vGet(rpos,i) ,dinfo->Min(i),dinfo->Rng(i));
       disFld[j++]= disNum(a,b);
     }
     //カテゴリ項目
@@ -367,13 +340,10 @@ int Clusters::nearestCid(Sample& sample,int rpos,DataInfo &dinfo){
   return(k);
 }
 
-
-
-
 //----------------------------------------------------------------------------
 // 各クラスタの重心を計算し、重心が変われば1変わらなければ0を返す             
 //----------------------------------------------------------------------------
-int Clusters::movCenter(){
+int ClustersBASE::movCenter(){
   int mov=0; // 重心が動いたフラグ
   double newCen;
   int i,k;
@@ -392,11 +362,10 @@ int Clusters::movCenter(){
   return(mov);
 }
 
- 
 //----------------------------------------------------------------------------
 // サンプリングデータを各クラスタに振り分け、重心計算のための値を更新していく  
 //----------------------------------------------------------------------------
-void Clusters::convergentBySmp(Sample& sample,DataInfo &dinfo){
+void ClustersTmp4BFA::convergent(Sample& sample,DataInfo *dinfo){
 
 	while(1){
 
@@ -416,35 +385,13 @@ void Clusters::convergentBySmp(Sample& sample,DataInfo &dinfo){
   	if(!movCenter()) break;
   }
 }
-//----------------------------------------------------------------------------
-/*多分いらん
-void Clusters::setClusterSmp(Sample& sample,DataInfo &dinfo){
-
-	int k;
-	wrkReset();
-
-  for(int smp=0; smp < sample.Cnt(); smp++){
-
-    k=nearestCid(sample,smp,dinfo);
-    if(k==-1){ throw kgError("cluster NO -1"); }
-		// -1の時どうする？
-    _cluster[k].incCnt();
-
-    for(int i=0; i<sample.fCnt(); i++){
-      double v = sample.vGet(smp,i);
-      _cluster[k].acum(i , v);
-    }
-	}
-}
-*/
- 
 
 // k番目のクラスタから最も離れたサンプルをクラスタの中心として登録する
 // for BRADLEY & FAYYAD APPROACH
-void Clusters::farthest(
+void ClustersTmp4BFA::farthest(
   int k,
   Sample & sample, 
-  DataInfo &dinfo)
+  DataInfo *dinfo)
 {
 
   //Clusters cls; //新しいクラスタ
@@ -456,7 +403,7 @@ void Clusters::farthest(
   // start i_max の算出 
   for(i=0; i< sample.Cnt(); i++){
 
-		dis= _cluster[k].calDist(sample,i,dinfo);
+		dis= _cluster[k].calDist(sample,i,_dinfo);
 
     if( dis > dis_max){
       dis_max=dis;
@@ -469,11 +416,10 @@ void Clusters::farthest(
 
   return;
 }
-
 //----------------------------------------------------------------------------
-// サンプルデータからcluster個数分ランダムに選択
+// サンプルデータからcluster個数分ランダムに選択　
 //----------------------------------------------------------------------------
-void Clusters::initRA_MAIN(
+void ClustersBASE::initRA_MAIN(
 	Sample& org,
 	boost::variate_generator< boost::mt19937,boost::uniform_int<>  > * rmod
 ){
@@ -508,7 +454,7 @@ void Clusters::initRA_MAIN(
 // ランダム初期化
 //----------------------------------------------------------------------------
 size_t Clusters::initRA( 
-kgCSVfld *csv, kgArgFld *fld,
+kgCSVfld *csv, kgArgFld *fld ,DataInfo *dinfo, 
  size_t cCnt , unsigned long seed, 
  size_t mcnt, size_t rcnt)
 {
@@ -518,10 +464,11 @@ kgCSVfld *csv, kgArgFld *fld,
 	_cCnt = cCnt;
 	_icsv = csv;
 	_fCnt = fld->size();
-	variate_generator< mt19937,uniform_int<> > randM( mt19937((uint64_t)seed),uniform_int<>(0,INT_MAX));
+	_dinfo = dinfo;
+ 	variate_generator< mt19937,uniform_int<> > randM( mt19937((uint64_t)seed),uniform_int<>(0,INT_MAX));
 
 
-	getDataInfo();
+	//_dinfo.getDatInfo(*_icsv,*_ffld);
 	
 	// サンプリング , clusrteサイズもチェック
 	vector < Sample > sample0(mcnt);
@@ -542,7 +489,7 @@ kgCSVfld *csv, kgArgFld *fld,
 // for the K-Mean",p6.                                                        
 //----------------------------------------------------------------------------
 size_t Clusters::initKA(
-kgCSVfld *csv, kgArgFld *fld,
+kgCSVfld *csv, kgArgFld *fld,DataInfo *dinfo, 
  size_t cCnt , unsigned long seed, 
  size_t mcnt, size_t rcnt
 ){
@@ -554,8 +501,10 @@ kgCSVfld *csv, kgArgFld *fld,
 	_fCnt = fld->size();
 	variate_generator< mt19937,uniform_int<> > randM( mt19937((uint64_t)seed),uniform_int<>(0,INT_MAX));
 
+	_dinfo = dinfo;
 
-	getDataInfo();
+
+	//_dinfo.getDatInfo(*_icsv,*_ffld);
 
 	// サンプリング , clusrteサイズもチェック
 	vector < Sample > sample0(mcnt);
@@ -569,7 +518,7 @@ kgCSVfld *csv, kgArgFld *fld,
   int k=0;
   int s;
 
-  s=getCenInstance(sample0[0],_dinfo);
+  s=getCenInstance(sample0[0]);
   sList[k]=s;
   setSmp2Cluster(k++,s,sample0[0]);
 
@@ -586,7 +535,7 @@ kgCSVfld *csv, kgArgFld *fld,
       for(int j=0; j<sample0[0].Cnt(); j++){
         if(isInCluster(j,sList,k)) continue;
         if(i==j) continue;
-        double tt = get_Dj(sample0[0],_dinfo,k,j) - get_dji(sample0[0],_dinfo,i,j);
+        double tt = get_Dj(sample0[0],k,j) - get_dji(sample0[0],i,j);
         Cji = Cji + ( tt - val0 > 0 ? tt : val0);
       }
 
@@ -616,7 +565,7 @@ kgCSVfld *csv, kgArgFld *fld,
 /* FMi : FM[i] */
 /*----------------------------------------------------------------------------*/
 size_t Clusters::initBFbyRA(
-	kgCSVfld *csv, kgArgFld *fld,
+	kgCSVfld *csv, kgArgFld *fld,DataInfo *dinfo, 
 	size_t cCnt , unsigned long seed, 
 	size_t mcnt, size_t rcnt
 ){
@@ -627,9 +576,8 @@ size_t Clusters::initBFbyRA(
 	_icsv = csv;
 	_fCnt = fld->size();
 	variate_generator< mt19937,uniform_int<> > randM( mt19937((uint64_t)seed),uniform_int<>(0,INT_MAX));
+	_dinfo = dinfo;
 
-
-	getDataInfo();
 	
 	// サンプリング , clusrteサイズもチェック
 	vector < Sample > sample(mcnt);
@@ -641,7 +589,7 @@ size_t Clusters::initBFbyRA(
 	double minFM;
   double tmpFM;
 
-	vector < Clusters > CM(sample.size());
+	vector < ClustersTmp4BFA > CM(sample.size(),ClustersTmp4BFA(_dinfo));
 
 	do {
 		// 新しいサンプルの作成 
@@ -653,7 +601,7 @@ size_t Clusters::initBFbyRA(
 	    // CONVERGENCE (kmean-mod)
   	  for(i=0;i<2;i++){
     	  // k-mean 
-				CM[s].convergentBySmp(sample[s],_dinfo);
+				CM[s].convergent(sample[s],_dinfo);
 	      // k-mean mod
   	    flg=0;
     	  for(j=0; j< _cCnt; j++){
@@ -676,7 +624,7 @@ size_t Clusters::initBFbyRA(
  	}while(flg);
 
   // クラスタの重心をサンプルとして登録する
-	vector < Clusters > FM(sample.size());
+	vector < ClustersTmp4BFA > FM(sample.size(),ClustersTmp4BFA(_dinfo));
   Sample  smpCM;  
 
   //領域確保(smpCM)
@@ -703,7 +651,7 @@ size_t Clusters::initBFbyRA(
       }
     }
     // CONVERGENCE
-		FM[s].convergentBySmp(smpCM,_dinfo);
+		FM[s].convergent(smpCM,_dinfo);
   }
 
   // DISTORTION(FM[i],smpCM)         
@@ -724,6 +672,11 @@ size_t Clusters::initBFbyRA(
   clscopy(FM[minFMi]);
 
   return _cCnt;
+}
+
+
+void Clusters::clscopy( ClustersTmp4BFA &cls){
+		_cluster = cls._cluster;
 }
 
 

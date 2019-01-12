@@ -17,53 +17,26 @@
 
  ////////// LICENSE INFO ////////////////////*/
 // =============================================================================
-/// kgedistHelp.h : kgedist help
+/// kgkmeansHelp.h : kgedist help
 // =============================================================================
-_title="編集距離計算";
+_title="k-mean法によるクラスタリング";
 _doc="\
-medist k=field s=field f=field [w=field] [-norm] [i=infile] [o=outfile]\n\
-k=,s=の項目順にレコードが並んでいる必要がある。\n\
-k= : ここで指定された項目をシーケンスの単位とする\n\
-s= : シーケンスID\n\
-w= : 重み項目\n\
-f= : アイテム\n\
--norm: シーケンス長で規格化(0〜1.0)する。\n\
-\n\
-例)\n\
-\n\
-dat.csvの内容\n\
-aid,seq,item\n\
-id1,1,a\n\
-id1,2,a\n\
-id1,3,b\n\
-id1,3,c\n\
-id2,3,a\n\
-id2,4,c\n\
-id2,5,a\n\
-id3,3,a\n\
-id3,4,a\n\
-id3,5,c\n\
-id4,3,x\n\
-id4,4,y\n\
-id4,5,z\n\
-\n\
-$ medist k=aid s=seq f=item i=dat.csv\n\
-key1,key2,distance\n\
-id1,id2,3\n\
-id1,id3,1.5\n\
-id1,id4,7\n\
-id2,id3,2\n\
-id2,id4,6\n\
-id3,id4,6\n\
-\n\
-$ medist k=aid s=seq f=item -norm i=dat.csv\n\
-key1,key2,distance\n\
-id1,id2,0.4166666667\n\
-id1,id3,0.2083333333\n\
-id1,id4,1\n\
-id2,id3,0.3333333333\n\
-id2,id4,1\n\
-id3,id4,1\n\
-\n\
+数値属性に基づいて、k-mean法によりクラスタリングをおこない、そのクラスタ番号を出力する。\
+\
+書式\
+mkmeans f= n= a= [d=] [m=] [S=] [-nfn] [-nfno] [-x][tmpPath=]\
+[precision=] [--help] [--helpl] [--version]\
+\
+パラメータ\
+\
+  S=   乱数の種【デフォルト値:現在時刻】\
+  a=   追加する項目名(クラスタ番号に対する項目名)\
+  d=   初期シードの計算方法【デフォルト値:2】\
+       0:random 1:Kaufman Approach 2:Bradley & Fayyad Approach\
+  f=   ここで指定された項目でクラスタリングを行う\
+  m=   Bradley & Fayyad Approach利用時に用意するサンプル数【デフォルト値:10】\
+  n=   クラスタ数\
 ";
+
+
 

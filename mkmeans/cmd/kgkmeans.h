@@ -30,6 +30,7 @@
 #include <kgArgFld.h>
 #include <kgCSV.h>
 #include <kgCSVout.h>
+#include "datainfo.h"
 #include "cluster4kmeans.h"
 using namespace kglib;
 
@@ -41,27 +42,26 @@ class kgKmeans : public kgMod {
 	// 引数
 	kgCSVfld _iFile;  // i=
 	kgCSVout _oFile;  // o=
+	kgArgFld _fField; // f=
 
 	int _cCnt; // n=
-	kgArgFld _fField; // f=
-	unsigned long _seed;			 // S=
-	kgstr_t		_addstr;	//a=
 	int		_dType;	//d=
 	int		_mcnt;	// m=
+	unsigned long _seed; // S=
+	kgstr_t		_addstr;	 //a=
 
 	vector < Sample > _sample;
-	//vector < Cluster > _cluster;
 	
 	Clusters _clusters;
 
-	kgAutoPtr1< boost::variate_generator< boost::mt19937,boost::uniform_int<>  > > _rand_mod;	
-
 	// 引数セット
 	void setArgs(void);
+
 	// read data
-	void getDataInfo(void);
+	//void getDataInfo(void);
 	
-	
+	DataInfo _dinfo;
+
 	
 	
 	//void samplingSmp(Sample *sample, int recCnt);
