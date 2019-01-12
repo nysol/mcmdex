@@ -5,7 +5,9 @@ bin_PROGRAMS = mkmeans
 
 mkmeans_SOURCES = mkmeans.cpp \
 kgkmeans.cpp \
-kgkmeans.h
+kgkmeans.h \
+cluster4kmeans.cpp \
+cluster4kmeans.h
 
 
 mkmeans_LDADD = -lkgmod3
