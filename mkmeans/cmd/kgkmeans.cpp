@@ -64,7 +64,7 @@ kgKmeans::kgKmeans(void){
 // -----------------------------------------------------------------------------
 void kgKmeans::setArgs(void){
 	// unknown parameter check
-	_args.paramcheck("n=,f=,i=,o=,S=,d=,m=,a=");
+	_args.paramcheck("n=,f=,i=,o=,S=,d=,m=,a=,-null");
 
 	// 入出力ファイルオープン
 	_iFile.open(_args.toString("i=",false), _env,_nfn_i);
@@ -92,6 +92,8 @@ void kgKmeans::setArgs(void){
 	if(_addstr.empty()&& _nfn_o==false){
 		throw kgError("parameter a= is mandatory");
 	}
+
+	_null=_args.toBool("-null");
 
 
 	//乱数の種
@@ -154,7 +156,7 @@ int kgKmeans::run(void) try {
 	_iFile.seekTop();
 	while(_iFile.read()!=EOF){
 
-    int k=_clusters.nearestCid();
+    int k=_clusters.nearestCid(_null);
     if(k!=-1){
 			_oFile.writeFld(_iFile.getFld(),_iFile.fldSize(),k+1,false);
     }

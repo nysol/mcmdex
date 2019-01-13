@@ -238,7 +238,7 @@ class Clusters : public ClustersBASE {
 		unsigned long seed, size_t cnt, size_t rcnt);
 
 
-	int  nearestCid();
+	int  nearestCid(bool null=false);
 	void convergent();
 
 };

@@ -109,12 +109,7 @@ class DataInfo {
 	double Rng(size_t i){return _rngNum[i];}
 	double Min(size_t i){return _minNum[i];}
 
-//	DataInfo& operator++(){
-//    ++_rec;
-//    return *this;
-//  }
 
-	
 	// debug
 	void print(){
 		cerr << "rec " << _rec << endl;

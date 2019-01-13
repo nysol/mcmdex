@@ -49,28 +49,14 @@ class kgKmeans : public kgMod {
 	int		_mcnt;	// m=
 	unsigned long _seed; // S=
 	kgstr_t		_addstr;	 //a=
-
-	vector < Sample > _sample;
+	bool _null; // -null
 	
 	Clusters _clusters;
 
 	// 引数セット
 	void setArgs(void);
 
-	// read data
-	//void getDataInfo(void);
-	
 	DataInfo _dinfo;
-
-	
-	
-	//void samplingSmp(Sample *sample, int recCnt);
-	void setSmp2Cluster(int k,Sample  *sample,int s,Clusters* cls);
-
-	void sampling( int mul,int recCnt);
-	int movCenter(Clusters *clusters);
-	int nearestCluster();
-	void setCluster();
 
   public:
   // コンストラクタ

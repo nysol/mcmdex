@@ -133,7 +133,7 @@ void Clusters::csv2sample(
 //  クラスタの項目とデータの項目がうまくNULLでかみあった場合は-1を返すことに  
 //  なる。すなわち、近いクラスタは分からないということになる                 
 //----------------------------------------------------------------------------
-int Clusters::nearestCid(){
+int Clusters::nearestCid(bool null){
 
   vector<double> disFld(_fCnt);
 	double a;
@@ -143,6 +143,7 @@ int Clusters::nearestCid(){
 
   for(int c=0; c<_cCnt; c++){
 
+		size_t nullcnt=0;
     int j=0;
     for(size_t i=0; i<_fCnt; i++){
 
@@ -152,14 +153,18 @@ int Clusters::nearestCid(){
 
 			char *str = _icsv->getVal(_ffld->num(i));
 			
-      if(*str=='\0') { b = _dinfo->Avg(i);}
+      if(*str=='\0') { 
+      	b = _dinfo->Avg(i);
+      	nullcnt++;
+      	if(null) { return -1;}
+      }
       else        { b=atof(str);}
 
       b=norm(b,_dinfo->Min(i), _dinfo->Rng(i));
       disFld[j++] = disNum(a,b);
  
     }
- 
+ 		if( nullcnt==_fCnt ){ return -1;}
     if(j==0){ continue;}
 
     //結合距離の計算

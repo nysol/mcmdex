@@ -36,6 +36,7 @@ mkmeans f= n= a= [d=] [m=] [S=] [-nfn] [-nfno] [-x][tmpPath=]\
   f=   ここで指定された項目でクラスタリングを行う\
   m=   Bradley & Fayyad Approach利用時に用意するサンプル数【デフォルト値:10】\
   n=   クラスタ数\
+	-null 一つでもNULLだとクラスタ番号をNULLとする\n\
 ";
 
 

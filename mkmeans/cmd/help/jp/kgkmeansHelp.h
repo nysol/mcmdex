@@ -25,7 +25,7 @@ _docL="\
 数値属性に基づいて、k-mean法によりクラスタリングをおこない、そのクラスタ番号を出力する。\n\
 \n\
 書式\n\
-mkmeans f= n= a= [d=] [m=] [S=] [-nfn] [-nfno] [-x][tmpPath=]\n\
+mkmeans f= n= a= [d=] [m=] [S=] [-null] [-nfn] [-nfno] [-x][tmpPath=]\n\
 [precision=] [--help] [--helpl] [--version]\n\
 \n\
 パラメータ\n\
@@ -37,5 +37,6 @@ mkmeans f= n= a= [d=] [m=] [S=] [-nfn] [-nfno] [-x][tmpPath=]\n\
   f=   ここで指定された項目でクラスタリングを行う\n\
   m=   Bradley & Fayyad Approach利用時に用意するサンプル数【デフォルト値:10】\n\
   n=   クラスタ数\n\
+	-null 一つでもNULLだとクラスタ番号をNULLとする\n\
 ";
 
