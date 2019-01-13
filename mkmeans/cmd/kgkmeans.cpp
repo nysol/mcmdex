@@ -25,7 +25,6 @@
 #include <csignal>
 
 #include <kgkmeans.h>
-#include <kgDblN.h>
 #include <kgMessage.h>
 #include <kgCSVout.h>
 #include <kgError.h>
