@@ -21,21 +21,22 @@
 // =============================================================================
 _title="k-mean法によるクラスタリング";
 _doc="\
-数値属性に基づいて、k-mean法によりクラスタリングをおこない、そのクラスタ番号を出力する。\
-\
-書式\
-mkmeans f= n= a= [d=] [m=] [S=] [-nfn] [-nfno] [-x][tmpPath=]\
-[precision=] [--help] [--helpl] [--version]\
-\
-パラメータ\
-\
-  S=   乱数の種【デフォルト値:現在時刻】\
-  a=   追加する項目名(クラスタ番号に対する項目名)\
-  d=   初期シードの計算方法【デフォルト値:2】\
-       0:random 1:Kaufman Approach 2:Bradley & Fayyad Approach\
-  f=   ここで指定された項目でクラスタリングを行う\
-  m=   Bradley & Fayyad Approach利用時に用意するサンプル数【デフォルト値:10】\
-  n=   クラスタ数\
+\n\
+数値属性に基づいて、k-mean法によりクラスタリングをおこない、そのクラスタ番号を出力する。\n\
+\n\
+書式\n\
+mkmeans f= n= a= [d=] [m=] [S=] [-null] [-nfn] [-nfno] [-x][tmpPath=]\n\
+[precision=] [--help] [--helpl] [--version]\n\
+\n\
+パラメータ\n\
+\n\
+  S=   乱数の種【デフォルト値:現在時刻】\n\
+  a=   追加する項目名(クラスタ番号に対する項目名)\n\
+  d=   初期シードの計算方法【デフォルト値:2】\n\
+       0:random 1:Kaufman Approach 2:Bradley & Fayyad Approach\n\
+  f=   ここで指定された項目でクラスタリングを行う\n\
+  m=   Bradley & Fayyad Approach利用時に用意するサンプル数【デフォルト値:10】\n\
+  n=   クラスタ数\n\
 	-null 一つでもNULLだとクラスタ番号をNULLとする\n\
 ";
 
