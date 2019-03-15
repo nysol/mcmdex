@@ -320,7 +320,7 @@ void KGLCM::reduce_occ_by_posi_equisupp (
     if ( _TT.get_w(*x)>= 0 ) continue;
     cnt = 0;
     
-		for(y=_TT.get_Tvv(*x); *((QUEUE_INT *)y)<item ; y++){  
+		for(y=_TT.beginTv(*x); *y < item ; y++){  
     	if ( _II.get_itemflag(*y) == 2 ) cnt++;
     }
 
@@ -329,7 +329,7 @@ void KGLCM::reduce_occ_by_posi_equisupp (
 
       _II.set_frq( _II.get_frq() - _TT.get_w(*x));
 
-			for(z=_TT.get_Tvv(*x);*((QUEUE_INT *)z)<item ; z++){
+			for(z=_TT.beginTv(*x) ; *z<item ; z++){
 	      _occ_w[*z] -= _TT.get_w(*x);
 	    }
     }
@@ -368,7 +368,7 @@ QUEUE_INT KGLCM::maximality_check (
   *fmax = _TT.get_clms(); *cnt=0;
 
 
-  for(x=_TT.get_jump_bgn();x<_TT.get_jump_end() ; x++){
+  for(x=_TT.beginJump();x<_TT.endJump() ; x++){
 
     if ( _II.get_itemflag(*x) == 1) continue;
     if ( _sgfname && ( (((_problem & LCM_UNCONST)==0) && (_itemary[*x]>0) ) || 
@@ -410,8 +410,8 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   int bblock = _TT.get_bblock();
   int wnum   = _TT.get_wnum();
   int wblock = _TT.get_wblock();
-
   VEC_ID new_t = _TT.get_new_t();
+
   QUEUE_INT cnt, f, *x, m, e, imax = _clms? item: _TT.get_clms();
   QUEUE_ID js = _itemcand.get_s(), qt = _II.iadd_get_t(), i;
   WEIGHT rposi=0.0;
@@ -427,9 +427,8 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
 	 // for ratio pruning when item target is set.
   if ( _II.get_target() < _II.get_item_max() && _occ_w[_II.get_target()] < _II.get_frq_lb()*_II.get_ratio_lb() ){
-  	// MQUE_FLOOP_CLS (_TT.get_jump(), x){
-		for(x=_TT.get_jump_bgn();x<_TT.get_jump_end() ; x++){
-  	 	_TT.set_OQ_end(*x,0);
+		for(x=_TT.beginJump();x<_TT.endJump() ; x++){
+  	 	_TT.clrOQend(*x);
   	}
   	goto END; 
   }
@@ -449,8 +448,8 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   if ( !(_problem & PROBLEM_FREQSET) && m<_TT.get_clms() ){  // ppc check
 
   	// MQUE_FLOOP_CLS (_TT.get_jump(), x){
-		for(x=_TT.get_jump_bgn();x<_TT.get_jump_end() ; x++){
-  	 	_TT.set_OQ_end(*x,0);
+		for(x=_TT.beginJump();x<_TT.endJump() ; x++){
+  	 	_TT.clrOQend(*x);
   	}
 
     goto END;
@@ -466,9 +465,9 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   } 
   // select freqeut (and addible) items with smaller indices
 	//MQUE_FLOOP_CLS (_TT.get_jump(), x){
-	for(x=_TT.get_jump_bgn();x<_TT.get_jump_end() ; x++){
+	for(x=_TT.beginJump();x<_TT.endJump() ; x++){
 		// ここでくりあ
-    _TT.set_OQ_end(*x,0);  // in the case of freqset mining, automatically done by rightmost sweep;
+    _TT.clrOQend(*x);  // in the case of freqset mining, automatically done by rightmost sweep;
 
     if ( _occ_w[*x] < _II.get_frq_lb() ) _occ_w[*x] = 0;  // modified 21/May/2018
     if ( *x<item && _II.get_itemflag(*x) == 0 ){
@@ -479,7 +478,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   }
 
 
-  if ( _itemcand.LENGTH_()==0 || _II.get_itemset_t() >= _II.get_ub() ) goto END;
+  if ( _itemcand.size()==0 || _II.get_itemset_t() >= _II.get_ub() ) goto END;
 
   qsort_<QUEUE_INT> (_itemcand.get_v()+_itemcand.get_s(), _itemcand.get_t()- _itemcand.get_s(), -1);
   qsort_<QUEUE_INT> (_II.iadd_get_v()+qt, _II.iadd_get_t()-qt, -1);
@@ -496,11 +495,11 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 	_TT.deliv(occ, item);
 
 	// loop for recursive calls
-  cnt = _itemcand.LENGTH_(); f=0;   // for showing progress
+  cnt = _itemcand.size(); f=0;   // for showing progress
 
-  while (_itemcand.LENGTH_() > 0 ){
+  while (_itemcand.size() > 0 ){
     //e = QUEUE_ext_tail_ (&_itemcand);
-    e = _itemcand.ext_tail_();
+    e = _itemcand.pop_back();
     //cerr << "aaa " << e << " " <<  _occ_pw2[e] << " " <<  MAX(_II.get_frq_lb(), _II.get_posi_lb()) << endl;
     if ( _occ_pw2[e] >= MAX(_II.get_frq_lb(), _II.get_posi_lb()) ){  // if the item is frequent
       add_item (e);
@@ -518,8 +517,8 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
     	//}
     }
     // clear the occurrences, for the further delivery
-    _TT.set_OQ_end(e,0);
-    _TT.set_OQ_t(e,0);
+    _TT.clrOQend(e);
+    _TT.clrOQt(e);
 
 
 
@@ -529,7 +528,8 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
       f++; print_err ("%d/%d (" LONGF " iterations)\n", f, cnt, _II.get_iters());
     }
   }
-
+	
+	//これいる？
   _TT.set_new_t(new_t);
   _TT.set_bnum(bnum);
   _TT.set_bblock(bblock);

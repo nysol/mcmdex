@@ -1,156 +1,13 @@
 /* library for vector and sparse vector, and matrix */
 /* Takeaki Uno    27/Dec/2008 */
 
-#ifndef _vec_c_
-#define _vec_c_
+//#ifndef _vec_c_
+//#define _vec_c_
 
 #include"vec.hpp"
 #include"stdlib2.hpp"
 #include"queue.hpp"
 #include"filecount.hpp"
-
-SVEC INIT_SVEC_ELE = {0,0};
-//SMAT INIT_SMAT = {TYPE_SMAT,NULL,NULL,0,NULL,0,0,NULL,NULL,0,0,0};
-//SETFAMILY INIT_SETFAMILY = INIT_SETFAMILY_;
-/*
-QSORT_TYPE (SVEC_VAL, SVEC_VAL)
-QSORT_TYPE (SVEC_VAL2, SVEC_VAL2)
-*/
-
-/* allocate memory according to rows and rowt */
-/*
-void VEC_alloc (VEC *V, VEC_ID clms){
-  *V = INIT_VEC;
-  V->end = clms;
-  calloc2 (V->v, clms+1, EXIT);
-}
-*/
-/* terminate routine for VEC */
-/*void VEC_end (VEC *V){
-  free2 (V->v);
-  *V = INIT_VEC;
-}*/
-
-/* allocate memory according to rows and rowt */
-void MAT::alloc (VEC_ID rows, VEC_ID clms){
-  VEC_ID i, clms2 = clms+(clms%2?1:2);
-  calloc2 (_v, rows+1, EXIT);
-  calloc2 (_buf_org, clms2 * (rows+1)+4, {free(_v);EXIT;});
-
-  _buf = _buf_org; 
-  // ADDR_FLOOR16(_buf);
-	char * chtmp;
-	chtmp =((char *)_buf)+15;
-	_buf = (typeof(_buf))(chtmp-(((size_t)chtmp)&15));
-
-  _end = rows;
-  _clms = clms;
-  FLOOP (i, 0, rows){
-    _v[i]._end = _v[i]._t = clms;
-    _v[i]._v   = _buf + i*(clms2);
-//    printf ("%p %p\n", M->buf, M->v[i].v);
-  }
-}
-
-/* terminate routine for MAT */
-/*
-void MAT::end (){
-  free2 (_buf_org);
-  free2 (_buf2_org);// double free?
-  free2 (_v);
-
-	// MAT INIT_MAT = {TYPE_MAT,NULL,NULL,0,NULL,0,0,NULL,NULL,0,0,NULL,NULL};
-  // *M = INIT_MAT;
-
-  // mark to identify type of the structure
-   //_type = TYPE_MAT;
-	_fname = NULL;
-	_wfname= NULL;      // input/weight file name
-	_flag=0;         // flag
-
-	_v=NULL;
-	_end=0; 
-	_t=0;
-  _buf=NULL;
-  _buf2=NULL;
-	_clms=0;
-  size_t _eles=0;
-	_buf_org=NULL;
-	_buf2_org=NULL;
-	
-}*/
-
-/* allocate memory */
-void SVEC::alloc (VEC_ID end){
-
-	//SVEC INIT_SVEC = {TYPE_SVEC,NULL,0,0};
-  //*V = INIT_SVEC;
-  _type = TYPE_SVEC;
-  _end = 0;
-  _t = 0;
-  calloc2 (_v, end+1, EXIT);
-  _end = end;
-  _t = 0;
-}
-
-/* terminate routine for SVEC */
-void SVEC::end (){
-  free2 (_v);
-
-  //*V = INIT_SVEC;
-  _type = TYPE_SVEC;
-  _end = 0;
-  _t = 0;
-
-}
-
-/* allocate memory according to rows and rowt */
-void SMAT::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
-  VEC_ID i;
-  if ( eles == 0 ) ARY_SUM (_ele_end, rowt, 0, rows); else _ele_end = eles;
-  calloc2 (_buf, _ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2, EXIT);
-  malloc2 (_v, rows+1, {free(_buf);EXIT;});
-  //ARY_FILL (_v, 0, rows, SVEC() );
-	for(size_t _common_size_t =0;common_size_t<rows;common_size_t++){
-		_v[common_size_t]._type=TYPE_SMAT;
-		_v[common_size_t]._end = 0;
-	  _v[common_size_t]._t = 0;
-	}
-
-  _end = rows;
-  _clms = clms;
-  if ( rowt ){
-    FLOOP (i, 0, rows){
-      _v[i]._v = i? _v[i-1]._v + rowt[i-1] +1: _buf;
-      _v[i]._end = rowt[i];
-    }
-  }
-}
-
-/* terminate routine for MAT */
-void SMAT::end (){
-  free2 (_buf);
-  free2 (_buf2);
-  free2 (_v);
-	//SMAT INIT_SMAT = {TYPE_SMAT,NULL,NULL,0,NULL,0,0,NULL,NULL,0,0,0};
-  //*M = INIT_SMAT;
-
-  _type = TYPE_SMAT;
-  _fname = NULL;
-  _wfname = NULL;
-  _flag = 0;
-  _v = NULL;
-  _end = 0;
-  _t = 0;
-  _buf = NULL;
-  _buf2 = NULL;
-  _clms = 0;
-  _eles = 0;
-  _ele_end = 0;
-  
-}
-
-
 
 /* allocate memory according to rows and rowt */
 /* if eles == 0, compute eles from rowt and rows */
@@ -218,206 +75,6 @@ void SETFAMILY::end (){
 
 }
 
-/****************************************************************/
-/****************************************************************/
-/****************************************************************/
-
-/* read binary file for MAT */
-/* each unit-byte will be one number. if unit<0, the sign of unit is flipped, and each value is minesed the half of the maximum */
-void MAT::load_bin (FILE2 *fp, int unit){
-  VEC_ID flag=0, i, j, jj;
-  size_t siz=0;
-  VEC_VAL z, neg=0;
-
-  if ( unit < 0 ){
-    unit = -unit; flag = 1; neg=128;
-    FLOOP (jj, 0, unit-1) neg *= 256;
-  }
-  if ( _t == 0 ){  // determine #rows if M->t is 0 (not specified)
-		siz = fp->get_fsize();
-    _t = (VEC_ID)(siz / unit / _clms);
-    if ( _flag & LOAD_TPOSE ) SWAP_<VEC_ID>(&_t, &_clms);
-  }
-  alloc(_t, _clms);  if (ERROR_MES) return;
-  _end = _t;
-  FLOOP (i, 0, _t){
-    FLOOP (j, 0, _clms){
-      z=0; FLOOP (jj, 0, unit){ z *= 256; z += fp->getc(); }
-      if ( flag ) z -= neg;
-      if ( _flag & LOAD_TPOSE ) _v[j]._v[i] = z;
-      else _v[i]._v[j] = z;
-    }
-  }
-}
-
-/* segmentation fault for illegal files */
-/* count/read the number in file for MAT */
-/* if *rows>0, only read count the numbers in a row, for the first scan. */
-void MAT::file_load (FILE2 *fp){
-  QUEUE_ID c;
-  VEC_ID t=0;
-  double p;
-
-  for (t=0 ; (FILE_err&2)==0 ; t++){
-
-    //ARY_SCAN (c, double, *fp, 0);
-    c = fp->ARY_Scan_DBL(0);
-
-    if ( _flag & LOAD_TPOSE ){
-      if ( _t == 0 ){ _t = c; if (_clms>0 ) break; }
-    } else if ( _clms == 0 ){ _clms = c; if ( _t>0 ) break; }
-    if ( c == 0 ) t--;
-  }
-  if ( _flag & LOAD_TPOSE ){ if ( _clms==0 ) _clms = t;} else if ( _t==0 ) _t = t;
-  fp->reset ();
-  _end = _t;
-  alloc (_t, _clms); if (ERROR_MES) return;
-  FLOOP (t, 0, (_flag&LOAD_TPOSE)? _clms: _t){
-    FLOOP (c, 0, (_flag&LOAD_TPOSE)? _t: _clms){
-      p = fp->read_double();
-      if ( FILE_err==1 || FILE_err==2 ) break;
-      if ( _flag&LOAD_TPOSE ) _v[c]._v[t] = p;
-      else _v[t]._v[c] = p;
-      if ( FILE_err==5 || FILE_err==6 ) break;
-    }
-    FLOOP (c, c, (_flag&LOAD_TPOSE)? _t: _clms){
-      if ( _flag&LOAD_TPOSE ) _v[c]._v[t] = 0;
-      else _v[t]._v[c] = 0;
-    }
-    if ( !FILE_err ) fp->read_until_newline ();
-  }
-}
-
-/* load file with switching the format according to the flag */
-void MAT::load (){
-  FILE2 fp ;
-  int unit=0;
-#ifdef USE_MATH
-  VEC_ID i;
-#endif
-  if ( _flag & VEC_LOAD_BIN ) unit = 1;
-  else if ( _flag & VEC_LOAD_BIN2 ) unit = 2;
-  else if ( _flag & VEC_LOAD_BIN4 ) unit = 4;
-  if ( _flag & VEC_LOAD_CENTERIZE ) unit = -unit;
-
-  fp.open( _fname, "rb");
-  if ( unit ) load_bin (&fp, unit);
-  else file_load (&fp);
-
-  fp.close (); if (ERROR_MES) EXIT;
-#ifdef USE_MATH
-  if ( _flag&VEC_NORMALIZE ) FLOOP (i, 0, _t) ARY_NORMALIZE (_v[i].v,_v[i].t);
-#endif
-  print_mes (this, "mat: %s ,#rows %d ,#clms %d\n", _fname, _t, _clms);
-}
-
-
-/* scan file and read the numbers for SMAT */
-/* flag&1? SMAT, SETFAMILY,  flag&2? tuple list format: array list :*/ 
-void SMAT::file_load (FILE2 *fp){
-	printf("sload\n");
-/*
-  double z=0;
-  VEC_ID t;
-  LONG x, y;
-  int fc=0, FILE_err_=0, flag=(M->type==TYPE_SMAT), flag2=M->flag;
-  int wflag = (M->type==TYPE_SETFAMILY && (((SETFAMILY *)M)->wfname || (M->flag&LOAD_EDGEW)));
-  FILE_COUNT C;
-  FILE2 wfp;
-
-  if ( flag && !M->wfname ) flag2 = M->flag | LOAD_EDGEW;
-//  C = FILE2_count (fp, (M->flag&(LOAD_ELE+LOAD_TPOSE+LOAD_EDGE+LOAD_RC_SAME)) | FILE_COUNT_ROWT, 0, 0, 0, (flag||flag2)? 1: 0, 0);
-  C = FILE2_count (fp, (M->flag&(LOAD_ELE+LOAD_TPOSE+LOAD_RC_SAME+LOAD_EDGE)) | FILE_COUNT_ROWT, 0, 0, 0, (flag2&LOAD_EDGEW)?1:0, 0);
-  if ( M->clms == 0 ) M->clms = C.clms;
-  if ( M->t == 0 ) M->t = C.rows;
-  if ( flag ) SMAT_alloc (M, M->t, C.rowt, M->clms, 0);
-  else {
-    SETFAMILY_alloc ((SETFAMILY *)M, M->t, C.rowt, M->clms, 0);
-    if ( wflag ) SETFAMILY_alloc_weight ((SETFAMILY *)M, C.rowt);
-  }
-  free2 (C.rowt);
-  if ( ((SETFAMILY *)M)->wfname ) FILE2_open (wfp, ((SETFAMILY *)M)->wfname, "r", EXIT);
-  if ( ERROR_MES ) return;
-
-  FILE2_reset (fp);
-  if ( M->flag&(LOAD_NUM+LOAD_GRAPHNUM) ) FILE2_read_until_newline (fp);
-  t=0;
-  do {
-    if ( M->flag&LOAD_ELE ){
-      if ( FILE2_read_pair (fp, &x, &y, &z, flag2) ) continue;
-    } else {
-      x = t;
-      FILE_err_ = FILE2_read_item (fp, ((SETFAMILY *)M)->wfname?&wfp:NULL, &x, &y, &z, fc, flag2);
-      if ( FILE_err&4 ) goto LOOP_END;
-    }
-//  printf ("%d %d       %d %d\n", x, M->t, y, M->clms);
-    if ( y >= M->clms || x >= M->t ) continue;
-//  printf ("## %d %d\n", x, y);
-    if ( flag ){
-      M->v[x].v[M->v[x].t].i = y;
-      M->v[x].v[M->v[x].t].a = z;
-      M->v[x].t++;
-    } else {
-      if ( wflag ) ((SETFAMILY *)M)->w[x][((SETFAMILY *)M)->v[x].t] = z;
-      QUE_INS (((SETFAMILY *)M)->v[x], y);
-      if ( (M->flag&LOAD_EDGE) && x != y ){
-        if ( wflag ) ((SETFAMILY *)M)->w[y][((SETFAMILY *)M)->v[y].t] = z;
-        QUE_INS (((SETFAMILY *)M)->v[y], x);
-      }
-    }
-    if ( !(M->flag&LOAD_ELE) ){
-      fc = 0;
-      if ( FILE_err&3 ){
-        LOOP_END:;
-        t++; if ( t >= M->t ) break;
-        fc = FILE_err_? 0: 1; FILE_err_=0; // even if next weight is not written, it is the rest of the previous line
-      }
-    }
-  } while ( (FILE_err&2)==0 );
-  if ( ((SETFAMILY *)M)->wfname ) FILE2_close (&wfp);
-*/
-}
-
-/* load column/row weight from the file */
-void SETFAMILY::load_column_weight (){
-
-  int i = FILE2::ARY_Load(_cw, _cwfname, 1);
-  //ARY_LOAD (_cw, WEIGHT, i, _cwfname, 1, EXIT);
-  reallocx (_cw, i, _clms+1, 0, EXIT);
-}
-
-void SETFAMILY::load_row_weight (){
-  //i = ARY_LOAD (_rw, WEIGHT,i, _rwfname, 1;
-  int i = FILE2::ARY_Load(_rw,_rwfname, 1);
-  reallocx (_rw, i, _t+1, 0, EXIT);
-}
-
-
-/* load file with switching the format according to the flag */
-void SMAT::load (){
-  FILE2 fp ;
-  VEC_ID i;
-  _type = TYPE_SMAT;
-  fp.open (_fname, "r");
-  file_load ( &fp);
-  fp.close();    if (ERROR_MES) EXIT;
-  FLOOP (i, 0, _t) _v[i]._v[_v[i]._t].i = _clms;  // end mark
-
-#ifdef USE_MATH
-	/*あと
-  if ( _flag&VEC_NORMALIZE ) FLOOP (i, 0, _t) SVEC::normalize (&M->v[i]); // normalize
-  */
-#endif
-  if (_flag&LOAD_INCSORT)
-      FLOOP (i, 0, _t) qsort_<VEC_ID> ((VEC_ID *)(_v[i]._v), _v[i]._t, sizeof(SVEC_ELE));
-  if (_flag&LOAD_DECSORT)
-      FLOOP (i, 0, _t) qsort_<VEC_ID> ((VEC_ID *)(_v[i]._v), _v[i]._t, -(int)sizeof(SVEC_ELE));
-  if (_flag&LOAD_RM_DUP)
-      FLOOP (i, 0, _t) MQUE_UNIFY (_v[i], SVEC_VAL);
-  _eles = _ele_end;
-  print_mes (this, "smat: %s ,#rows %d ,#clms %d ,#eles %zd\n", _fname, _t, _clms, _eles);
-
-}
 
 /* sort and duplication check */
 void SETFAMILY::sort (){
@@ -578,6 +235,367 @@ void SETFAMILY::load (){
   _eles = _ele_end;
 }
 
+/* load column/row weight from the file */
+void SETFAMILY::load_column_weight (){
+
+  int i = FILE2::ARY_Load(_cw, _cwfname, 1);
+  //ARY_LOAD (_cw, WEIGHT, i, _cwfname, 1, EXIT);
+  reallocx (_cw, i, _clms+1, 0, EXIT);
+}
+
+void SETFAMILY::load_row_weight (){
+  //i = ARY_LOAD (_rw, WEIGHT,i, _rwfname, 1;
+  int i = FILE2::ARY_Load(_rw,_rwfname, 1);
+  reallocx (_rw, i, _t+1, 0, EXIT);
+}
+
+
+
+
+//SVEC INIT_SVEC_ELE = {0,0};
+//SMAT INIT_SMAT = {TYPE_SMAT,NULL,NULL,0,NULL,0,0,NULL,NULL,0,0,0};
+//SETFAMILY INIT_SETFAMILY = INIT_SETFAMILY_;
+/*
+QSORT_TYPE (SVEC_VAL, SVEC_VAL)
+QSORT_TYPE (SVEC_VAL2, SVEC_VAL2)
+*/
+
+/* allocate memory according to rows and rowt */
+/*
+void VEC_alloc (VEC *V, VEC_ID clms){
+  *V = INIT_VEC;
+  V->end = clms;
+  calloc2 (V->v, clms+1, EXIT);
+}
+*/
+/* terminate routine for VEC */
+/*void VEC_end (VEC *V){
+  free2 (V->v);
+  *V = INIT_VEC;
+}*/
+
+/* allocate memory according to rows and rowt */
+/*
+void MAT::alloc (VEC_ID rows, VEC_ID clms){
+  VEC_ID i, clms2 = clms+(clms%2?1:2);
+  calloc2 (_v, rows+1, EXIT);
+  calloc2 (_buf_org, clms2 * (rows+1)+4, {free(_v);EXIT;});
+
+  _buf = _buf_org; 
+  // ADDR_FLOOR16(_buf);
+	char * chtmp;
+	chtmp =((char *)_buf)+15;
+	_buf = (typeof(_buf))(chtmp-(((size_t)chtmp)&15));
+
+  _end = rows;
+  _clms = clms;
+  FLOOP (i, 0, rows){
+    _v[i]._end = _v[i]._t = clms;
+    _v[i]._v   = _buf + i*(clms2);
+//    printf ("%p %p\n", M->buf, M->v[i].v);
+  }
+}
+*/
+/* terminate routine for MAT */
+/*
+void MAT::end (){
+  free2 (_buf_org);
+  free2 (_buf2_org);// double free?
+  free2 (_v);
+
+	// MAT INIT_MAT = {TYPE_MAT,NULL,NULL,0,NULL,0,0,NULL,NULL,0,0,NULL,NULL};
+  // *M = INIT_MAT;
+
+  // mark to identify type of the structure
+   //_type = TYPE_MAT;
+	_fname = NULL;
+	_wfname= NULL;      // input/weight file name
+	_flag=0;         // flag
+
+	_v=NULL;
+	_end=0; 
+	_t=0;
+  _buf=NULL;
+  _buf2=NULL;
+	_clms=0;
+  size_t _eles=0;
+	_buf_org=NULL;
+	_buf2_org=NULL;
+	
+}*/
+
+/* allocate memory */
+/*
+void SVEC::alloc (VEC_ID end){
+
+	// SVEC INIT_SVEC = {TYPE_SVEC,NULL,0,0};
+  // *V = INIT_SVEC;
+  _type = TYPE_SVEC;
+  _end = 0;
+  _t = 0;
+  calloc2 (_v, end+1, EXIT);
+  _end = end;
+  _t = 0;
+}
+*/
+/* terminate routine for SVEC */
+/*
+void SVEC::end (){
+  free2 (_v);
+
+  // *V = INIT_SVEC;
+  _type = TYPE_SVEC;
+  _end = 0;
+  _t = 0;
+
+}
+*/
+/* allocate memory according to rows and rowt */
+/*
+void SMAT::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
+  VEC_ID i;
+  if ( eles == 0 ) ARY_SUM (_ele_end, rowt, 0, rows); else _ele_end = eles;
+  calloc2 (_buf, _ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2, EXIT);
+  malloc2 (_v, rows+1, {free(_buf);EXIT;});
+  //ARY_FILL (_v, 0, rows, SVEC() );
+	for(size_t _common_size_t =0;common_size_t<rows;common_size_t++){
+		_v[common_size_t]._type=TYPE_SMAT;
+		_v[common_size_t]._end = 0;
+	  _v[common_size_t]._t = 0;
+	}
+
+  _end = rows;
+  _clms = clms;
+  if ( rowt ){
+    FLOOP (i, 0, rows){
+      _v[i]._v = i? _v[i-1]._v + rowt[i-1] +1: _buf;
+      _v[i]._end = rowt[i];
+    }
+  }
+}
+*/
+/* terminate routine for MAT */
+/*
+void SMAT::end (){
+  free2 (_buf);
+  free2 (_buf2);
+  free2 (_v);
+	//SMAT INIT_SMAT = {TYPE_SMAT,NULL,NULL,0,NULL,0,0,NULL,NULL,0,0,0};
+  // *M = INIT_SMAT;
+
+  _type = TYPE_SMAT;
+  _fname = NULL;
+  _wfname = NULL;
+  _flag = 0;
+  _v = NULL;
+  _end = 0;
+  _t = 0;
+  _buf = NULL;
+  _buf2 = NULL;
+  _clms = 0;
+  _eles = 0;
+  _ele_end = 0;
+  
+}
+
+*/
+
+
+/****************************************************************/
+/****************************************************************/
+/****************************************************************/
+
+/* read binary file for MAT */
+/* each unit-byte will be one number. if unit<0, the sign of unit is flipped, and each value is minesed the half of the maximum */
+/*
+void MAT::load_bin (FILE2 *fp, int unit){
+  VEC_ID flag=0, i, j, jj;
+  size_t siz=0;
+  VEC_VAL z, neg=0;
+
+  if ( unit < 0 ){
+    unit = -unit; flag = 1; neg=128;
+    FLOOP (jj, 0, unit-1) neg *= 256;
+  }
+  if ( _t == 0 ){  // determine #rows if M->t is 0 (not specified)
+		siz = fp->get_fsize();
+    _t = (VEC_ID)(siz / unit / _clms);
+    if ( _flag & LOAD_TPOSE ) SWAP_<VEC_ID>(&_t, &_clms);
+  }
+  alloc(_t, _clms);  if (ERROR_MES) return;
+  _end = _t;
+  FLOOP (i, 0, _t){
+    FLOOP (j, 0, _clms){
+      z=0; FLOOP (jj, 0, unit){ z *= 256; z += fp->getc(); }
+      if ( flag ) z -= neg;
+      if ( _flag & LOAD_TPOSE ) _v[j]._v[i] = z;
+      else _v[i]._v[j] = z;
+    }
+  }
+}
+*/
+
+/* segmentation fault for illegal files */
+/* count/read the number in file for MAT */
+/* if *rows>0, only read count the numbers in a row, for the first scan. */
+/*
+void MAT::file_load (FILE2 *fp){
+  QUEUE_ID c;
+  VEC_ID t=0;
+  double p;
+
+  for (t=0 ; (FILE_err&2)==0 ; t++){
+
+    //ARY_SCAN (c, double, *fp, 0);
+    c = fp->ARY_Scan_DBL(0);
+
+    if ( _flag & LOAD_TPOSE ){
+      if ( _t == 0 ){ _t = c; if (_clms>0 ) break; }
+    } else if ( _clms == 0 ){ _clms = c; if ( _t>0 ) break; }
+    if ( c == 0 ) t--;
+  }
+  if ( _flag & LOAD_TPOSE ){ if ( _clms==0 ) _clms = t;} else if ( _t==0 ) _t = t;
+  fp->reset ();
+  _end = _t;
+  alloc (_t, _clms); if (ERROR_MES) return;
+  FLOOP (t, 0, (_flag&LOAD_TPOSE)? _clms: _t){
+    FLOOP (c, 0, (_flag&LOAD_TPOSE)? _t: _clms){
+      p = fp->read_double();
+      if ( FILE_err==1 || FILE_err==2 ) break;
+      if ( _flag&LOAD_TPOSE ) _v[c]._v[t] = p;
+      else _v[t]._v[c] = p;
+      if ( FILE_err==5 || FILE_err==6 ) break;
+    }
+    FLOOP (c, c, (_flag&LOAD_TPOSE)? _t: _clms){
+      if ( _flag&LOAD_TPOSE ) _v[c]._v[t] = 0;
+      else _v[t]._v[c] = 0;
+    }
+    if ( !FILE_err ) fp->read_until_newline ();
+  }
+}
+*/
+/* load file with switching the format according to the flag */
+/*
+void MAT::load (){
+  FILE2 fp ;
+  int unit=0;
+#ifdef USE_MATH
+  VEC_ID i;
+#endif
+  if ( _flag & VEC_LOAD_BIN ) unit = 1;
+  else if ( _flag & VEC_LOAD_BIN2 ) unit = 2;
+  else if ( _flag & VEC_LOAD_BIN4 ) unit = 4;
+  if ( _flag & VEC_LOAD_CENTERIZE ) unit = -unit;
+
+  fp.open( _fname, "rb");
+  if ( unit ) load_bin (&fp, unit);
+  else file_load (&fp);
+
+  fp.close (); if (ERROR_MES) EXIT;
+#ifdef USE_MATH
+  if ( _flag&VEC_NORMALIZE ) FLOOP (i, 0, _t) ARY_NORMALIZE (_v[i].v,_v[i].t);
+#endif
+  print_mes (this, "mat: %s ,#rows %d ,#clms %d\n", _fname, _t, _clms);
+}
+*/
+
+/* scan file and read the numbers for SMAT */
+/* flag&1? SMAT, SETFAMILY,  flag&2? tuple list format: array list :*/ 
+/*
+
+void SMAT::file_load (FILE2 *fp){
+	printf("sload\n");
+  double z=0;
+  VEC_ID t;
+  LONG x, y;
+  int fc=0, FILE_err_=0, flag=(M->type==TYPE_SMAT), flag2=M->flag;
+  int wflag = (M->type==TYPE_SETFAMILY && (((SETFAMILY *)M)->wfname || (M->flag&LOAD_EDGEW)));
+  FILE_COUNT C;
+  FILE2 wfp;
+
+  if ( flag && !M->wfname ) flag2 = M->flag | LOAD_EDGEW;
+//  C = FILE2_count (fp, (M->flag&(LOAD_ELE+LOAD_TPOSE+LOAD_EDGE+LOAD_RC_SAME)) | FILE_COUNT_ROWT, 0, 0, 0, (flag||flag2)? 1: 0, 0);
+  C = FILE2_count (fp, (M->flag&(LOAD_ELE+LOAD_TPOSE+LOAD_RC_SAME+LOAD_EDGE)) | FILE_COUNT_ROWT, 0, 0, 0, (flag2&LOAD_EDGEW)?1:0, 0);
+  if ( M->clms == 0 ) M->clms = C.clms;
+  if ( M->t == 0 ) M->t = C.rows;
+  if ( flag ) SMAT_alloc (M, M->t, C.rowt, M->clms, 0);
+  else {
+    SETFAMILY_alloc ((SETFAMILY *)M, M->t, C.rowt, M->clms, 0);
+    if ( wflag ) SETFAMILY_alloc_weight ((SETFAMILY *)M, C.rowt);
+  }
+  free2 (C.rowt);
+  if ( ((SETFAMILY *)M)->wfname ) FILE2_open (wfp, ((SETFAMILY *)M)->wfname, "r", EXIT);
+  if ( ERROR_MES ) return;
+
+  FILE2_reset (fp);
+  if ( M->flag&(LOAD_NUM+LOAD_GRAPHNUM) ) FILE2_read_until_newline (fp);
+  t=0;
+  do {
+    if ( M->flag&LOAD_ELE ){
+      if ( FILE2_read_pair (fp, &x, &y, &z, flag2) ) continue;
+    } else {
+      x = t;
+      FILE_err_ = FILE2_read_item (fp, ((SETFAMILY *)M)->wfname?&wfp:NULL, &x, &y, &z, fc, flag2);
+      if ( FILE_err&4 ) goto LOOP_END;
+    }
+//  printf ("%d %d       %d %d\n", x, M->t, y, M->clms);
+    if ( y >= M->clms || x >= M->t ) continue;
+//  printf ("## %d %d\n", x, y);
+    if ( flag ){
+      M->v[x].v[M->v[x].t].i = y;
+      M->v[x].v[M->v[x].t].a = z;
+      M->v[x].t++;
+    } else {
+      if ( wflag ) ((SETFAMILY *)M)->w[x][((SETFAMILY *)M)->v[x].t] = z;
+      QUE_INS (((SETFAMILY *)M)->v[x], y);
+      if ( (M->flag&LOAD_EDGE) && x != y ){
+        if ( wflag ) ((SETFAMILY *)M)->w[y][((SETFAMILY *)M)->v[y].t] = z;
+        QUE_INS (((SETFAMILY *)M)->v[y], x);
+      }
+    }
+    if ( !(M->flag&LOAD_ELE) ){
+      fc = 0;
+      if ( FILE_err&3 ){
+        LOOP_END:;
+        t++; if ( t >= M->t ) break;
+        fc = FILE_err_? 0: 1; FILE_err_=0; // even if next weight is not written, it is the rest of the previous line
+      }
+    }
+  } while ( (FILE_err&2)==0 );
+  if ( ((SETFAMILY *)M)->wfname ) FILE2_close (&wfp);
+}
+*/
+
+
+/* load file with switching the format according to the flag */
+/*
+void SMAT::load (){
+  FILE2 fp ;
+  VEC_ID i;
+  _type = TYPE_SMAT;
+  fp.open (_fname, "r");
+  file_load ( &fp);
+  fp.close();    if (ERROR_MES) EXIT;
+  FLOOP (i, 0, _t) _v[i]._v[_v[i]._t].i = _clms;  // end mark
+
+#ifdef USE_MATH
+	//あと
+  //if ( _flag&VEC_NORMALIZE ) FLOOP (i, 0, _t) SVEC::normalize (&M->v[i]); // normalize
+  //
+#endif
+  if (_flag&LOAD_INCSORT)
+      FLOOP (i, 0, _t) qsort_<VEC_ID> ((VEC_ID *)(_v[i]._v), _v[i]._t, sizeof(SVEC_ELE));
+  if (_flag&LOAD_DECSORT)
+      FLOOP (i, 0, _t) qsort_<VEC_ID> ((VEC_ID *)(_v[i]._v), _v[i]._t, -(int)sizeof(SVEC_ELE));
+  if (_flag&LOAD_RM_DUP)
+      FLOOP (i, 0, _t) MQUE_UNIFY (_v[i], SVEC_VAL);
+  _eles = _ele_end;
+  print_mes (this, "smat: %s ,#rows %d ,#clms %d ,#eles %zd\n", _fname, _t, _clms, _eles);
+
+}
+*/
+
+
 /* print routines */
 /*
 void MAT::print (FILE *fp){
@@ -618,6 +636,7 @@ void SETFAMILY_print_WEIGHT (FILE *fp, SETFAMILY *M){
 /****************************************************************/
 /** Inner product routines **************************************/
 /****************************************************************/
+/*
 SVEC_VAL2 SVEC_inpro (SVEC *V1, SVEC *V2){
   VEC_ID i1, i2=0;
   SVEC_VAL2 sum=0;
@@ -627,7 +646,7 @@ SVEC_VAL2 SVEC_inpro (SVEC *V1, SVEC *V2){
   }
   return (sum);
 }
-
+*/
 
 /* get ith vector */ //class継承させる
 //TYPE_MAT) return (&MM->v[i]);
@@ -709,7 +728,7 @@ double SETFAMILY_resemblance (QUEUE *Q1, QUEUE *Q2){
 }
 
 */
-#ifdef USE_MATH
+//#ifdef USE_MATH
 
 /****************************************************************/
 /** Norm computation and normalization   ************************/
@@ -888,7 +907,7 @@ double MMAT_eucdist_ij (void *M, int i, int j){
 }
 */
 
-#endif
+//#endif
 
 /**********************************************************/
 /**   multi-vector routines  ******************************/
@@ -959,6 +978,6 @@ void SETFAMILY_to_BARRAY (BARRAY *A, SETFAMILY *F){
 }
 #endif
 */
-#endif
+//#endif
 
 

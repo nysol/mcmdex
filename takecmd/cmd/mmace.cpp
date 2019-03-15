@@ -1,4 +1,4 @@
-#include "mace.hpp"
+#include "kgmace.hpp"
 
 // extern用
 //char *ERROR_MES;
@@ -6,6 +6,6 @@
 
 int main(int ac ,char* av[]){
 
-	MACE().run(ac,av);
+	KGMACE().run(ac,av);
 	
 }

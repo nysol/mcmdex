@@ -42,7 +42,7 @@ INIT_FILE_COUNT = {0,0,0,0,0,0,0,0,0,0,0,0,NULL,NULL,0,0,NULL,NULL,0,0,NULL,NULL
 
 class FILE_COUNT{
 
-  int flag;
+  //int _flag;
 
    // #rows, #column, #elements, minimum elements
   QUEUE_INT _clms_org;
@@ -461,6 +461,9 @@ class FILE_COUNT{
 	 	FILE_COUNT_INT row_limit)
 	{
 
+		std::cerr << flag << " " << skip_rows << " " 
+		<< int_rows<< " " << skip_clms<< " " <<  int_clms << " " << row_limit << std::endl;
+		
 	  FILE_COUNT_INT k=0, j, x, y, t=0;
 
   	// flags for using rowt, and clmt, that counts elements in each row/column
@@ -469,7 +472,6 @@ class FILE_COUNT{
 		// fe,ft: flag for ele mode, and transposition
 	  int fe = flag&LOAD_ELE, ft = flag&LOAD_TPOSE;  
 
-	  FILE_COUNT C ;
   	//_flag = flag;
 
 	  FLOOP (j, 0, skip_rows) rfp->read_until_newline ();

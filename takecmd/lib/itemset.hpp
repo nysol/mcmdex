@@ -111,6 +111,7 @@ class ITEMSET{
   QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
   WEIGHT *_set_weight;  // the frequency of each prefix of current itemset
   QUEUE **_set_occ;    // the occurrence of each prefix of current itemset
+  KGLCMSEQ_QUE **_set_occELE;    // the occurrence of each prefix of current itemset
 
 
   LONG *_multi_outputs, *_multi_outputs2;    // #calls of ITEMSET_output_itemset or ITEMSET_solusion
@@ -174,6 +175,12 @@ class ITEMSET{
 	void lamp2 (LONG s);
 	void output_occ( QUEUE *occ, int core_id);
 
+
+	void output_occ( KGLCMSEQ_QUE *occ, int core_id);
+	void check_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, size_t item, int core_id);
+	void solution ( KGLCMSEQ_QUE *occ, int core_id);
+	void solution_iter (KGLCMSEQ_QUE *occ, int core_id);
+	void output_rule ( KGLCMSEQ_QUE *occ, double p1, double p2, size_t item, int core_id);
 
 
 	public:
@@ -283,6 +290,17 @@ class ITEMSET{
 		
 		}
 
+		// MACE
+		void setParams(
+			int iFlag, int lb,int ub, LONG max_solutions,char separator
+		){
+			_flag   = iFlag;
+			_lb = lb;
+			_ub = ub;
+			_max_solutions = max_solutions;
+			_separator = separator;
+
+		}
 
 
 
@@ -330,13 +348,13 @@ class ITEMSET{
 
 
 	QUEUE_INT item_del_item(){ 
-  	QUEUE_INT item = _itemset.pop();
+  	QUEUE_INT item = _itemset.pop_back();
 	  _itemflag[item]=0;
 	  return item;
 	}
 
 	QUEUE_INT iadd_del_item(){ 
-  	QUEUE_INT item = _add.pop();
+  	QUEUE_INT item = _add.pop_back();
 	  _itemflag[item]=0;
 	  return item;
 	}
@@ -447,7 +465,7 @@ class ITEMSET{
 
   void set_set_weight(QUEUE_ID i, WEIGHT v){ _set_weight[i]=v;}
   void set_set_occ(QUEUE_ID i,QUEUE * v){ _set_occ[i]=v;}
-
+  void set_set_occELE(QUEUE_ID i,KGLCMSEQ_QUE * v){ _set_occELE[i]=v;}
 
 	void union_flag(int flag){ _flag|=flag;}
 	void union_flag2(int flag){ _flag2|=flag;}
@@ -472,6 +490,9 @@ class ITEMSET{
 	void output_itemset  ( QUEUE *occ, int core_id);
 	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
 
+	void output_itemset  ( KGLCMSEQ_QUE *occ, int core_id);
+	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
+
 	/*******************************************************************/
 	/* output at the termination of the algorithm */
 	/* print #of itemsets of size k, for each k */
@@ -485,6 +506,8 @@ class ITEMSET{
 	/* check all rules for an itemset and all items */
 	/*************************************************************************/
 	void check_all_rule (WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total, int core_id);
+
+	void check_all_rule (WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT total, int core_id);
 
 	void close(){
 		int i;

@@ -67,7 +67,7 @@ class KGSSPC{
 	// gloval value in org
 	// LONG _ip_l2;
 	 LONG _ip_l3;
-
+	 LONG _ip_l1;
 
 	int _siz;
 
@@ -84,18 +84,12 @@ class KGSSPC{
 	ITEMSET _II;
 	TRSACT _TT;
 
-	//void read_param(int argc, char* argv[]);
-	void _error(void);
-
-	//WEIGHT *init1 ();
-	//QUEUE_INT **init2 ();
-
 	void output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id);
 	void *iter (void *p);
-	//WEIGHT comp (PROBLEM *PP, WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq);
+
 	WEIGHT comp ( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq);
-	//void comp2 (PROBLEM *PP, QUEUE_ID i, QUEUE_ID x, WEIGHT c, WEIGHT wi, WEIGHT wx, double sq, QUEUE_INT *cnt, FILE *fp, QUEUE *itemset, int core_id);
 	void comp2 (QUEUE_ID i, QUEUE_ID x, WEIGHT c, WEIGHT wi, WEIGHT wx, double sq, QUEUE_INT *cnt, FILE *fp, QUEUE *itemset, int core_id);
+
 	void SSPCCORE();
 	void list_comp();
 
@@ -110,8 +104,8 @@ class KGSSPC{
 
 		calloc2(_occ_w, siz+2, goto ERR);
 		calloc2(_vecchr, siz2+2, goto ERR);
-		if(_problem&SSPC_POLISH2) calloc2(_itemary, siz+2, goto ERR);
 
+		if(_problem&SSPC_POLISH2) calloc2(_itemary, siz+2, goto ERR);
 
     // set outperm
 	  if ( _outperm_fname ){
@@ -127,14 +121,6 @@ class KGSSPC{
 	  }
 
 	  _II.alloc(_output_fname, perm, siz, 0);
-	  
-	  /* lcm lcm_seqの時に必要
-	  if ( _II.get_target()<siz && _II.exist_perm() ){
-      FLOOP (j, 0, _II.get_item_max()){ 
-      	if ( _II.get_target() == _II.get_perm(j) ){ _II.set_target(j); break; } 
-      }
-		}
-		*/
 
 		_TT.set_perm(NULL); // これなに？
 		

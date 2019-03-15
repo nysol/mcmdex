@@ -50,10 +50,13 @@ void TRSACT::prop_print (){
 //*/
 
   print_err (" extracted database: #transactions %d ,#items %d ,size %zd", _T.get_t(), _T.get_clms(), _T.get_eles());
+/*
   print_fname (" ,weightfile %s", _wfname);
-  print_fname (" ,itemweightfile %s", _item_wfname);
-  print_fname (" ,item-order-file %s", _pfname);
 
+  print_fname (" ,itemweightfile %s", _item_wfname);
+
+  print_fname (" ,item-order-file %s", _pfname);
+*/
   // print_fname (" ,2nd-itemweightfile %s", _item_wfname2);
   // print_fname (" ,2nd-weightfile %s", _wfname2);
 
@@ -736,6 +739,7 @@ void TRSACT::sort ( FILE_COUNT *C, int flag){
 		//===================
     ARY_MAX (_clm_max, i, p, 0, _T.get_clms());
 
+		
     Mque_alloc(p);
 
    	//QUEUE_alloc (&_OQ[_T._clms], MAX(_T._t, _clm_max));
@@ -755,6 +759,7 @@ void TRSACT::sort ( FILE_COUNT *C, int flag){
   }
 
     // shrinking database
+
   if ( _flag2&TRSACT_1ST_SHRINK ){
 
     Q = _OQ[_T.get_clms()];
@@ -771,6 +776,145 @@ void TRSACT::sort ( FILE_COUNT *C, int flag){
   }
   
 }
+
+
+/* sort the transactions and items according to the flag, allocate OQ, and database reduction */
+/* causion! not adopt for itemweights!!!!! */
+void TRSACT::sortELE ( FILE_COUNT *C, int flag){
+  VEC_ID t, *p;
+  int f;
+  PERM pp;
+  KGLCMSEQ_QUE Q;
+  QUEUE_ID i;
+  WEIGHT *ww;
+
+	_T.set_vv_all();
+  //FLOOP (t, 0, _T.get_t()) _T._v[t].set_v( _T._v[t].get_t() , _T.get_clms());
+
+  flag = (_flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE);
+
+  if ( flag ){   // sort rows for the case that some columns are not read
+	  //FLOOP (t, 0, _rows_org){  // compute #elements according to rowt, and set rperm
+	  //	printf("%d\n",C->rperm[t]);
+	  //}
+
+   // qsort_perm__VECt ((VEC *)_T._v, _T.get_t(), C->rperm, flag); // determine the order of transactions
+		//qsort_perm__<VEC> ((VEC *)_T._v, _T.get_t(), C->rperm, flag); // determine the order of transactions
+		//qsort_perm__VECt(_T._v, _T.get_t(), C->rperm, flag); // determine the order of transactions
+		//qsort_perm__VECt((VEC *)_T._v, _T.get_t(), C->rperm, flag); // determine the order of transactions
+
+		//qsort_perm__(_T._v, _T.get_t(), C->rperm, flag); // determine the order of transactionsx
+
+		// friendにする？
+		_T.qsort_perm(C->get_rperm(), flag);
+
+
+		_T.any_INVPERMUTE( C->get_rperm());
+    //ARY_INVPERMUTE (_T._v, C->rperm, Q, _T.get_t(), EXIT);  // sort transactions
+    if ( _T.exist_w() ) {
+    	ARY_INVPERMUTE (_T.get_w(), C->get_rperm(), ww, _T.get_t(), EXIT); // sort rows of itemweighs 
+    }
+    ARY_INVPERMUTE_ (_trperm, C->get_rperm(), pp, _T.get_t()); 
+  }
+
+  //free2 (C->rperm); free2 (C->cperm);
+
+
+  if ( _flag & LOAD_PERM ) flag = 1;
+  else flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0);
+
+  if ( flag ){
+    FLOOP (t, 0, _T.get_t()) qsort_<QUEUE_INT> (_T.get_vv(t), _T.get_vt(t), flag);
+  }
+  
+  if ( _flag & LOAD_RM_DUP ){
+    FLOOP (t, 0, _T.get_t()){
+    	if(_T.get_vt(t)>1){
+				INT cmmn_INT=1;
+				for (INT cmmn_INT2=1 ; cmmn_INT2<_T.get_vt(t) ; cmmn_INT2++){
+
+					if ( _T.get_vv(t,cmmn_INT2-1) != _T.get_vv(t,cmmn_INT2) )
+  					_T.set_vv( t, cmmn_INT++ , _T.get_vv(t,cmmn_INT2));
+				}
+				_T.set_vt(t,cmmn_INT);
+			}
+			_T.set_vv(t, _T.get_vt(t), _T.get_clms()); 
+		}
+  }
+
+	//ST_MAX(m,i,S,a,x,y)   
+  //ST_MAX (_row_max, i, _T._v, _t, 0, _T.get_t());
+	// QUEUEのメソッド化
+	_row_max=_T.get_vt(0);
+	i=0;
+	INT cmmn_INT;
+	FLOOP(cmmn_INT,1,_T.get_t()){
+		if(_row_max <_T.get_vt(cmmn_INT)){
+			i=cmmn_INT;
+			_row_max=_T.get_vt(i);
+		}
+	}
+
+  if ( _flag2&(TRSACT_ALLOC_OCC+TRSACT_SHRINK) ){
+
+
+    calloc2 (p, _T.get_clms(), EXIT);
+    
+    // QUEUE_delivery (NULL, p, NULL, _T._v, NULL, _T._t, _T._clms);
+		//===================
+		VEC_ID iv, ev;
+	  QUEUE_INT *x;
+		for (iv=0 ; iv<_T.get_t() ; iv++){
+    	ev =  iv;
+    	MLOOP (x, _T.get_vv(ev), _T.get_clms()) p[*x]++;
+		}
+		//===================
+    ARY_MAX (_clm_max, i, p, 0, _T.get_clms());
+
+		cerr << "mqalloc" << endl;
+    Mque_allocELE(p);
+
+   	//QUEUE_alloc (&_OQ[_T._clms], MAX(_T._t, _clm_max));
+		_OQELE[_T.get_clms()].alloc( MAX(_T.get_t(), _clm_max));
+
+    FLOOP (i, 0, _T.get_clms()+1) _OQELE[i].set_end(0);   // end is illegally set to 0, for the use in "TRSACT_find_same" 
+
+    // initial occurrence := all transactions
+    // ARY_INIT_PERM (_OQ[_T.get_clms()].get_v(), _T.get_t());   
+		for(size_t i=0 ; i< _T.get_t(); i++){ 
+			_OQELE[_T.get_clms()].set_v(i,i);
+		}
+    _OQELE[_T.get_clms()].set_t( _T.get_t());
+
+    free (p);
+
+  }
+
+    // shrinking database
+
+  if ( _flag2&TRSACT_1ST_SHRINK ){
+
+    Q = _OQELE[_T.get_clms()];
+    _OQELE[_T.get_clms()].set_t(0);
+
+    find_same ( &Q, _T.get_clms());
+
+    f = _flag2;  // preserve the flag
+    BITRM (_flag2 ,TRSACT_MAKE_NEW +TRSACT_UNION +TRSACT_INTSEC);
+    merge_trsact ( &_OQELE[_T.get_clms()], _T.get_clms()); // just remove duplicated trsacts
+    _flag2 = f;  // recover flag
+    _OQELE[_T.get_clms()].set_t(0);
+    FLOOP (t, 0, _T.get_t()) {
+    	if ( _mark[t]>0 ) _OQELE[_T.get_clms()].push_backt(t);  // make resulted occ
+    }
+  }
+  
+}
+
+
+
+
+
 
 /*****************************************/
 /* load transaction file and its weight  */
@@ -790,7 +934,7 @@ void TRSACT::sort ( FILE_COUNT *C, int flag){
 	WEIGHT w_lb,WEIGHT w_ub,double clm_lb_,double clm_ub_ ,
 	QUEUE_ID row_lb,QUEUE_ID row_ub ,double row_lb_,double row_ub_
 ){*/
-int TRSACT::loadMain(void){
+int TRSACT::loadMain(bool elef){
 
   FILE2 fp , fp2 ;
 //  FILE_COUNT C = INIT_FILE_COUNT;
@@ -845,7 +989,12 @@ int TRSACT::loadMain(void){
   
   //if (ERROR_MES){ mfree (C.rowt, C.clmt); goto END; }
   int i;
-  sort (&_C, f);
+  if(elef){
+	  sortELE (&_C, f);
+	}
+	else{
+	  sort (&_C, f);
+	}
 
   END:;
   fp.close ();
@@ -855,6 +1004,7 @@ int TRSACT::loadMain(void){
 
   return 0;
 }
+
 
 /* iteration of delivery; operate one transaction */
 /* use OQ.end to count the number of items */
@@ -1031,6 +1181,86 @@ void TRSACT::find_same (QUEUE *occ, QUEUE_INT end){
 
 }
 
+
+void TRSACT::find_same (KGLCMSEQ_QUE *occ, QUEUE_INT end){
+  VEC_ID mark=2, t_end;
+  KGLCMSEQ_QUE *o=occ, *EQ, *QQ = _OQELE;
+  QUEUE_INT *x, e;
+  QUEUE_ID ot = occ->get_t();
+  // initialization
+	for(KGLCMSEQ_ELM *xx=occ->begin(); xx <occ->end() ; xx++){
+		_mark[xx->_t] = mark; 
+		_shift[xx->_t] = _T.get_vv(xx->_t); 
+	}
+
+  _jump.setEndByStart(); 
+  QQ[_T.get_clms()].set_s(0);
+
+  while (1){
+    if ( o->size()  == 1 ){
+    	 _mark[o->pop_back()] = 1;  // no same transactions; mark by 1
+    }
+    if ( o->get_t() == 0 ) goto END;
+    // if previously inserted transactions are in different group, then change their marks with incrementing mark by one
+    mark++; 
+    for (KGLCMSEQ_ELM *xx=o->start() ; xx < o->end() ; xx++){
+    	_mark[xx->_t] = mark;
+    }
+
+    t_end = o->get_t();
+    o->posClr();
+    
+    // insert each t to buckets
+    for (KGLCMSEQ_ELM *xx=o->begin() ; xx<o->begin()+t_end ; xx++){
+         // get next item in transaction t
+      do{
+
+        e = *(_shift[xx->_t]);
+        _shift[xx->_t]++;
+
+        if ( e >= end ){ e = _T.get_clms(); break; }
+
+      }while ( _sc[e] );
+
+      EQ = &QQ[e];
+      // if previously inserted transactions are in different group, 
+      // then change their mark to the transaction ID of top transacion.
+			KGLCMSEQ_ELM * y = EQ->start();
+
+      if ( EQ->posCheck() && _mark[y->_t] != _mark[xx->_t] ){
+        if ( EQ->size() == 1 ){
+	        // the tail of the queue has no same transaction; mark the tail by 1
+        	_mark[EQ->pop_back()] = 1; 
+        }
+        else {
+          mark++; 
+          for ( ; y< EQ->end(); y++){
+          	_mark[y->_t] = mark;
+          }
+          EQ->setStartByEnd();
+        }
+      } 
+      else if ( EQ->get_t() == 0 && e<_T.get_clms() ){
+      	_jump.push_back(e);
+      }
+      EQ->push_back(*xx);  // insert t to bucket of e
+    }
+    END:;
+    if ( _jump.size() == 0 ) break;
+    o = &QQ[_jump.pop_back()];
+  }
+
+  // same transactions are in queue of item_max
+  if ( QQ[_T.get_clms()].size() == 1 ){
+		//QQ[_T.get_clms()].dec_t();
+  	//_mark[QQ[_T.get_clms()].get_v(QQ[_T.get_clms()].get_t())] = 1;
+  	_mark[QQ[_T.get_clms()].pop_back()] = 1;
+
+  }
+
+  if ( occ != &QQ[_T.get_clms()] ) occ->set_t(ot);
+
+}
 
 /****************************************************************************/
 /*  copy transaction t to tt (only items i s.t. sc[i]==0)                 **/
@@ -1229,6 +1459,52 @@ void TRSACT::merge_trsact ( QUEUE *o, QUEUE_INT end){
       	tt = *x;
       }
       _mark[*x] = tt+2;
+
+    }
+
+  }
+  o->posClr();
+}
+
+void TRSACT::merge_trsact ( KGLCMSEQ_QUE *o, QUEUE_INT end){
+
+  VEC_ID mark = 0, tt=0;
+  QUEUE_INT x;
+
+	for(KGLCMSEQ_ELM * xx = o->begin() ; xx < o->end() ; xx++){
+		x =xx->_t;
+    if ( mark == _mark[x] ){
+      _mark[x] = 0;   // mark of unified (deleted) transaction
+      _w[tt] += _w[x]; if ( _pw ) _pw[tt] += _pw[x];
+      if ( _flag2 & TRSACT_INTSEC ){
+        suffix_and (tt, x);
+        _buf.set_num( (int)(_T.get_vv(tt) - (QUEUE_INT *)_buf.get_base(_buf.get_block_num())  +_T.get_vt(tt) +1) );
+      }
+      if ( _flag2 & TRSACT_UNION ){
+        itemweight_union (tt, x);
+        if ( ERROR_MES ) _mark[x] = x+2; // do not merge if not enough memory
+      }
+    }
+
+		// *x is not the same to the previous, or memory short 
+    if ( mark != _mark[x] && _mark[x] > 1 ){
+    
+      mark = _mark[x];
+
+      if ( _flag2&TRSACT_MAKE_NEW ){
+
+        tt = _new_t++;
+
+        copy ( tt, x, (_flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
+
+        if( ERROR_MES ){ _new_t--; tt = x; }
+        else { for (_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++);}
+
+      } 
+      else{
+      	tt = x;
+      }
+      _mark[x] = tt+2;
 
     }
 

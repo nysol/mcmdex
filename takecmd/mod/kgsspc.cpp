@@ -301,9 +301,9 @@ void KGSSPC::output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset,
     }
 
     if ( _II.get_itemtopk_end() > 0 ){
-      _II.output_itemset_ ( itemset, frq, frq, NULL, i, ii, core_id);
+      _II.output_itemset_ ( itemset, frq, frq, (QUEUE*)NULL, i, ii, core_id);
     }
-      _II.output_itemset_ ( itemset, frq, frq, NULL, ii, i, core_id);
+      _II.output_itemset_ ( itemset, frq, frq, (QUEUE*)NULL, ii, i, core_id);
   }
 }
 
@@ -422,36 +422,51 @@ void KGSSPC::list_comp(){
   FLOOP (i, 0, _TT.get_t()){
     w[i] = 0;
     if ( (_problem & SSPC_INNERPRODUCT) && _TT.exist_Tw()){
-      FLOOP (yw, _TT.get_Tw(i), _TT.get_Tw(i)+_TT.get_Tvt(i)) w[i] += (*yw)*(*yw);
+
+			for ( WEIGHT * yw =_TT.beginTw(i) ; yw < _TT.endTw(i) ; yw++){
+				w[i] += (*yw)*(*yw);
+			}
       w[i] = sqrt (w[i]);
-      FLOOP (yw, _TT.get_Tw(i), _TT.get_Tw(i)+_TT.get_Tvt(i)) (*yw) /= w[i];
+			for ( WEIGHT * yw =_TT.beginTw(i) ; yw < _TT.endTw(i) ; yw++){
+				(*yw) /= w[i];
+			}
+
     } else {
-      // MQUE_FLOOP_CLS (_TT.get_Tv(i), x) w[i] += _TT.get_w(*x);
-			// MQUE_FLOOP_CLS(V,z)    
-			for(x=_TT.get_Tvv(i);x<_TT.get_Tvv(i)+_TT.get_Tvt(i) ; x++){
+
+			for(x=_TT.beginTv(i) ; x < _TT.endTv(i) ; x++){
 				w[i] += _TT.get_w(*x);		
 			}
 
     }
   }
-	fp.open( _table_fname, "r");
-  //FILE2_open (fp, _table_fname, "r", EXIT);
 
+	fp.open( _table_fname, "r");
   do {
+
     if ( fp.read_pair ( &i, &j, &c, 0) ) continue;
-    y = _TT.get_Tvv(j);
-    yy = y+_TT.get_Tvt(j); 
+
+    y  = _TT.beginTv(j);
+    yy = _TT.endTv(j); 
+
     c = 0; wi = w[i], wx = w[j];
-    if ( _TT.exist_Tw() ){ xw = _TT.get_Tw(i); yw = _TT.get_Tw(j); }
+
+    if ( _TT.exist_Tw() ){ 
+    	xw = _TT.beginTw(i); 
+    	yw = _TT.beginTw(j); 
+    }
 
     if (_problem & SSPC_NO_NEIB){
 
       //MQUE_FLOOP_CLS (_TT.get_Tv(i), x){
-			for(x=_TT.get_Tvv(i);x<_TT.get_Tvv(i)+_TT.get_Tvt(i) ; x++){
+			for(x=_TT.beginTv(i);x<_TT.endTv(i) ; x++){
 
-        if ( *x == j ) wi -= (_problem & SSPC_INNERPRODUCT)?  (*xw) * (*xw): _TT.get_w(*x);
+        if ( *x == j ) {
+        	wi -= (_problem & SSPC_INNERPRODUCT)?  (*xw) * (*xw): _TT.get_w(*x);
+        }
         while (*y < *x){
-          if ( *y == i ) wx -= (_problem & SSPC_INNERPRODUCT)?  (*yw) * (*yw): _TT.get_w(*y);
+          if ( *y == i ) {
+	          wx -= (_problem & SSPC_INNERPRODUCT)?  (*yw) * (*yw): _TT.get_w(*y);
+	        }
           y++; yw++;
           if ( y == yy ) goto END2;
         }
@@ -471,7 +486,7 @@ void KGSSPC::list_comp(){
       }
     } else {
       // MQUE_FLOOP_CLS (_TT.get_Tv(i), x){ // for usual
-			for(x=_TT.get_Tvv(i);x<_TT.get_Tvv(i)+_TT.get_Tvt(i) ; x++){
+			for(x=_TT.beginTv(i);x<_TT.endTv(i) ; x++){
 
         while (*y < *x){
           y++; yw++;
@@ -489,6 +504,7 @@ void KGSSPC::list_comp(){
       END:;
     }
     comp2 ( i, j, c, wi, wx, sqrt(w[i]), &cnt, fp2, _II.getp_itemset(), 0);
+
   } while ( (FILE_err&2)==0 );
   fp.close();
   fclose2 (fp2);
@@ -565,75 +581,69 @@ void *KGSSPC::iter (void *p){
     if (_problem & SSPC_NO_NEIB){ // for no_neib
     
       //MQUE_FLOOP_CLS (_TT.get_Tv(i), x) mark[*x] |= 1;
-			for(x=_TT.get_Tvv(i);x<_TT.get_Tvv(i)+_TT.get_Tvt(i) ; x++){
+			for( x=_TT.beginTv(i) ; x < _TT.endTv(i) ; x++){
 				mark[*x] |= 1;
 			}
       // MQUE_FLOOP_CLS (_TT.get_OQ(i), x) mark[*x] |= 2;
-			for(x=_TT.get_OQ_v(i);x<_TT.get_OQ_v(i)+_TT.get_OQ_t(i) ; x++){
+			for( x=_TT.beginOQv(i) ; x<_TT.endOQv(i) ; x++){
 				mark[*x] |= 2;
 			}
 
     }
 
-    //FLOOP (ii, _TT.get_OQ_s(i), _TT.get_OQ_t(i)){
 		for(int ii = _TT.get_OQ_s(i);ii< _TT.get_OQ_t(i); ii++ ){
 
       t = _TT.get_OQ_v(i,ii);
 
 			// get item weight of current vector
       if ( _TT.exist_Tw() && (_problem & SSPC_INNERPRODUCT)){ 
-        y = _TT.get_Tw(t);
-        // MQUE_MLOOP_CLS (_TT.get_Tv(t), x, i) y++;
-	      for((x)=_TT.get_Tvv(t); *((QUEUE_INT *)x)<(i) ; (x)++){ y++; }
+
+        y = _TT.beginTw(t);
+	      for( x=_TT.beginTv(t); *x < i  ; x++ ){ y++; }
         yy = *y;
 
       }
 
       if ( (_problem & SSPC_NO_NEIB) && t == i ) continue;
 
-      if ( _TT.exist_Tw() ){
-				y = _TT.get_Tw(t); 
-      }
-      else{
-      	y = 0;
-      }
+      if ( _TT.exist_Tw() ){ y = _TT.beginTw(t); }
+      else                 { y = 0;}
 
-      // MQUE_MLOOP_CLS(_TT.get_Tv(t), x, m){
-      for((x)=_TT.get_Tvv(t); *((QUEUE_INT *)x)<(m) ; (x)++){
+
+      for( x =_TT.beginTv(t); *x < m ; x++){
 
         if ( (_problem & SSPC_POLISH2) && *x < i) continue;
+
         if ( (_problem & SSPC_NO_NEIB) && *x == t ) continue;
 
         if ( OQend[*x] == 0 ){
           jump.push_back(*x);
           occ_w[*x] = 0;
-          //if ( pf ) occ_pw[*x] = 0;
         }
         OQend[*x]++;
 
         if ( _TT.exist_Tw() ){
           if (_problem & SSPC_INNERPRODUCT){
             occ_w[*x] += (*y) * yy; 
-            // if ( *y>0 && pf) occ_pw[*x] += (*y) * yy;
+            // occ_pw使われないはず
+            // if ( *y>0 && pf) occ_pw[*x] += (*y) * yy; 
           }
           else { 
           	occ_w[*x] += *y;
+            // occ_pw使われないはず
           	// if ( *y>0 && pf) occ_pw[*x] += *y; 
           }
           y++;
         }
         else {
           occ_w[*x] += _TT.get_w(t); 
+          // occ_pw使われないはず
           // if ( pf ) occ_pw[*x] += _TT.get_pw(t);
         }
       }
     }
 
-    // MQUE_FLOOP_CLS (jump, x){
-		// #define   
-		//MQUE_FLOOP_CLS(V,z)    
-		// for((z)=(V).get_v();(z)<(V).get_v()+(V).get_t() ; (z)++)
-		for(x=jump.get_v(); x < jump.get_v()+jump.get_t(); (x)++){
+		for(x=jump.begin(); x < jump.end(); (x)++){
 
       if ( *x == i ) goto SKIP;
 
@@ -682,8 +692,7 @@ void *KGSSPC::iter (void *p){
         t = _TT.get_OQ_v(i,ii); 
         ff = 0;
 
-        // MQUE_MLOOP_CLS (_TT.get_Tv(t), x, _TT.get_clms())
-				for(x=_TT.get_Tvv(t); *((QUEUE_INT *)x)<_TT.get_clms() ; x++){
+				for( x=_TT.beginTv(t); *x < _TT.get_clms() ; x++){
 					if ( _vecchr[*x] ){ 
 						ff = 1; 
 						break; 
@@ -890,8 +899,9 @@ int KGSSPC::run (int argc ,char* argv[]){
 
   _II.set_perm((PERM *)_position_fname);
   _II.merge_counters ();
-
-  internal_params.l1 = _II.get_solutions();
+	
+//  internal_params.l1 = _II.get_solutions();
+	_ip_l1 = _II.get_solutions();
 
   if ( _II.get_topk_end() > 0 || _II.get_itemtopk_end ()> 0 ) _II.last_output ();
   else print_mesf (&_TT, LONGF " pairs are found\n", _II.get_sc(2));

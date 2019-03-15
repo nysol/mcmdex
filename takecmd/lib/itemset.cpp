@@ -98,8 +98,12 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
   
   if ( _flag&ITEMSET_SET_RULE ){
     calloc2 (_set_weight, siz, goto ERR);
-    if ( _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) )
+    if ( _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ){
         calloc2 (_set_occ, siz, goto ERR);
+        calloc2 (_set_occELE, siz, goto ERR);
+
+
+    }
   }
   _iters = _solutions = 0; //_iters2 =
   _item_max = item_max;
@@ -724,4 +728,376 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
     }
   }
 }
+
+
+
+// 以下　KGLCMSEQ_QUE
+
+//for _trsact_h_
+void ITEMSET::output_occ ( KGLCMSEQ_QUE *occ, int core_id){
+  KGLCMSEQ_ELM *x;
+  FILE2 *fp = &_multi_fp[core_id];
+  TRSACT *TT = (TRSACT *)(_X);
+  VEC_ID j, ee = TT->get_rows_org();
+
+  int flag = _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT), flush_flag=0;
+
+  //MQUE_FLOOP__CLS (*occ, x, TT->get_occ_unit()){
+	for(x=occ->begin() ; x< occ->end() ;  x++){
+
+    if ( (_flag&ITEMSET_RM_DUP_TRSACT)==0 || x->_t != ee ){
+      fp->print_int ( TT->exist_trperm()? TT->get_trperm(x->_t): x->_t, _separator);
+      if (flag == ITEMSET_MULTI_OCC_PRINT ){
+        //FLOOP (j, 1, (VEC_ID)(TT->get_occ_unit()/sizeof(QUEUE_INT)))
+        //    fp->print_int ( *(x+j), _separator);
+
+            fp->print_int ( x->_s, _separator);
+            fp->print_int ( x->_org, _separator);
+
+
+      } else if ( flag == (ITEMSET_MULTI_OCC_PRINT+ITEMSET_TRSACT_ID) ){
+         //fp->print_int ( *(x+1), _separator);
+         fp->print_int ( x->_s, _separator);
+      }
+    }
+    ee = x->_t;
+    if ( !(_flag&ITEMSET_MULTI_OUTPUT) || (fp->get_size()) > FILE2_BUFSIZ/2 ){
+      SPIN_LOCK(_multi_core, _lock_output);
+      flush_flag = 1;
+      fp->flush_();
+      //FILE2_flush_ (fp);
+    }
+  }
+#ifdef _FILE2_LOAD_FROM_MEMORY_
+  *((int *)__write_to_memory__) = INTHUGE;
+  __write_to_memory__ = (char *)(((int *)__write_to_memory__) + 1);
+#else
+  fp->putc ('\n');
+  if ( flush_flag ){
+    fp->flush_ ();
+    SPIN_UNLOCK(_multi_core, _lock_output);
+  }
+#endif
+}
+
+/* output an itemset to the output file */
+void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id){
+  QUEUE_ID i;
+  QUEUE_INT e;
+
+  int flush_flag = 0;
+  FILE2 *fp = &_multi_fp[core_id];
+  
+  _multi_outputs[core_id]++;
+  if ( (_flag&SHOW_PROGRESS ) && (_multi_outputs[core_id]%(ITEMSET_INTERVAL) == 0) )
+      print_err ("---- " LONGF " solutions in " LONGF " candidates\n",
+                  _multi_solutions[core_id], _multi_outputs[core_id]);
+  if ( itemset->get_t() < _lb || itemset->get_t() > _ub ) return;
+  if ( (_flag&ITEMSET_IGNORE_BOUND)==0 && (frq < _frq_lb || frq > _frq_ub) ) return;
+  if ( (_flag&ITEMSET_IGNORE_BOUND)==0 && (pfrq < _posi_lb || pfrq > _posi_ub || (frq - _pfrq) > _nega_ub || (frq - _pfrq) < _nega_lb) ) return;
+
+  _multi_solutions[core_id]++;
+  if ( _max_solutions>0 && _multi_solutions[core_id] > _max_solutions ){
+    last_output ();
+    ERROR_MES = "reached to maximum number of solutions";
+    EXIT;
+  }
+
+  SPIN_LOCK(_multi_core, _lock_sc);
+  _sc[itemset->get_t()]++;
+  if (_flag & ITEMSET_SC2) _sc2[(QUEUE_INT)frq]++;  // histogram for LAMP
+  SPIN_UNLOCK(_multi_core, _lock_sc);
+
+  if ( _flag2 & ITEMSET_LAMP ) { lamp  (1); return; }  // LAMP mode
+  if ( _flag2 & ITEMSET_LAMP2 ){ lamp2 (1); return; }  // 2D LAMP mode
+  if ( _itemtopk_end > 0 ){
+
+    e = _itemtopk[itemtopk_item].findmin_head();
+
+    if ( frq*_itemtopk_sign > _itemtopk[itemtopk_item].H(e) ){
+      SPIN_LOCK(_multi_core, _lock_sc);
+      _itemtopk[itemtopk_item].chg(e, frq * _itemtopk_sign);
+      if ( _itemtopk_ary ) _itemtopk_ary[itemtopk_item][e] = itemtopk_item2;
+      SPIN_UNLOCK(_multi_core, _lock_sc);
+    }
+    return;
+  }
+
+  if ( _topk_k > 0 ){
+    if ( _topk.end() ){
+
+      e = _topk.findmin_head();
+      if ( frq * _topk_sign > _topk.H(e) ){
+
+        SPIN_LOCK(_multi_core, _lock_sc);
+
+        _topk.chg( e, frq * _topk_sign);
+        e = _topk.findmin_head ();
+        _frq_lb = _topk.H(e) * _topk_sign;
+
+        SPIN_UNLOCK(_multi_core, _lock_sc);
+
+      }
+    } else {  // histogram version
+      if ( frq > _topk_frq ){
+
+        SPIN_LOCK(_multi_core, _lock_sc);
+
+        _sc2[_topk_frq]--;
+        while (_sc2[_topk_frq]==0) _topk_frq++;
+        _frq_lb = _topk_frq+1;
+
+        SPIN_UNLOCK(_multi_core, _lock_sc);
+
+      }
+    }
+    return;
+  }
+  
+  if ( _fp ){
+    if ( _flag&ITEMSET_PRE_FREQ ) output_frequency ( frq, pfrq, core_id);
+    if ( (_flag & ITEMSET_NOT_ITEMSET) == 0 ){
+      FLOOP (i, 0, itemset->get_t()){
+        e = itemset->get_v(i);
+        fp->print_int ( _perm? _perm[e]: e, i==0? 0: _separator);
+        if ( !(_flag&ITEMSET_MULTI_OUTPUT) || (fp->get_size()) > FILE2_BUFSIZ/2 ){
+          SPIN_LOCK(_multi_core, _lock_output);
+          flush_flag = 1;
+          fp->flush_ ();
+        }
+      }
+    }
+    if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( frq, pfrq, core_id);
+    if ( ((_flag & ITEMSET_NOT_ITEMSET) == 0) || (_flag&ITEMSET_FREQ) || (_flag&ITEMSET_PRE_FREQ) ){
+#ifdef _FILE2_LOAD_FROM_MEMORY_
+  FILE2_WRITE_MEMORY (QUEUE_INT, FILE2_LOAD_FROM_MEMORY_END);
+#else
+      fp->putc ('\n');
+#endif
+    }
+		// for _trsact_h_
+    if (_flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) output_occ ( occ, core_id);
+
+    if ( flush_flag ){
+      fp->flush_ ();
+      SPIN_UNLOCK(_multi_core, _lock_output);
+    }
+  }
+}
+
+
+void ITEMSET::output_itemset ( KGLCMSEQ_QUE *occ, int core_id){
+  output_itemset_ ( &_itemset, _frq, _pfrq, occ, _itemtopk_item, _itemtopk_item2, core_id);
+}
+
+
+/* output itemsets with adding all combination of "add"
+   at the first call, i has to be "add->t" */
+void ITEMSET::solution_iter (KGLCMSEQ_QUE *occ, int core_id){
+  QUEUE_ID t=_add.get_t();
+  if ( _itemset.get_t() > _ub ) return;
+  output_itemset ( occ, core_id);
+
+	if ( ERROR_MES ) return;
+	
+	//BLOOP(i,x,y) for ((i)=(x) ; ((i)--)>(y) ; )
+  //BLOOP (_add._t, _add._t, 0){
+  for(;_add.get_dec_t()>0;){
+
+    _itemset.push_back(_add.pop_back());
+
+    solution_iter ( occ, core_id);
+
+		if ( ERROR_MES ) return;
+    _itemset.dec_t();
+  }
+  _add.set_t(t);
+}
+
+void ITEMSET::solution (KGLCMSEQ_QUE *occ, int core_id){
+
+  QUEUE_ID i;
+  LONG s;
+
+  if ( _itemset.get_t() > _ub ) return;
+  if ( _flag & ITEMSET_ALL ){
+    if ( _fp || _topk.end() ) solution_iter ( occ, core_id);
+    else {
+      s=1; FLOOP (i, 0, _add.get_t()+1){
+        _sc[_itemset.get_t()+i] += s;
+        s = s*(_add.get_t()-i)/(i+1);
+      }
+      if (_flag & ITEMSET_SC2){
+        s = 1<< _add.get_t();
+        _sc2[(QUEUE_INT)_frq] += s;  // histogram for LAMP
+        if ( _flag2 & ITEMSET_LAMP )  lamp  ( s);  // LAMP mode
+        if ( _flag2 & ITEMSET_LAMP2 ) lamp2 ( s);  // 2D LAMP mode
+        else if ( _topk_k > 0 && _frq > _topk_frq ){ // top-k histogram version
+          while (1){
+            if ( _sc2[_topk_frq] > s ){ _sc2[_topk_frq] -= s; break; }
+            s -= _sc2[_topk_frq];
+            _sc2[_topk_frq++] = 0; 
+          }
+          _frq_lb = _topk_frq+1;
+        }
+      }
+    }
+  } else {
+    FLOOP (i, 0, _add.get_t()) _itemset.push_back(_add.get_v(i));
+    output_itemset ( occ, core_id);
+    _itemset.minus_t(_add.get_t());
+  }
+}
+
+/*************************************************************************/
+/* ourput a rule */
+/*************************************************************************/
+void ITEMSET::output_rule ( KGLCMSEQ_QUE *occ, double p1, double p2, size_t item, int core_id){
+
+  FILE2 *fp = &_multi_fp[core_id];
+  if ( fp->exist_fp() && !(_topk.end()) ){
+    fp->print_real ( p1, _digits, '(');
+    fp->print_real ( p2, _digits, ',');
+    fp->putc ( ')');
+    fp->print_int ( _perm[item], _separator);
+    fp->puts ( " <= ");
+  }
+  if ( _flag & ITEMSET_RULE ){
+    if ( _flag & ITEMSET_RULE_ADD ) solution (occ, core_id);
+    else output_itemset ( occ, core_id);
+  } else solution ( occ, core_id);
+
+}
+
+/*************************************************************************/
+/* check all rules for a pair of itemset and item */
+/*************************************************************************/
+void ITEMSET::check_rule (WEIGHT *w, KGLCMSEQ_QUE *occ, size_t item, int core_id){
+  double p = w[item]/_frq, pp, ff;
+
+  if ( _itemflag[item]==1 ) return;
+  if ( w[item] <= -WEIGHTHUGE ) p = 0;
+  pp = p; ff = _item_frq[item];
+  if ( _flag & ITEMSET_RULE_SUPP ){ pp = w[item]; ff *= _total_weight; }
+
+  if ( _flag & (ITEMSET_RULE_FRQ+ITEMSET_RULE_INFRQ)){
+    if ( (_flag & ITEMSET_RULE_FRQ) && p < _ratio_lb ) return;
+    if ( (_flag & ITEMSET_RULE_INFRQ) && p > _ratio_ub ) return;
+    output_rule ( occ, p, ff, item, core_id);
+  } else if ( _flag & (ITEMSET_RULE_RFRQ+ITEMSET_RULE_RINFRQ) ){
+    if ( (_flag & ITEMSET_RULE_RFRQ) && (1-p) > _ratio_lb * (1-_item_frq[item]) ) return;
+    if ( (_flag & ITEMSET_RULE_RINFRQ) && p > _ratio_ub * _item_frq[item] ) return;
+    output_rule ( occ, pp, ff, item, core_id);
+  }
+}
+
+/*************************************************************************/
+/* check all rules for an itemset and all items */
+/*************************************************************************/
+void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT total, int core_id){
+
+  QUEUE_ID i, t;
+  QUEUE_INT e, f=0, *x;
+  WEIGHT d = _frq/total;
+  int flush_flag = 0;
+
+    // checking out of range for itemset size and (posi/nega) frequency
+  if ( _itemset.get_t()+_add.get_t() < _lb || _itemset.get_t()>_ub || (!(_flag&ITEMSET_ALL) && _itemset.get_t()+_add.get_t()>_ub)) return;
+  if ( !(_flag&ITEMSET_IGNORE_BOUND) && (_frq < _frq_lb || _frq > _frq_ub) ) return;
+  if ( !(_flag&ITEMSET_IGNORE_BOUND) && (_pfrq < _posi_lb || _pfrq > _posi_ub || (_frq - _pfrq) > _nega_ub || (_frq - _pfrq) < _nega_lb) ) return;
+
+  if ( _flag&ITEMSET_SET_RULE ){  // itemset->itemset rule for sequence mining
+    FLOOP (i, 0, _itemset.get_t()-1){
+      if ( _frq/_set_weight[i] >= _setrule_lb && _fp ){
+        _sc[i]++;
+        if ( _flag  & ITEMSET_SC2)     _sc2[(QUEUE_INT)_frq]++;  // histogram for LAMP
+        if ( _flag2 & ITEMSET_LAMP )   lamp (1);  // LAMP mode
+        if ( _flag2 & ITEMSET_LAMP2 )  lamp2 (1);  // 2D LAMP mode
+        if ( _flag  & ITEMSET_PRE_FREQ ) output_frequency ( _frq, _pfrq, core_id);
+        FLOOP (t, 0, _itemset.get_t()){
+          _multi_fp[core_id].print_int ( _itemset.get_v(t), t?_separator:0);
+          if ( t == i ){
+            _multi_fp[core_id].putc ( ' ');
+            _multi_fp[core_id].putc ( '=');
+            _multi_fp[core_id].putc ( '>');
+          }
+          if ( !(_flag&ITEMSET_MULTI_OUTPUT) || (_multi_fp[core_id].get_size()) > FILE2_BUFSIZ/2 ){
+            SPIN_LOCK(_multi_core, _lock_output);
+            flush_flag = 1;
+            _multi_fp[core_id].flush_ ();
+          }
+        }
+        if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( _frq, _pfrq, core_id);
+        _multi_fp[core_id].putc ( ' ');
+        _multi_fp[core_id].print_real ( _frq/_set_weight[i], _digits, '(');
+        _multi_fp[core_id].putc ( ')');
+#ifdef _FILE2_LOAD_FROM_MEMORY_
+  FILE2_WRITE_MEMORY (QUEUE_INT, FILE2_LOAD_FROM_MEMORY_END);
+#else
+        _multi_fp[core_id].putc ( '\n');
+#endif
+			//for _trsact_h_
+        if ( _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ){
+            output_occ ( _set_occELE[i], core_id);
+        }
+
+        if ( flush_flag ){
+          _multi_fp[core_id].flush_ ();
+          SPIN_UNLOCK(_multi_core, _lock_output);
+        }
+      }
+    }
+  }
+    // constraint of relational frequency
+  if ( ((_flag&ITEMSET_RFRQ)==0 || d >= _prob_lb * _prob ) 
+      && ((_flag&ITEMSET_RINFRQ)==0 || d <= _prob * _prob_ub) ){
+    if ( _flag&ITEMSET_RULE ){  //  rule mining routines
+      if ( _itemset.get_t() == 0 ) return;
+      if ( _target < _item_max ){
+
+				for(x=jump->get_v();x<jump->get_v()+jump->get_t() ; x++){
+        // MQUE_FLOOP_CLS (*jump, x){
+          if ( *x == _target ){ 
+             check_rule ( w, occ, *x, core_id);   if (ERROR_MES) return;
+          }
+        }
+      } else {
+        if ( _flag & (ITEMSET_RULE_FRQ + ITEMSET_RULE_RFRQ) ){
+          if ( _add.get_t()>0 ){
+            f = _add.get_v(_add.get_t()-1); t = _add.get_t(); _add.dec_t();
+            FLOOP (i, 0, t){
+              e = _add.get_v(i);
+              _add.set_v(i,f);
+              check_rule ( w, occ, e, core_id);    if (ERROR_MES) return;
+              _add.set_v(i,e);
+            }
+            _add.inc_t();
+          }
+          // MQUE_FLOOP_CLS (*jump, x)
+					for(x=jump->get_v();x<jump->get_v()+jump->get_t() ; x++){
+            check_rule ( w, occ, *x, core_id);   
+  	        if (ERROR_MES) return;			
+					}
+
+        } else {
+          if ( _flag & (ITEMSET_RULE_INFRQ + ITEMSET_RULE_RINFRQ) ){
+            FLOOP (i, 0, _item_max){
+              if ( _itemflag[i] != 1 ){
+                check_rule (w, occ, i, core_id);     if (ERROR_MES) return;
+              }
+            }
+          }
+        }
+      }
+    } else {  // usual mining (not rule mining)
+      if ( _fp && (_flag&(ITEMSET_RFRQ+ITEMSET_RINFRQ))){
+        _multi_fp[core_id].print_real ( d, _digits, '[');
+        _multi_fp[core_id].print_real ( _prob, _digits, ',');
+        _multi_fp[core_id].putc ( ']');
+      }
+      solution (occ, core_id);
+    }
+  }
+}
+
 

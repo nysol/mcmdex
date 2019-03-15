@@ -20,6 +20,8 @@
 
 class KGGRHFIL{
 
+	 LONG _ip_l1;
+
   // PROBLEM _PP; //problemは使わない
 
   // problem項目
@@ -37,46 +39,44 @@ class KGGRHFIL{
 
   FSTAR _FS;
   FSTAR _FS2;
-  
-  
+
+	// _FS  
+	// fs
+	int _fsFlag;
+	int _edge_dir;
+	char *_fname;
+	char *_wfname;
+	int _deg_lb,_deg_ub;
+	int _in_lb,_in_ub;
+	int _out_lb,_out_ub;
+	double _w_lb,_w_ub;
+	char _sep;
+
+	// f2
+	int _fsFlag2;
+	char *_fname2;
+	int _edge_dir2;
+
+ 
   char *_ERROR_MES ;
 
 	void help(void);
 
-	int read_param_iter (char *a, int *ff);
-	void read_param (int argc, char *argv[]);
-	void preLOAD(){
-
-	  if ( _FS.get_fname() ){
-	  	_FS.load();    
-  		if (_ERROR_MES) EXIT;
-  	}
-
-	  if ( _FS2.get_fname() ){
-		  _FS2.load();
-  		if (_ERROR_MES) EXIT;
-  	}
-	}
+	int setArgs_iter (char *a, int *ff);
+	int setArgs(int argc, char *argv[]);
 
 	public:
 
 
-	KGGRHFIL(){
-
-		_problem  = 0;
-		_problem2 = 0;
-  	_dir  = 0;
-  	_root = 0;
-  	_ratio= 0;
-		_th   = 0;
-		_th2  = 0;
-		_rows = 0;
-		_weight_fname = NULL;
-		_table_fname  = NULL;
-		_output_fname = NULL;
-		_ERROR_MES = NULL;
-	
-	}
+	KGGRHFIL():
+		_problem(0),_problem2(0),_fsFlag(0),_fsFlag2(0),
+  	_dir(0),_root(0),_ratio(0),_th(0),_th2(0),_rows(0),
+		_deg_lb(0),_deg_ub(FSTAR_INTHUGE),_in_lb(0),_in_ub(FSTAR_INTHUGE),
+		_out_lb(0),_out_ub(FSTAR_INTHUGE),_w_lb(-WEIGHTHUGE),_w_ub(WEIGHTHUGE),
+		_edge_dir(0),_edge_dir2(0),_sep(' '),
+		_weight_fname(NULL),_table_fname(NULL),
+		_output_fname(NULL),_ERROR_MES(NULL),
+		_fname(NULL),_fname2(NULL),_wfname(NULL){}
 
 	int run(int argc ,char* argv[]);
 	static int mrun(int argc ,char* argv[]);

@@ -97,6 +97,7 @@ void SGRAPH::arc_rm ( QUEUE_INT u, QUEUE_INT v){
 }
 
 /*  print graph by numbers  */
+/*
 void SGRAPH::print (FILE *fp){
   VEC_ID i, j;
   QUEUE_INT e;
@@ -142,7 +143,7 @@ void SGRAPH::print (FILE *fp){
     }
   }
 }
-
+*/
 /* Output a graph to file
   Vertices, edges, arcs less than node_num, edge_num, arc_num are written to the file. Input parameters are
   (graph) (file name) (flag)
@@ -372,6 +373,7 @@ void SGRAPH::replace_index (PERM *perm, PERM *invperm){
 }
 
 /* sort the nodes according to the permutation *tmp */
+/*
 void SGRAPH::perm_node (PERM *tmp){
   VEC_ID c1=0, c2=_node1_num, i;
   PERM *perm;
@@ -390,7 +392,7 @@ void SGRAPH::perm_node (PERM *tmp){
   replace_index (perm, tmp);
 //  free2 (tmp);
 }
-
+*/
 /* sort the nodes by Q->t, increasing if flag=1, decreasing if flag=-1 */
 /*未使用
 void SGRAPH::sort_node (int flag){

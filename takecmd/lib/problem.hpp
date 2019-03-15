@@ -11,11 +11,11 @@
 
 /***************************************************/
 #pragma once
-#include "fstar.hpp"
-#include "itemset.hpp" 
-#include "trsact.hpp" 
-#include "vec.hpp" 
-#include "base.hpp" 
+//#include "fstar.hpp"
+//#include "itemset.hpp" 
+//#include "trsact.hpp" 
+//#include "vec.hpp" 
+//#include "base.hpp" 
 
 
 

@@ -54,9 +54,38 @@ class SGRAPH {
 		_node_w(NULL),_wbuf(NULL),_perm(NULL),_wfname(NULL),_nwfname(NULL)
 	{}
 
+
+
+	void edgeSetEnd(){
+		//FLOOP (i, 0, _SG.edge_t()){
+		for(size_t i=0 ; i< _edge.get_t() ; i++){
+			_edge.set_vv(i,_edge.get_vt(i),_edge.get_t());
+		}
+	}
+
 	QUEUE_INT * edge_vv(QUEUE_INT item) { return _edge.get_vv(item); }
+
+
 	VEC_ID edge_t(){ return _edge.get_t(); }
 	void edge_sort(){  _edge.sort(); }
+	VEC_ID edge_eles(){ return _edge.get_eles(); }
+
+	QUEUE_ID edge_vt(int i){ 
+		return _edge.get_vt(i);
+	}
+
+	void edge_setvv(int i,int j, QUEUE_ID v ) { 
+		_edge.set_vv(i,j,v);
+	}
+
+
+	QUEUE* getp_v(int i){
+		return _edge.getp_v(i);
+	}
+
+	QUEUE* getp_v(){
+		return _edge.getp_v();
+	}
 
 	// これは再考
 	void edge_union_flag(int flag){ _edge.union_flag(flag);} 
@@ -111,7 +140,7 @@ class SGRAPH {
 
 
 	/*  print graph by numbers  */
-	void print (FILE *fp);
+	//void print (FILE *fp);
 
 	/* Write the graph to file. Edges, arcs, and nodes from 0 to node_num/edge_num/arc_num are written to file. Parameters are
 	  (graph) (file name) (not write edge weight => 0) (not write node weight => 0) */

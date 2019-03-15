@@ -14,21 +14,6 @@
 #include"stdlib2.hpp"
 
 
-/* initialization, not fill the memory by 0 */
-void QUEUE::alloc (QUEUE_ID siz){
-	_end =  siz+1;
-	malloc2(_v, siz+1, EXIT);
-}
-
-void QUEUE::init(){
-	_v = NULL;
-	_end=0;
-	_t=0;
-	_s=0;
-
-}
-
-
 /* tranpose the matrix ; counting/transpose/memory_allocate */
 /* OQ: QUEUE to transposed matrix, c: count the column sizes if its given
    jump: QUEUE to store ID's of non-empty columns, Q: the matrix, occ: the rows to be transposed
@@ -64,7 +49,9 @@ void QUEUE::perm_WEIGHT (WEIGHT *w, PERM *invperm, int flag){
   qsort_<INT> (_v, _t, flag);
 }
 
-/* remove (or unify) the consecutive same ID's in a QUEUE (duplication delete, if sorted) */
+/* 
+	remove (or unify) the consecutive same ID's in a QUEUE (duplication delete, if sorted) 
+*/
 void QUEUE::rm_dup_WEIGHT (WEIGHT *w){
   VEC_ID j, jj=0;
   if ( w ){
@@ -120,7 +107,41 @@ void QUEUE::occ_dup ( QUEUE **QQ, QUEUE *Q, WEIGHT **ww, WEIGHT *w, WEIGHT **ppw
 }
 
 
+//QUEUE *jump,
+void QUEUE::occ_dupELE ( KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, WEIGHT **ww, WEIGHT *w, WEIGHT **ppw, WEIGHT *pw, int u){
+  QUEUE_ID i, l=_t-_s; //QUEUE_LENGTH_(*jump);
+  size_t cnt=0;
+  QUEUE_INT e, *x;
+  char *buf;
+  int unit = sizeof(*Q) + (w?sizeof(*w):0) + (pw?sizeof(*pw):0);
+ 
+  ENMAX (u, sizeof(*x));
+
+  //MQUE_FLOOP (*jump, x) cnt += Q[*x].t;
+
+	for(x=_v; x < _v+_t ; x++) cnt += Q[*x]._t;
+  if ( cnt == 0 ){ *QQ=NULL; return; }
+
+  malloc2 (buf, l*unit + (cnt+l)*u, EXIT);
+
+  *QQ = (KGLCMSEQ_QUE*)buf; buf += sizeof(*Q) *l;
+  if ( w ){ *ww = (WEIGHT *)buf; buf += sizeof(*w)*l; }
+  if ( pw ){ *ppw = (WEIGHT *)buf; buf += sizeof(*pw)*l; }
+  for (i=0 ; i< _t ; i++){
+    e = _v[i];
+    (*QQ)[i]._end = e;
+    (*QQ)[i]._v = (KGLCMSEQ_ELM *)buf;
+    (*QQ)[i]._t = Q[e]._t;
+    memcpy (buf, Q[e]._v, (Q[e]._t+1)*u);
+    buf += (Q[e]._t+1) *u;
+    if ( w ) (*ww)[i] = w[e];
+    if ( pw ) (*ppw)[i] = pw[e];
+  }
+
+}
+/// ======= 以下の必要なら復活させる =================
 /* return the position of the first element having value e. return -1 if no such element exists */
+/*
 LONG QUEUE::ele (QUEUE_INT e){
   QUEUE_INT *x;
   //MQUE_FLOOP (*Q, x)
@@ -129,8 +150,9 @@ LONG QUEUE::ele (QUEUE_INT e){
   }
   return (-1);
 }
-
+*/
 /* insert an element to the tail */
+/*
 void QUEUE::ins_ (QUEUE_INT e){
   _v[_t] = e;
   _t++;
@@ -140,8 +162,9 @@ void QUEUE::ins (QUEUE_INT e){
   QUE_t_INC();
   if (_s == _t ) error_num ("QUEUE_ins: overflow", _s, EXIT);
 }
-
+*/
 /* insert an element to the head */
+/*
 void QUEUE::ins_head_ (QUEUE_INT e){
   _s--;
   _v[_s] = e;
@@ -151,9 +174,9 @@ void QUEUE::ins_head (QUEUE_INT e){
   _v[_s] = e;
   if (_s == _t ) error_num ("QUEUE_ins_head: underflow", _s, EXIT);
 }
-
+*/
 /* extract an element from the head, without checking underflow */
-QUEUE_INT QUEUE::ext_(){
+/*QUEUE_INT QUEUE::ext_(){
   _s++;
   return (_v[_s-1]);
 }
@@ -165,19 +188,21 @@ QUEUE_INT QUEUE::ext (){
  	QUE_s_INC();
   return ( e);
 }
-
+*/
 /* extract an element from the tail, without checking underflow */
-QUEUE_INT QUEUE::ext_tail_ (){
-  (_t)--;
-  return (_v[_t]);
-}
-QUEUE_INT QUEUE::ext_tail (){
-  if ( _s == _t ) error_num ("QUEUE_ext_tail: empty queue", _s, EXIT0);
-  QUE_t_DEC();
-  return (_v[_t]);
-}
+//QUEUE_INT QUEUE::ext_tail_ (){
+//  (_t)--;
+//  return (_v[_t]);
+//}
+
+//QUEUE_INT QUEUE::ext_tail (){
+//  if ( _s == _t ) error_num ("QUEUE_ext_tail: empty queue", _s, EXIT0);
+//  QUE_t_DEC();
+//  return (_v[_t]);
+//}
 
 /* remove the j-th element and replace it by the tail */
+/*
 void QUEUE::rm_ (QUEUE_ID j){
   _t--;
   _v[j] = _v[_t];
@@ -189,8 +214,9 @@ void QUEUE::rm ( QUEUE_ID j){
   QUE_t_DEC();
   _v[j] = _v[_t];
 }
-
+*/
 /* remove the j-th element and replace it by the head */
+/*
 void QUEUE::rm_head_ ( QUEUE_ID j){
   _v[j] = _v[_s];
   _s++;
@@ -202,8 +228,9 @@ void QUEUE::rm_head ( QUEUE_ID j){
   _v[j] = _v[_s];
   QUE_s_INC();
 }
-
+*/
 /* remove the j-th element and shift the following elements to fill the gap */
+/*
 int QUEUE::rm_ele_ (QUEUE_INT e){
   QUEUE_ID i;
 	//#define QUEUE_F_LOOP_(Q,i)  for((i)=(Q)._s;(i)<(Q)._t;(i)++)
@@ -216,6 +243,7 @@ int QUEUE::rm_ele_ (QUEUE_INT e){
   }
   return (0);
 }  
+*/
 /* insert e to the position determined by the increasing order of elements */
 /*
 void QUEUE::ins_ele_(QUEUE_INT e){
@@ -234,80 +262,81 @@ void QUEUE::ins_ele_(QUEUE_INT e){
 */
 
 /* Append Q2 to the tail of Q1. Q2 will not be deleted */
-void QUEUE::concat_ (QUEUE *Q2){
-  memcpy ( &(_v[_t]), &(Q2->_v[Q2->_s]), (Q2->_t-Q2->_s)*sizeof(QUEUE_INT));
-  _t += Q2->_t-Q2->_s;
-}
-void QUEUE::concat ( QUEUE *Q2){
-  QUEUE_ID e = Q2->_s;
-  while ( e != Q2->_t){
-    ins ( Q2->_v[e]);
-    e = Q2->QUE_INC(e);
-    //QUEUE_INCREMENT(*Q2,e);
-  }
-}
-/* Append Q2 to the tail of Q1. Q2 will be deleted */
-void QUEUE::append_ (QUEUE *Q2){
-  concat_(Q2);
-	//#define QUEUE_RMALL(Q) ((Q)._t=(Q)._s)
-	Q2->RMALL();
-  //QUEUE_RMALL (*Q2);
+//void QUEUE::concat_ (QUEUE *Q2){
+//  memcpy ( &(_v[_t]), &(Q2->_v[Q2->_s]), (Q2->_t-Q2->_s)*sizeof(QUEUE_INT));
+//  _t += Q2->_t-Q2->_s;
+//}
+//void QUEUE::concat ( QUEUE *Q2){
+//  QUEUE_ID e = Q2->_s;
+//  while ( e != Q2->_t){
+//    ins ( Q2->_v[e]);
+//    e = Q2->QUE_INC(e);
+//    //QUEUE_INCREMENT(*Q2,e);
+//  }
+//}
 
-}
-void QUEUE::append (QUEUE *Q2){ // more improvement can be
-  while ( Q2->_s != Q2->_t )
-      ins (Q2->ext());
-}
+/* Append Q2 to the tail of Q1. Q2 will be deleted */
+//void QUEUE::append_ (QUEUE *Q2){
+//  concat_(Q2);
+//	//#define QUEUE_RMALL(Q) ((Q)._t=(Q)._s)
+//	Q2->RMALL();
+//  //QUEUE_RMALL (*Q2);
+//}
+//void QUEUE::append (QUEUE *Q2){ // more improvement can be
+//  while ( Q2->_s != Q2->_t )
+//      ins (Q2->ext());
+//}
 
 /* Append from j to jj th elements to the tail of Q1. Q2 will not be deleted */
-void QUEUE::subconcat_ ( QUEUE *Q2, QUEUE_ID j, QUEUE_ID jj){
-  for ( ; j<=jj ; j++){
-    _v[_t] = Q2->_v[j];
-    _t++;
-  }
-}
-void QUEUE::subconcat ( QUEUE *Q2, QUEUE_ID j, QUEUE_ID jj){
-  while (1){
-    ins (Q2->_v[j]);
-    if ( j == jj ) break;
-    j = Q2->QUE_INC(j);
-  } 
-}
+//void QUEUE::subconcat_ ( QUEUE *Q2, QUEUE_ID j, QUEUE_ID jj){
+//  for ( ; j<=jj ; j++){
+//    _v[_t] = Q2->_v[j];
+//    _t++;
+//  }
+//}
+//void QUEUE::subconcat ( QUEUE *Q2, QUEUE_ID j, QUEUE_ID jj){
+//  while (1){
+//    ins (Q2->_v[j]);
+//    if ( j == jj ) break;
+//    j = Q2->QUE_INC(j);
+// } 
+//}
 
 /* initialize Q1 by length of Q2, and copy Q2 to Q1 */
 //QUEUE *Q1,
-void QUEUE::store_ ( QUEUE *Q2){
 /*あとまわし
+void QUEUE::store_ ( QUEUE *Q2){
   QUEUE_alloc (Q1, QUEUE_LENGTH(*Q2));
   QUEUE_concat_ (Q1, Q2);
-*/
 }
+*/
 //QUEUE *Q1,
-void QUEUE_store ( QUEUE *Q2){
 /*あとまわし
+void QUEUE_store ( QUEUE *Q2){
   QUEUE_alloc (Q1, QUEUE_LENGTH(*Q2));
   QUEUE_concat (Q1, Q2);
-*/
 }
+*/
 /* copy Q2 to Q1 and delete Q2 */
 //QUEUE *Q1, 
-void QUEUE_restore_ (QUEUE *Q2){
 /*あとまわし
+void QUEUE_restore_ (QUEUE *Q2){
   QUEUE_RMALL (*Q1);
   QUEUE_concat_ (Q1, Q2);
   QUEUE_end (Q2);
-*/
 }
+*/
 //QUEUE *Q1,
-void QUEUE_restore ( QUEUE *Q2){
 /*
+void QUEUE_restore ( QUEUE *Q2){
   QUEUE_RMALL (*Q1);
   QUEUE_concat (Q1, Q2);
   QUEUE_end (Q2);
-*/
 }
+*/
 
 /* copy Q2 to Q1 */
+/*
 void QUEUE::cpy_ ( QUEUE *Q2){
   _s = _t = 0;
   concat_ ( Q2);
@@ -318,7 +347,7 @@ void QUEUE::cpy (QUEUE *Q2){
 
   concat(Q2);
 }
-
+*/
 /* compare two queues */
 /*
 int QUEUE::cmp_ (QUEUE *Q2){
@@ -336,6 +365,7 @@ int QUEUE::cmp_ (QUEUE *Q2){
 
 /* copy l elements of Q2 starting from s2 to the s1th position of Q1.
    size of Q1 is not increasing */
+/*
 void QUEUE::subcpy_ (QUEUE_ID s1, QUEUE *Q2, QUEUE_ID s2, QUEUE_ID l){
   memcpy ( &(_v[s1]), &(Q2->_v[s2]), (l-s2)*sizeof(QUEUE_INT));
 }
@@ -344,16 +374,18 @@ void QUEUE::subcpy ( QUEUE_ID s1, QUEUE *Q2, QUEUE_ID s2, QUEUE_ID l){
       _v[s1] = Q2->_v[s2];
   _v[s1] = Q2->_v[s2];
 }
-
+*/
 /* duplicate Q2 to Q1. The memory size will be the length of Q2 */
+/*
 QUEUE QUEUE::dup_ (){
   QUEUE QQ;
   QQ.alloc(MAX(_t+1, _end-1));
   QQ.cpy_(this);
   return (QQ);
 }
-
+*/
 /* merge Q1 and Q2 by insert all elements of Q2 to Q1 with deleting duplications. Both Q1 and Q2 have to be sorted in increasing order */
+/*
 void QUEUE::merge_ ( QUEUE *Q2){
 
   QUEUE_ID i=_t-1, j=Q2->_t-1, t=i+j-Q2->_s+1;
@@ -383,7 +415,6 @@ void QUEUE::merge_ ( QUEUE *Q2){
     t--;
   }
 }
-
 void QUEUE::merge (QUEUE *Q2){
   QUEUE_ID i=_t, j=Q2->_t;
   QUEUE_INT ei, ej;
@@ -421,9 +452,11 @@ void QUEUE::merge (QUEUE *Q2){
     QUE_t_DEC();
   }
 }
+*/
 
 /* delete all elements of Q1 included in Q2.
  both Q1 and Q2 have to be sorted in increasing order */
+/*
 void QUEUE::minus_ (QUEUE *Q2){
   QUEUE_ID i=_s, i2 = Q2->_s, ii=_s;
   while ( i != _t && i2 != Q2->_t){
@@ -462,6 +495,7 @@ void QUEUE::minus (QUEUE *Q2){
   }
   _t = ii;
 }
+*/
 
 /* Delete all elements of Q1 which are not included in Q2. 
  both Q1 and Q2 have to be sorted in increasing order */
@@ -478,7 +512,6 @@ QUEUE_ID QUEUE::intsec_( QUEUE *Q2){
   }
   return (c);
 }
-*/
 void QUEUE::and_ (QUEUE *Q2){
   QUEUE_ID i=_s, i2 = Q2->_s, ii=_s;
   while ( i != _t ){
@@ -506,7 +539,10 @@ void QUEUE::_and (QUEUE *Q2){
   _t = ii;
 }
 
+*/
+
 /* insertion sort */
+/*
 void QUEUE::sort (){
   QUEUE_ID i = _s, j, jj;
   QUEUE_INT e;
@@ -524,9 +560,10 @@ void QUEUE::sort (){
     }
   }
 }
-
+*/
 
 /* print a queue */
+/*
 void QUEUE::print (){
   QUEUE_ID i;
   for ( i=_s ; i!=_t ; ){
@@ -536,6 +573,7 @@ void QUEUE::print (){
   }
   printf ("\n");
 }
+*/
 /* permutation version */
 /*
 void QUEUE::perm_print (QUEUE_ID *q){
@@ -561,6 +599,7 @@ void QUEUE::perm_printn ( QUEUE_ID *q){
   }
 }
 */
+/*
 
 void QUEUE::print_(){
   QUEUE_ID i;
@@ -572,7 +611,6 @@ void QUEUE::print_(){
   }
   printf ("\n");
 }
-/*
 void QUEUE::print__(){
   QUEUE_ID i;
   printf("s="QUEUE_IDF",t="QUEUE_IDF": ", _s, _t);

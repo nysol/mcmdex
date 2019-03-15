@@ -31,7 +31,7 @@
 #define VEC_LOAD_BIN4 67108864   // read binary file with 4byte for each number
 #define VEC_LOAD_CENTERIZE 134217728  // read binary file, and minus the half(128) from each number
 #define VEC_NORMALIZE 268435456  // read binary file, and minus the half(128) from each number
-
+/*
 class MAT{
   //unsigned char _type;  // mark to identify type of the structure
   char *_fname, *_wfname;      // input/weight file name
@@ -95,8 +95,9 @@ struct SVEC {
 	SVEC_VAL2 SVEC_inpro (SVEC *V1, SVEC *V2);
 	double SVEC_eucdist (SVEC *V1, SVEC *V2);
 };
-
+*/
 /* sparse vector, matrix */
+/*
 struct SMAT{
   unsigned char _type;  // mark to identify type of the structure
   char *_fname, *_wfname;      // input/weight file name
@@ -123,7 +124,7 @@ struct SMAT{
 	void * getvec(int i){ return &_v[i]; }
 
 };
-
+*/
 class SETFAMILY{
   //unsigned char _type;  // mark to identify type of the structure
   char *_fname, *_wfname;      // input/weight file name
@@ -217,6 +218,11 @@ class SETFAMILY{
 		QUEUE_INT * get_vv(int i){ return _v[i].get_v(); }
 		QUEUE_INT get_vv(int i,int j){ return _v[i].get_v(j); }
 		QUEUE get_v(int i){ return _v[i]; }
+
+		QUEUE* getp_v(int i){ return &_v[i]; }
+		
+		QUEUE* getp_v(){ return _v; }
+		
 
 		void init_v(int i){ _v[i].init(); }
 

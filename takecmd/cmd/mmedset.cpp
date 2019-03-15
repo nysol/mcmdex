@@ -1,4 +1,4 @@
-#include "medset.hpp"
+#include "kgmedset.hpp"
 
 // extern用
 //char *ERROR_MES;
@@ -6,6 +6,6 @@
 
 int main(int ac ,char* av[]){
 
-	MEDSET().run(ac,av);
+	KGMEDSET().run(ac,av);
 	
 }

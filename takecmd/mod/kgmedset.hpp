@@ -2,10 +2,8 @@
 /* 8/Nov/2008   Takeaki Uno  */
 #pragma once
 
-#include"fstar.hpp"
-#include"problem.hpp"
-
-
+#include "fstar.hpp"
+#include "problem.hpp"
 
 #define MEDSET_CC 4
 #define MEDSET_IND 8
@@ -15,45 +13,51 @@
 #define MEDSET_BELOW 128
 
 
-class MEDSET{
+class KGMEDSET{
+
+  FILE2 _fp;
+	FILE *_ofp; // org II._fp
+
 	int _problem;
-	
+
 	char *	_input_fname;
+	char *  _output_fname;
+
 	int _dir;
 	int _num;
   double _th ;
-	char *  _output_fname;
-	FILE *_ofp; // org II._fp
 	char *_ERROR_MES;
 	FSTAR _FS;
 
-	void _error();
+
+	// _FS 
+	int _fsFlag;
+	char *_set_fname;
+
+
+	void help();
+
+
 	/* read commands and options from command line */
-	void read_param (int argc, char *argv[]);
-	/* read file, output the histogram of each line */
-	void read_file (FILE2 *fp);
+	int setArgs(int argc, char *argv[]);
+
 
 	/* output clusters to the output file */
 	void print_clusters (FSTAR_INT *mark, FSTAR_INT *set, FSTAR_INT xmax);
-	/* read file, output the histogram of each line */
-	void cc_clustering (FILE2 *fp);
-
 
 	/* read file, output the histogram of each line */
-	void ind_clustering (FILE2 *fp);
+	void cc_clustering();
+	void ind_clustering();
+	void read_file();
 
-	void preLOAD(){
-  	if ( _FS.get_fname() ){ 
-  		_FS.load();
-  		if (ERROR_MES) EXIT; 
-  	}
 
-	}
 
 	public:
-	MEDSET():
-		_problem(0),_input_fname(NULL),_dir(0),_num(0),_th(0),
-		_output_fname(NULL),_ofp(NULL),_ERROR_MES(NULL){}
+
+	KGMEDSET():
+		_problem(0),_fsFlag(0),_input_fname(NULL),_dir(0),_num(0),_th(0),
+		_output_fname(NULL),_ofp(NULL),_set_fname(NULL),_ERROR_MES(NULL){}
+		
 	int run (int argc, char *argv[]);
 	static int mrun(int argc, char *argv[]);
 

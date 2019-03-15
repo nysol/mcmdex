@@ -34,22 +34,6 @@ void FSTAR::print (FILE *fp){
   END:;
 }
 
-/* initialization */
-void FSTAR::init2 (){
-  if ( _in_lb >0 || _in_ub <FSTAR_INTHUGE ) _flag |= (FSTAR_IN_CHK+FSTAR_CNT_IN);
-  if ( _out_lb >0 || _out_ub <FSTAR_INTHUGE ) _flag |= (FSTAR_OUT_CHK+FSTAR_CNT_OUT);
-  if ( _deg_lb >0 || _deg_ub <FSTAR_INTHUGE ){
-    _flag |= FSTAR_DEG_CHK+FSTAR_CNT_IN;
-    if ( (_flag&(FSTAR_OUT_CHK+FSTAR_IN_CHK)) ==0 ) _flag |= FSTAR_CNT_DEG_ONLY;
-    else _flag |= FSTAR_CNT_OUT;
-  }
-}
-
-/* termination */
-void FSTAR::end (){
-  mfree (_edge, _edge_w, _in_deg, _out_deg, _fstar, _table, _rev_table);
-
-}
 
 /* increment degrees */
 void FSTAR::inc_deg (FSTAR_INT x, FSTAR_INT y){
@@ -205,6 +189,7 @@ void FSTAR::scan_file (FILE2 *fp){
   _xmax = C.get_rows(); 
   _ymax = C.get_clms(); 
   _edge_num_org = C.get_eles();
+  
 
   j = alloc_deg ();
   FLOOP (i, 0, j){
@@ -283,7 +268,7 @@ void FSTAR::extract_subgraph (){
   FSTAR_INT x, y, ii, i, nodes;
   int flag = 0;
   WEIGHT w=0;
-
+	std::cerr << _in_node_num << " " << _out_node_num << " " << _edge_num << std::endl;
     // count #pairs
   do {
     nodes = 0;
@@ -305,15 +290,26 @@ void FSTAR::extract_subgraph (){
     }
     
       // re-remove out-bounded degree vertices
-    ii=x=0; FLOOP (i, 0, _edge_num){
-      while ( i == _fstar[x+1] ){ _fstar[x+1] = ii; x++; flag = 0; }
+    ii=x=0; 
+    FLOOP (i, 0, _edge_num){
+
+      while ( i == _fstar[x+1] ){ 
+      	_fstar[x+1] = ii; 
+      	x++; 
+      	flag = 0; 
+      }
+
       y = _edge[i];
+
       if ( _edge_w ) w = _edge_w[i];
+
       if ( eval_edge ( x, y, w) ){
+
         if ( _edge_w ) _edge_w[ii] = _edge_w[i];
         _edge[ii++] = y;
         if ( flag==0 ){ nodes++; flag = 1; }
       }
+
     }
     while (x < _out_node_num) _fstar[++x] = ii;
     _edge_num = ii;
@@ -323,28 +319,54 @@ void FSTAR::extract_subgraph (){
 }
 
 /* load graph from file */
-void FSTAR::load (){
+int FSTAR::load (){
 
   FILE2 fp , wfp;
 
-  init2();
+  if ( _in_lb >0 || _in_ub <FSTAR_INTHUGE ){
+  	 _flag |= (FSTAR_IN_CHK+FSTAR_CNT_IN);
+  }
+
+  if ( _out_lb >0 || _out_ub <FSTAR_INTHUGE ){
+  	_flag |= (FSTAR_OUT_CHK+FSTAR_CNT_OUT);
+  }
+
+  if ( _deg_lb >0 || _deg_ub <FSTAR_INTHUGE ){
+
+    _flag |= FSTAR_DEG_CHK+FSTAR_CNT_IN;
+    
+    if ( (_flag&(FSTAR_OUT_CHK+FSTAR_IN_CHK)) ==0 ) {
+    	_flag |= FSTAR_CNT_DEG_ONLY;
+    }
+    else{
+    	_flag |= FSTAR_CNT_OUT;
+    }
+  }
 
   fp.open ( _fname, "r");
   if ( _wfname ) wfp.open ( _wfname, "r");
 
-  scan_file (&fp);
+  scan_file(&fp);
   print_mes (this, "first & second scan end: %s\n", _fname);
 
-  read_file ( &fp, _wfname? &wfp: NULL);
-  fp.close ();   if (ERROR_MES) EXIT;
-  if ( _wfname ) wfp.close ();  if (ERROR_MES) EXIT;
+  read_file( &fp, _wfname? &wfp: NULL);
+
+  fp.close ();
+  if ( _wfname ) wfp.close ();
+
+  if (ERROR_MES) EXIT;
+
   print_mes (this, "file read end: %s\n", _fname);
 
   extract_subgraph();
 
-  if ( (_flag&LOAD_INCSORT)
-     || (_flag&LOAD_DECSORT) ) sort_adjacent_node ((_flag&LOAD_DECSORT)?-1:1);
-  print_mes (this, "forwardstar graph: %s ,#nodes "FSTAR_INTF"("FSTAR_INTF","FSTAR_INTF") ,#edges "FSTAR_INTF"\n", _fname, _node_num, _in_node_num, _out_node_num, _edge_num);
+  if ( (_flag&LOAD_INCSORT)|| (_flag&LOAD_DECSORT) ) {
+     sort_adjacent_node ((_flag&LOAD_DECSORT)?-1:1);
+  }
+
+  print_mes(this, "forwardstar graph: %s ,#nodes "FSTAR_INTF"("FSTAR_INTF","FSTAR_INTF") ,#edges "FSTAR_INTF"\n", _fname, _node_num, _in_node_num, _out_node_num, _edge_num);
+
+	return 0;
 }
 
 /* make vertex permutation table and write to table-file */
@@ -544,4 +566,24 @@ LONG FSTAR::write_graph_operation (FSTAR *F1, FSTAR *F2, char *fname, char *fnam
   return (cnt);
 }
 
+
+
+/* initialization */
+/*
+void FSTAR::init2 (){
+  if ( _in_lb >0 || _in_ub <FSTAR_INTHUGE ) _flag |= (FSTAR_IN_CHK+FSTAR_CNT_IN);
+  if ( _out_lb >0 || _out_ub <FSTAR_INTHUGE ) _flag |= (FSTAR_OUT_CHK+FSTAR_CNT_OUT);
+  if ( _deg_lb >0 || _deg_ub <FSTAR_INTHUGE ){
+    _flag |= FSTAR_DEG_CHK+FSTAR_CNT_IN;
+    if ( (_flag&(FSTAR_OUT_CHK+FSTAR_IN_CHK)) ==0 ) _flag |= FSTAR_CNT_DEG_ONLY;
+    else _flag |= FSTAR_CNT_OUT;
+  }
+}
+*/
+/* termination */
+/*
+void FSTAR::end (){
+  mfree (_edge, _edge_w, _in_deg, _out_deg, _fstar, _table, _rev_table);
+}
+*/
 

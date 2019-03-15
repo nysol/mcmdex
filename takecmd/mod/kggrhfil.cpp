@@ -50,7 +50,7 @@ w,W:read/write edge weights in the graph file\n\
   EXIT;
 }
 
-int KGGRHFIL::read_param_iter (char *a, int *ff){
+int KGGRHFIL::setArgs_iter (char *a, int *ff){
   int f=0;
   *ff = 2;
   if ( strchr(a, 'u') ){ f |= LOAD_EDGE; *ff = 0; }
@@ -66,95 +66,158 @@ int KGGRHFIL::read_param_iter (char *a, int *ff){
   if ( strchr(a, 'v') ) f |= LOAD_ID1;
   return (f);
 }
+
 /* read filenames from command line parameters */
-void KGGRHFIL::read_param (int argc, char *argv[]){
+int KGGRHFIL::setArgs(int argc, char *argv[]){
 
   int c=1;
 
-  if ( argc<c+3 ){ help(); return; }
+  if ( argc<c+3 ){ help(); return 1; }
 
-  _FS.set_edge_dir(2);
-  
-  if ( !strchr (argv[c], '_') ){ _FS.union_flag(SHOW_MESSAGE);   }
-  if ( strchr (argv[c], '+') ) { _II.union_flag(ITEMSET_APPEND); }
+	_edge_dir = 2;//_FS.set_edge_dir(2);  
 
-  _FS.union_flag( read_param_iter (argv[c], _FS.getp_edge_dir()) );
+  if ( !strchr (argv[c], '_') ){ _fsFlag |= SHOW_MESSAGE;   }
+	//これ使いたい場合は別途考える
+//  if ( strchr (argv[c], '+') ) { _iFlag  |= ITEMSET_APPEND; }
+
+	_fsFlag  |= setArgs_iter(argv[c], &_edge_dir);
+  // _FS.union_flag( read_param_iter (argv[c], _FS.getp_edge_dir()) );
 
   if ( strchr(argv[c], 'u') ){ _problem |= LOAD_EDGE; }
   if ( strchr(argv[c], 'E') ){ _problem |= LOAD_ELE; }
   if ( strchr(argv[c], 'N') ){ _problem |= LOAD_GRAPHNUM; }
   if ( strchr(argv[c], 'W') ){ _problem |= LOAD_EDGEW; }
   if ( strchr(argv[c], 'V') ){ _problem |= LOAD_ID1; }
-  if ( strchr(argv[c], 'q') ){ _dir = 1; _FS.set_edge_dir(0); }
+  if ( strchr(argv[c], 'q') ){ _dir = 1; _edge_dir=0; }
   if ( strchr(argv[c], '0') ){ _problem  |= FSTAR_INS_ROWID; }
   if ( strchr(argv[c], '9') ){ _problem  |= FSTAR_INS_ROWID_WEIGHT; }
   if ( strchr(argv[c], 'Z') ){ _problem2 |= GRHFIL_NORMALIZE; }
   if ( strchr(argv[c], '1') ){ _problem  |= LOAD_RM_DUP; }
-  if ( _FS.get_edge_dir() == 2 )  { error ("one of B, D, d, u or U has to be given", EXIT);}
+  if ( _edge_dir == 2 ){
+		fprintf(stderr,"one of B, D, d, u or U has to be given\n");
+  	return 1; 
+  }
 
   c++;
+
   while ( argv[c][0] == '-' ){
     switch (argv[c][1]){
-      case 't': _FS.set_deg_lb (atoi(argv[c+1]));
-      break; case 'T': _FS.set_deg_ub ( atoi(argv[c+1]) );
-      break; case 'i': _FS.set_in_lb ( atoi(argv[c+1]) );
-      break; case 'I': _FS.set_in_ub ( atoi(argv[c+1]) );
-      break; case 'o': _FS.set_out_lb ( atoi(argv[c+1]) );
-      break; case 'O': _FS.set_out_ub ( atoi(argv[c+1]) );
-      break; case 'r': _FS.set_w_lb ( atof(argv[c+1]) );
-      break; case 'R': _FS.set_w_ub ( atof(argv[c+1]) );
-      break; case 'X': _ratio = atof(argv[c+1]); _th = atof(argv[c+2]); c++;
-      break; case 'x': _ratio = atof(argv[c+1]); _th = DOUBLEHUGE;
-      break; case '1': _th2 = atof(argv[c+1]);  _problem2 |= GRHFIL_DISCRETIZE;
-      break; case 'w': _FS.set_wfname ( argv[c+1] );
-      break; case 'W': _weight_fname = argv[c+1];
-      break; case 'p': _table_fname = argv[c+1];
-      break; case ',': _FS.set_sep ( argv[c+1][0] );
-      break; case 'Q': _table_fname = argv[c+1]; _dir =1;
+      case 't': 
+      	_deg_lb = atoi(argv[c+1]);
+      break; case 'T': 
+      	_deg_ub = atoi(argv[c+1]);
+
+      break; case 'i':
+      	_in_lb = atoi(argv[c+1]);
+
+      break; case 'I': 
+      	_in_ub = atoi(argv[c+1]);
+
+      break; case 'o': 
+      	_out_lb = atoi(argv[c+1]);
+
+      break; case 'O': 
+      	_out_ub = atoi(argv[c+1]);
+
+      break; case 'r': 
+      	_w_lb = atof(argv[c+1]);
+      	
+      break; case 'R': 
+      	_w_ub = atof(argv[c+1]);
+      
+      break; case 'X': 
+      	_ratio = atof(argv[c+1]); 
+      	_th = atof(argv[c+2]); 
+      	c++;
+      	
+      break; case 'x': 
+      	_ratio = atof(argv[c+1]); 
+      	_th = DOUBLEHUGE;
+
+      break; case '1': 
+      	_th2 = atof(argv[c+1]);  
+      	_problem2 |= GRHFIL_DISCRETIZE;
+
+      break; case 'w': 
+      	_wfname = argv[c+1];
+
+      break; case 'W': 
+      	_weight_fname = argv[c+1];
+      	
+      break; case 'p': 
+      	_table_fname = argv[c+1];
+      	
+      break; case ',': 
+      	_sep = argv[c+1][0] ;
+
+      break; case 'Q': 
+      	_table_fname = argv[c+1]; 
+      	_dir =1;
+
+
       break; case 'd': 
-      	if ( _FS2.get_fname() ){
+      	if ( _fname2 ){
           _th2 = atof(argv[c+1]);
           _root = 4;
-     		} else {
-          _FS2.set_fname ( argv[c+1]);
-          _root = 3; _th2 = 1;
-          _FS2.union_flag ( read_param_iter (&argv[c][2], _FS2.getp_edge_dir()) );
-          if ( _FS2.get_edge_dir() == 2 ) _FS2.set_edge_dir ( _FS.get_edge_dir()); 
+     		} 
+     		else {
+	     		_fname2 = argv[c+1];
+          _root = 3; 
+          _th2 = 1;
+          _fsFlag2 |= setArgs_iter (&argv[c][2], &_edge_dir2);
+          if ( _edge_dir2 == 2 ) _edge_dir2 = _edge_dir;
         }
+
       break; case 'm':
-      	_FS2.set_fname ( argv[c+1] ); _root = 1;
-        _FS2.union_flag ( read_param_iter (&argv[c][2], _FS2.getp_edge_dir()) );
+	      _fname2 = argv[c+1];
+	      _root = 1;
+        _fsFlag2 |= setArgs_iter (&argv[c][2], &_edge_dir2);
+        // _edge_dir2 チェックしなくていい？
+
       break; case 'M':
-      	_FS2.set_fname ( argv[c+1] ); _root = 2;
-        _FS2.union_flag ( read_param_iter (&argv[c][2], _FS2.getp_edge_dir()) );
-      break; case 'n': _rows = atoi(argv[c+1]); 
+	      _fname2 = argv[c+1];
+      	_root = 2;
+      	_fsFlag2 |= setArgs_iter (&argv[c][2], &_edge_dir2);
+        // _edge_dir2 チェックしなくていい？
+
+      break; case 'n': 
+      	_rows = atoi(argv[c+1]); 
+
       break; default: goto NEXT;
     }
     c += 2;
-    if ( argc<c+2 ){ help(); return; }
+    if ( argc<c+2 ){ help(); return 1; }
   }
   
   NEXT:;
-  _FS.set_fname ( argv[c] );
+  _fname = argv[c];
   _output_fname = argv[c+1];
-  print_mesf (&_FS, "input-file %s, output-file %s\n", _FS.get_fname(), _output_fname);
-  print_mesf (&_FS, "degree threshold: ");
-  if ( _FS.get_deg_lb()>0 ) print_mesf (&_FS, FSTAR_INTF" <", _FS.get_deg_lb());
-  if ( _FS.get_deg_lb()>0 || _FS.get_deg_ub()<FSTAR_INTHUGE) print_mesf (&_FS, " degree ");
-  if ( _FS.get_deg_ub()<FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _FS.get_deg_ub());
 
-  if ( _FS.get_in_lb()>0 ) print_mesf (&_FS, FSTAR_INTF" <", _FS.get_in_lb());
-  if ( _FS.get_in_lb()>0 || _FS.get_in_ub()<FSTAR_INTHUGE) print_mesf (&_FS, " in-degree ");
-  if ( _FS.get_in_ub()<FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _FS.get_in_ub());
+
+  print_mesf (&_FS, "input-file %s, output-file %s\n", _fname, _output_fname);
+  print_mesf (&_FS, "degree threshold: ");
+
+  if ( _deg_lb>0 ) print_mesf (&_FS, FSTAR_INTF" <", _deg_lb);
+  if ( _deg_lb>0 || _deg_ub < FSTAR_INTHUGE) print_mesf (&_FS, " degree ");
+  if ( _deg_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _deg_ub);
+
+  if ( _in_lb > 0 ) print_mesf (&_FS, FSTAR_INTF" <", _in_lb);
+  if ( _in_lb > 0 || _in_ub <FSTAR_INTHUGE) print_mesf (&_FS, " in-degree ");
+  if ( _in_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _in_ub);
   
-  if ( _FS.get_out_lb()>0 ) print_mesf (&_FS, FSTAR_INTF" <", _FS.get_out_lb());
-  if ( _FS.get_out_lb()>0 || _FS.get_out_ub()<FSTAR_INTHUGE) print_mesf (&_FS, " out-degree ");
-  if ( _FS.get_out_ub()<FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _FS.get_out_ub());
+  if ( _out_lb > 0 ) print_mesf (&_FS, FSTAR_INTF" <", _out_lb);
+  if ( _out_lb > 0 || _out_ub < FSTAR_INTHUGE) print_mesf (&_FS, " out-degree ");
+  if ( _out_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _out_ub);
+
   print_mesf (&_FS, "\n");
   
   if ( _table_fname ) print_mesf (&_FS, "permutation-table-file %s\n", _table_fname);
-  if ( _root > 0 ){ _FS.union_flag ( LOAD_INCSORT ); _FS2.union_flag ( LOAD_INCSORT); }
 
+	if ( _root > 0 ){ 
+	  _fsFlag |= LOAD_INCSORT ;
+	  _fsFlag2|= LOAD_INCSORT ;
+	}
+	return 0;
 }
 
 /* main routine */
@@ -165,83 +228,60 @@ int KGGRHFIL::run (int argc ,char* argv[]){
   char i;
   WEIGHT w;
 
-	read_param (argc, argv);
 
-	_FS.set_out_node_num(_rows);
+	if ( setArgs(argc, argv) ){ return 1; }
+
+
+  _FS.setParams(
+  	_fsFlag,_fname,_edge_dir,_wfname,
+		_deg_lb,_deg_ub,_in_lb,_in_ub,
+		_out_lb,_out_ub,_w_lb,_w_ub,
+		_sep,_rows
+	);
+
+  _FS2.setParams(_fsFlag2,_fname2,_edge_dir2);
+
 
 	//ARY_LOAD (_FS.get_table(), int, l, _table_fname, 1, EXIT);
-  if ( _dir ) l = _FS.array_LOAD( _table_fname);
-  
-    // no transformation (just replace the numbers and separators)
-  if ( _dir ){
-    fp.open ( _FS.get_fname()   , "r");
-    fp2.open(_output_fname, "w");
-    do {
-      i=0; x=0;
-      do {
-        l = fp.read_int ();
-        if ( (FILE_err&4)==0 ){
-          fp2.print_int ( _FS.get_table()? _FS.get_table(l): l, i);
-          i = _II.get_separator();
-          if ( (_FS.get_flag()&LOAD_EDGEW) && (((_FS.get_flag()&LOAD_ELE)&&x==1) || !(_FS.get_flag()&LOAD_ELE)) ){
-            w = fp.read_double ();
-            fp2.print_int ( w, i);
-          }
-          fp2.flush ();
-        }
-        x++;
-      } while ( (FILE_err&3)==0 );
-      fp2.puts ( "\n");
-    } while ( (FILE_err&2)==0 );
-    fp.close ();
-    fp2.closew ();
-    return (0); //別にする・simset用？
+  // no transformation (just replace the numbers and separators)
+  //これ別のほうがいい？
+
+  if ( _dir ) {
+		
+		return _FS.repNumAndSeparator(_output_fname, _table_fname);
+	 	
   }
+
+
 
   //PROBLEM_load (&PP);
   // _PP.load();
-	preLOAD();
 
-  if ( _ratio != 0 && _FS.get_edge_w() ){ // multiply & trancate
-    FLOOP (l, 0, _FS.get_edge_num()){ 
-      if ( _th == DOUBLEHUGE ){
-        _FS.edge_w_pow (l, _ratio);
-      } 
-      else { 
-      	_FS.edge_w_mul_min(l , _ratio,_th);
-      }
-    }
+	if( _FS.load() ) return 1;
+
+	if( _fname2 ){
+		if( _FS2.load() ) return 1;
+	}
+
+	
+	_FS.adjust_edgeW(_ratio,_th,_th2,_problem2 & GRHFIL_NORMALIZE,_problem2 & GRHFIL_DISCRETIZE);
+
+  _FS.set_flag(_problem); // +(FS->flag&LOAD_EDGE); //なぜここで
+
+  if ( !_dir ) _FS.write_table_file (_table_fname); 
+
+  if ( _root ){
+  	 _ip_l1 = FSTAR::write_graph_operation (
+  		 	&_FS, &_FS2, 
+	  	 	_output_fname, _weight_fname,
+  		 	_root, _th2
+  	 );
   }
-  if ( (_problem2 & GRHFIL_NORMALIZE) && _FS.get_edge_w() ){
-    FLOOP (l, 0, _FS.get_out_node_num()){
-      w = 0.0;
-      FLOOP (x, _FS.get_fstar(l), _FS.get_fstar(l+1)) w += _FS.edge_w_mul(x);
-      w = sqrt (w);
-      //FLOOP (x, _FS.get_fstar[l], _FS.get_fstar[l+1]) _FS._edge_w[x] /= w;
-      FLOOP (x, _FS.get_fstar(l), _FS.get_fstar(l+1)) _FS.edge_w_div(x,w);
-    }
+  else{
+  	 _ip_l1 = _FS.write_graph ( _output_fname, _weight_fname );
   }
-  if ( (_problem2 & GRHFIL_DISCRETIZE) && _FS.get_edge_w() ){
-    xx = 0;
-    FLOOP (l, 0, _FS.get_out_node_num()){
-      ll = _FS.get_fstar(l); _FS.set_fstar(l, xx);
-      FLOOP (x, ll, _FS.get_fstar(l+1)){
-        if ( _FS.get_edge_w(x) >= _th2 ){
-          _FS.set_edge( xx, _FS.get_edge(x));
-          _FS.set_edge_w( xx , _FS.get_edge_w(x));
-          xx++;
-        }
-      }
-    }
-    _FS.set_fstar(l, xx);
-  }
-  
-  _FS.set_flag ( _problem); // +(FS->flag&LOAD_EDGE);
-  if ( !_dir ) _FS.write_table_file (_table_fname);
-  if ( _root ) internal_params.l1 = FSTAR::write_graph_operation (&_FS, &_FS2, _output_fname, _weight_fname, _root, _th2);
-  else internal_params.l1 = _FS.write_graph (_output_fname, _weight_fname);
-//	_PP.end();
-  return (0);
+
+  return 0;
 }
 
 int KGGRHFIL::mrun(int argc ,char* argv[]){

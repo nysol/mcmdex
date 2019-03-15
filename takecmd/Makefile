@@ -3,15 +3,15 @@ CXX = g++
 
 CXXFLAGS = -O3 -Os -g -Wno-c++11-compat-deprecated-writable-strings -I ./lib  -I ./mod
 
-SSPCOBJS =   cmd/msspc.o mod/kgsspc.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o lib/fstar.o 
+SSPCOBJS =   cmd/msspc.o mod/kgsspc.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o
 
 #SSPC4TRA2GCOBJ =  cmd/msspc4tra2gc.o mod/sspctra2gc.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o lib/fstar.o 
 
-GRHFILOBJS = cmd/mgrhfil.o mod/kggrhfil.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o lib/fstar.o 
+GRHFILOBJS = cmd/mgrhfil.o mod/kggrhfil.o lib/stdlib2.o lib/file2.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o lib/fstar.o 
 
-#MACEOBJS = cmd/mmace.o mod/mace.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o lib/sgraph.o 
+MACEOBJS = cmd/mmace.o mod/kgmace.o lib/stdlib2.o lib/file2.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o lib/sgraph.o 
 
-#MEDSETOBJS = cmd/mmedset.o mod/medset.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o lib/fstar.o 
+MEDSETOBJS = cmd/mmedset.o mod/kgmedset.o lib/stdlib2.o lib/file2.o lib/queue.o lib/vec.o lib/base.o lib/aheap.o lib/fstar.o 
 
 LCMOBJ = cmd/mlcm.o mod/kglcm.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/aheap.o lib/sgraph.o 
 
@@ -21,7 +21,7 @@ LCMSEQOBJ = cmd/mlcmseq.o mod/kglcm_seq.o lib/stdlib2.o lib/file2.o lib/trsact.o
 
 #all : msspc mgrhfil mmace mmedset mlcm mlcmseq msspc4tra2gc msimset
 
-all : msspc mgrhfil mlcm mlcmseq
+all : msspc mgrhfil mlcm mlcmseq mmace mmedset
 
 msimset: $(SIMSETOBJS)
 	g++ -o msimset $^

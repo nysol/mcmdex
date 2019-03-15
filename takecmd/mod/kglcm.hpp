@@ -28,6 +28,7 @@
 #include"trsact.hpp"
 #include"sgraph.hpp"
 #include"problem.hpp"
+#include "itemset.hpp" 
 
 
 class KGLCM{
@@ -185,7 +186,7 @@ class KGLCM{
   	}
 
 		_TT.set_perm(NULL);
-	  _TT.set_OQ_t(_TT.get_clms(),0);
+	  _TT.resizeOQ(_TT.get_clms(),0);
 
 		print_mesf (&_TT, "separated at %d\n", _TT.get_sep());
 
