@@ -198,7 +198,6 @@ class TRSACT {
 		_row_ub = row_ub ;
 		_row_lb_ = row_lb_;
 		_row_ub_ = row_ub_;
-	
 		return loadMain();
 
 	}
@@ -206,7 +205,7 @@ class TRSACT {
 	int load(
 		int flag ,int flag2 ,
 		char *fname,char *wfname,char *iwfname,char *fname2,
-		WEIGHT w_lb,WEIGHT w_ub
+		WEIGHT w_lb,WEIGHT w_ub,bool eleflg=false
 	){
 	
 		_flag = flag;
@@ -218,7 +217,7 @@ class TRSACT {
 		_w_lb = w_lb;
 		_w_ub = w_ub; 
 
-		return loadMain(true);
+		return loadMain(eleflg);
 		
 	}
 

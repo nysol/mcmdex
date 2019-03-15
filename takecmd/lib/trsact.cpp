@@ -871,7 +871,6 @@ void TRSACT::sortELE ( FILE_COUNT *C, int flag){
 		//===================
     ARY_MAX (_clm_max, i, p, 0, _T.get_clms());
 
-		cerr << "mqalloc" << endl;
     Mque_allocELE(p);
 
    	//QUEUE_alloc (&_OQ[_T._clms], MAX(_T._t, _clm_max));
@@ -908,7 +907,6 @@ void TRSACT::sortELE ( FILE_COUNT *C, int flag){
     	if ( _mark[t]>0 ) _OQELE[_T.get_clms()].push_backt(t);  // make resulted occ
     }
   }
-  
 }
 
 
@@ -940,8 +938,6 @@ int TRSACT::loadMain(bool elef){
 //  FILE_COUNT C = INIT_FILE_COUNT;
   VEC_ID t=0;
   int f;
-
-	cerr << "flag " << _flag << " "<< _flag2 << endl; 
   // パラメータセット
   /*
 	_flag = flag;
@@ -990,7 +986,7 @@ int TRSACT::loadMain(bool elef){
   //if (ERROR_MES){ mfree (C.rowt, C.clmt); goto END; }
   int i;
   if(elef){
-	  sortELE (&_C, f);
+	  sortELE(&_C, f);
 	}
 	else{
 	  sort (&_C, f);

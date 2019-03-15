@@ -113,6 +113,7 @@ void QUEUE::occ_dupELE ( KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, WEIGHT **ww, WEIGHT
   size_t cnt=0;
   QUEUE_INT e, *x;
   char *buf;
+
   int unit = sizeof(*Q) + (w?sizeof(*w):0) + (pw?sizeof(*pw):0);
  
   ENMAX (u, sizeof(*x));
