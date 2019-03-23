@@ -258,53 +258,6 @@ int KGLCM::setArgs(int argc, char *argv[]){
   return 0;
 }
 
-
-/*********************************************************************/
-/* add an item to itemset, and update data */
-/*********************************************************************/
-void KGLCM::add_item (QUEUE *Q, QUEUE_INT item){
-
-  Q->push_back(item);
-  _II.set_itemflag(item,1);
-
-  if ( _sgfname ){
-
-		for(QUEUE_INT *x =_SG.edge_vv(item); *((QUEUE_INT *)x)<(item) ; x++){
-			_itemary[*x]++;
-		}
-      
-  }
-}
-void KGLCM::add_item ( QUEUE_INT item){
-
-  _II.itemINS(item);
-  _II.set_itemflag(item,1);
-
-  if ( _sgfname  ){
-
-		for(QUEUE_INT *x=_SG.edge_vv(item); *((QUEUE_INT *)x)<(item) ; x++){
-			_itemary[*x]++;
-		}
-	}
-  
-}
-/*********************************************************************/
-/* delete an item from itemset, and update data */
-/*********************************************************************/
-void KGLCM::del_item (QUEUE *Q){
-
-	QUEUE_INT item = Q->pop_back(); 
-
-  _II.set_itemflag(item,0);
-
-  if ( _sgfname  ){
-		for( QUEUE_INT *x =_SG.edge_vv(item); *((QUEUE_INT *)x)<(item) ; x++){
-			_itemary[*x]--;
-		}
-	}
-
-}
-
 /* remove unnecessary transactions which do not include all posi_closed items */
 /* scan of each transaction is up to item */
 void KGLCM::reduce_occ_by_posi_equisupp ( 
@@ -371,23 +324,37 @@ QUEUE_INT KGLCM::maximality_check (
   for(x=_TT.beginJump();x<_TT.endJump() ; x++){
 
     if ( _II.get_itemflag(*x) == 1) continue;
-    if ( _sgfname && ( (((_problem & LCM_UNCONST)==0) && (_itemary[*x]>0) ) || 
-        ((_problem & LCM_UNCONST) && (_itemary[*x]<_II.item_get_t() ))) ){
+
+    if ( _sgfname && ( (((_problem & LCM_UNCONST)==0) && (_SG.itemCnt(*x)>0) ) || 
+        ((_problem & LCM_UNCONST) && (_SG.itemCnt(*x)<_II.item_get_t() ))) ){
       // e can not be added by item constraint
       _II.set_itemflag(*x,3);
-    } else if ( ISEQUAL(_occ_pw[*x],_II.get_pfrq()) && ( ISEQUAL(_occ_w[*x],_II.get_frq()) || (_problem & LCM_POSI_EQUISUPP) ) ){ // check e is included in all transactions in occ
+    } 
+    else if ( ISEQUAL(_occ_pw[*x],_II.get_pfrq()) && ( ISEQUAL(_occ_w[*x],_II.get_frq()) || (_problem & LCM_POSI_EQUISUPP) ) ){ // check e is included in all transactions in occ
+
       if ( *x<item ){
         if ( !_sgfname ){ // add item as "equisupport"
-        	// add_item ( &_II._add, *x);
-        	_II.iaddINS(*x);
-				  _II.set_itemflag(item,1);
-          if ( (_problem&LCM_POSI_EQUISUPP) && (_II.get_flag()&ITEMSET_RULE) ) _II.set_itemflag(*x,0); // in POSI_EQUISUPP, occ_w[*x] is not equal to II->frq, thus we have to deal it in the rule mining
+
+					_II.addEquiSupport(*x);
+          if ( (_problem&LCM_POSI_EQUISUPP) && (_II.get_flag()&ITEMSET_RULE) ){				
+						// in POSI_EQUISUPP, occ_w[*x] is not equal to II->frq, 
+						// thus we have to deal it in the rule mining
+          	 _II.set_itemflag(*x,0); 
+          }
         }
         if ( !ISEQUAL(_occ_w[*x],_II.get_frq()) ){ full++; _II.set_itemflag(*x, 2); }
-      } else m = *x; // an item in prefix can be added without going to another closed itemset
-    } else {
+
+      }
+      else {
+      	 // an item in prefix can be added without going to another closed itemset
+      	 m = *x;
+      }
+
+    }
+    else {
       if ( *x<item ) (*cnt)++;
       _II.set_itemflag( *x , _occ_pw[*x] < _th? 3: 0); // mark item by freq/infreq
+
       if ( _occ_w[*x] > w ){
         *fmax = *x;
         w = _occ_w[*x];
@@ -412,71 +379,89 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   int wblock = _TT.get_wblock();
   VEC_ID new_t = _TT.get_new_t();
 
-  QUEUE_INT cnt, f, *x, m, e, imax = _clms? item: _TT.get_clms();
-  QUEUE_ID js = _itemcand.get_s(), qt = _II.iadd_get_t(), i;
-  WEIGHT rposi=0.0;
+  QUEUE_INT cnt, f, *x, m, e;
 
+
+	// _clmsFlag = ((_problem&PROBLEM_FREQSET)&&(_iFlag&ITEMSET_RULE)==0);
+  QUEUE_INT imax = _clmsFlag ? item: _TT.get_clms();
+
+
+  QUEUE_ID js = _itemcand.get_s(); 
+  QUEUE_ID qt = _II.iadd_get_t();
+
+
+  _itemcand.setStartByEnd();
 
   _II.inc_iters();
-  _itemcand.set_s(_itemcand.get_t());
 
-  if ( _II.get_flag()&ITEMSET_POSI_RATIO && pfrq!=0 ) rposi = pfrq / (pfrq+pfrq-_II.get_frq());
+	// -P , -p
+  WEIGHT rposi=0.0;
+  if ( _iFlag&ITEMSET_POSI_RATIO && pfrq!=0 ) {
+  	rposi = pfrq / (pfrq + pfrq - _II.get_frq());
+  }
 
-  _TT.delivery ( _occ_w, _occ_pw, occ, imax);
+  _TT.delivery( _occ_w, _occ_pw, occ, imax);
 
 
 	 // for ratio pruning when item target is set.
-  if ( _II.get_target() < _II.get_item_max() && _occ_w[_II.get_target()] < _II.get_frq_lb()*_II.get_ratio_lb() ){
-		for(x=_TT.beginJump();x<_TT.endJump() ; x++){
-  	 	_TT.clrOQend(*x);
-  	}
+  if ( 
+  	_II.get_target() < _II.get_item_max() && 
+  	_occ_w[_II.get_target()] < _II.get_frq_lb()*_II.get_ratio_lb() )
+  {
+		_TT.clrOQendByJump();
   	goto END; 
   }
 
   // if the itemset is empty, set frq to the original #trsactions, and compute item_frq's
   if ( _II.get_itemset_t() == 0 ){
-    if ( _TT.get_total_w_org() != 0.0 )
-        FLOOP (i, 0, _TT.get_clms()) _II.set_item_frq(i,_occ_w[i]/_TT.get_total_w_org());
+    if ( _TT.get_total_w_org() != 0.0 ){
+    	for(size_t i=0; i < _TT.get_clms();i++){
+        _II.set_item_frq( i , _occ_w[i]/_TT.get_total_w_org() );
+      }
+    }
   }
 
-
+	// セットし直し？
   _II.set_frq(frq); 
   _II.set_pfrq(pfrq);
+
   m = maximality_check ( occ, item, &f, &cnt);
 
 
   if ( !(_problem & PROBLEM_FREQSET) && m<_TT.get_clms() ){  // ppc check
 
-  	// MQUE_FLOOP_CLS (_TT.get_jump(), x){
-		for(x=_TT.beginJump();x<_TT.endJump() ; x++){
-  	 	_TT.clrOQend(*x);
-  	}
-
+		_TT.clrOQendByJump();
     goto END;
+
   }
-  if ( !(_problem&PROBLEM_MAXIMAL) || f>=_TT.get_clms() || _occ_w[f]<_II.get_frq_lb() ){
-    if ( !(_II.get_flag() & ITEMSET_POSI_RATIO) || (rposi<=_II.get_rposi_ub() && rposi>=_II.get_rposi_lb()) ){
-      _II.set_prob(1.0);
-      _II.item_cal_prob();
-      _II.iadd_cal_prob();
+
+  if ( !(_problem&PROBLEM_MAXIMAL) || f >= _TT.get_clms() || _occ_w[f] < _II.get_frq_lb() ){
+
+    if ( !(_II.get_flag() & ITEMSET_POSI_RATIO) || 
+    			(rposi<=_II.get_rposi_ub() && rposi>=_II.get_rposi_lb()) ){
+
       _II.check_all_rule ( _occ_w, occ, _TT.getp_jump(), _TT.get_total_pw_org(), 0);     
-      // if (ERROR_MES) return;
+
     }
   } 
+
   // select freqeut (and addible) items with smaller indices
-	//MQUE_FLOOP_CLS (_TT.get_jump(), x){
+
 	for(x=_TT.beginJump();x<_TT.endJump() ; x++){
-		// ここでくりあ
-    _TT.clrOQend(*x);  // in the case of freqset mining, automatically done by rightmost sweep;
+
+		// in the case of freqset mining, automatically done by rightmost sweep;
+    _TT.clrOQend(*x);  
 
     if ( _occ_w[*x] < _II.get_frq_lb() ) _occ_w[*x] = 0;  // modified 21/May/2018
+
     if ( *x<item && _II.get_itemflag(*x) == 0 ){
       _itemcand.push_back(*x);
+
       _occ_w2[*x] = _occ_w[*x];
       if ( _TT.get_flag2() & TRSACT_NEGATIVE ) _occ_pw2[*x] = _occ_pw[*x];
+
     }
   }
-
 
   if ( _itemcand.size()==0 || _II.get_itemset_t() >= _II.get_ub() ) goto END;
 
@@ -485,10 +470,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
 	// database reduction
   if ( cnt>2 && (_II.get_flag() & ITEMSET_TRSACT_ID)==0 && _II.get_itemset_t() >0){
-   	_TT.find_same (occ, item);
-   	_TT.merge_trsact (_TT.getp_OQ(_TT.get_clms()), item);
-    _TT.reduce_occ (occ);
-
+  	_TT.dbReduction(occ, item);
   }
   
 	// occurrence deliver
@@ -498,29 +480,26 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   cnt = _itemcand.size(); f=0;   // for showing progress
 
   while (_itemcand.size() > 0 ){
-    //e = QUEUE_ext_tail_ (&_itemcand);
+
     e = _itemcand.pop_back();
-    //cerr << "aaa " << e << " " <<  _occ_pw2[e] << " " <<  MAX(_II.get_frq_lb(), _II.get_posi_lb()) << endl;
+
     if ( _occ_pw2[e] >= MAX(_II.get_frq_lb(), _II.get_posi_lb()) ){  // if the item is frequent
-      add_item (e);
+
+			_II.addCurrent(e);
+		  if ( _sgfname  ){ _SG.itemCntUp(item); }
+
+
       LCMCORE( e, _TT.getp_OQ(e), _occ_w2[e], _occ_pw2[e]); // recursive call
+
 			if ( _ERROR_MES ) return;
-      // del_item ( &_II._itemset);
-			QUEUE_INT item = _II.item_del_item();
+
+			_II.delCurrent();
+		  if ( _sgfname  ){ _SG.itemCntDown(item); }
 			
-		  //if ( _sgfname ){
-		  //	QUEUE_INT *x;
-    	//	//MQUE_MLOOP_CLS (_SG._edge._v[item], x, item)  _itemary[*x]--;
-			//	for(x=_SG.edge_vv(item); *((QUEUE_INT *)x)<(item) ; x++){
-			//		_itemary[*x]--;
-			//	}
-    	//}
     }
     // clear the occurrences, for the further delivery
     _TT.clrOQend(e);
     _TT.clrOQt(e);
-
-
 
     _occ_w[e] = _occ_pw[e] = -WEIGHTHUGE;  // unnecessary?
     
@@ -536,21 +515,18 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   _TT.set_wnum(wnum);
   _TT.set_wblock(wblock);
 
-  END:;
+ END:;
+
   while ( _II.iadd_get_t() > qt ) {
-  	//del_item ( &_II._add);
-		QUEUE_INT item = _II.iadd_del_item();
-		
-		if ( _sgfname ){
-			QUEUE_INT *x;
- 			// MQUE_MLOOP_CLS (_SG._edge._v[item], x, item)  _itemary[*x]--;
-			for(x=_SG.edge_vv(item); *((QUEUE_INT *)x)<(item) ; x++){
-				_itemary[*x]--;
-			}
-    }
+
+		QUEUE_INT item = _II.delEquiSupport();
+		if ( _sgfname ){ _SG.itemCntDown(item); }
+
   }
-  _itemcand.set_t(_itemcand.get_s());
+
+	_itemcand.setEndByStart();  //_itemcand.set_t(_itemcand.get_s());
   _itemcand.set_s(js);
+
 }
 
 /*************************************************************************/
@@ -592,14 +568,13 @@ int KGLCM::run (int argc, char *argv[]){
   
 	_iFlag |= (ITEMSET_ITEMFRQ + ITEMSET_ADD); 
 
-  if (!_wfname){// adjust
+  if (!_wfname){// adjust なぜwegihtがない時だけ
 
 	  ENMIN(_frq_ub, (WEIGHT)_TT.get_t());
   
     if( _topk_k > 0 ) _iFlag |= ITEMSET_SC2; 
 
   }
- 
 
 	_II.setParams(
 		_iFlag,_frq_lb,_frq_ub,_lb,_ub,_target,
@@ -614,8 +589,6 @@ int KGLCM::run (int argc, char *argv[]){
     if ( !ERROR_MES ) LCMCORE (_TT.get_clms(), &_oo, _TT.get_total_w_org(), _TT.get_total_pw_org());
     _II.last_output();
   }
-
-  _TT.set_sc(NULL);
 
   return (ERROR_MES?1:0);
 }

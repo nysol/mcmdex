@@ -19,7 +19,6 @@ INT common_INT, common_INT2;
 char *common_charp, *common_pnt;
 FILE *common_FILE;
 
-PERM common_PERM;
 char common_comm[1024], common_comm2[1024], *common_argv[100];  // max. command length = 2048, max. #params = 100
 
 char *ERROR_MES = NULL;
@@ -29,10 +28,6 @@ PARAMS internal_params;
 #ifdef MULTI_CORE
 int SPIN_LOCK_dummy;
 #endif
-
-//FILE2 INIT_FILE2 = {TYPE_FILE2,NULL,NULL,NULL,NULL,0};
-VEC INIT_VEC = {TYPE_VEC,NULL,0,0};
-//FILE_COUNT INIT_FILE_COUNT = {0,0,0,0,0,0,0,0,0,0,0,0,NULL,NULL,0,0,NULL,NULL,0,0,NULL,NULL};
 
 
 FILE_COUNT_INT common_FILE_COUNT_INT;
@@ -205,8 +200,6 @@ void UNIONFIND_unify_set (UNIONFIND_ID u, UNIONFIND_ID v, UNIONFIND_ID *ID, UNIO
     }
   }
 }
-
-
 
 /* allocate memory according to rows and rowt */
 

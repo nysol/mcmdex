@@ -24,22 +24,6 @@
  #define TRSACT_MAXNUM 20000000LL
 #endif
 
-/*
-typedef struct {
-  int flag;
-  FILE_COUNT_INT clms, rows, eles, clm_end, row_end, row_btm, clm_btm; // #rows, #column, #elements, minimum elements
-  FILE_COUNT_INT row_min, row_max, clm_min, clm_max;  // maximum/minimum size of column
-  FILE_COUNT_INT *rowt, *clmt;   // size of each row/clmn
-  WEIGHT total_rw, total_cw, *rw, *cw;  // WEIGHTs for rows/columns ... reserved.
-  FILE_COUNT_INT rw_end, cw_end;
-  PERM *rperm, *cperm;   // permutation (original->internal) of rows and columns
-} FILE_COUNT;
-
-extern FILE_COUNT INIT_FILE_COUNT;
-
-INIT_FILE_COUNT = {0,0,0,0,0,0,0,0,0,0,0,0,NULL,NULL,0,0,NULL,NULL,0,0,NULL,NULL};
-*/
-
 class FILE_COUNT{
 
   //int _flag;
@@ -64,6 +48,7 @@ class FILE_COUNT{
   FILE_COUNT_INT _rw_end, _cw_end;
 
   PERM *_rperm, *_cperm;   // permutation (original->internal) of rows and columns
+	bool _negaFLG;
 
 	QUEUE_INT weight_Scan(char *wf){
 
@@ -87,7 +72,7 @@ class FILE_COUNT{
 		ARY_MIN (w, i, _rw, 0, kk);
 		
 //		if ( w<0 ) _flag2 |= TRSACT_NEGATIVE;どこかでセットする
-		
+		if ( w<0 ) { _negaFLG = true;}
 		wfp.close();
 		return kk;
 	
@@ -101,7 +86,7 @@ class FILE_COUNT{
 			_row_btm(0) , _clm_btm(0) , _row_min(0) , _row_max(0),
 			_clm_min(0) , _clm_max(0) , _rowt(NULL) , _clmt(NULL),
 			_total_rw(0), _total_cw(0), _rw(NULL) , _cw(NULL),
-			_rw_end(0) , _cw_end(0) , _rperm(NULL) , _cperm(NULL){}
+			_rw_end(0) , _cw_end(0) , _rperm(NULL) , _cperm(NULL),_negaFLG(false){}
 	
 
 		~FILE_COUNT(void){
@@ -109,7 +94,7 @@ class FILE_COUNT{
 			//rowtは他でセットされる
 		}
 		
-		
+		bool existNegative(){ return _negaFLG;}
 		
 		WEIGHT get_total_w_org(){ return _total_w_org;}
 		WEIGHT get_total_pw_org(){ return _total_pw_org;}
@@ -225,6 +210,7 @@ class FILE_COUNT{
 
 			return  ( RANGE(w_lb, _cw[tt], w_ub) && RANGE (clm_lb, _clmt[tt], clm_ub) );
 		}
+
 		bool RangeChecnkR(VEC_ID tt,QUEUE_ID row_lb ,QUEUE_ID row_ub ){
 			return  RANGE(row_lb, _rowt[tt], row_ub);
 		}
@@ -341,7 +327,6 @@ class FILE_COUNT{
 	}
 
 	// NOT LOAD_TPOSEの時
-
 	int file_count (FILE2 *fp, QUEUE_ID row_lb, QUEUE_ID row_ub ,char *wf){
 
 	
@@ -415,22 +400,6 @@ class FILE_COUNT{
 
 		free2 (jump);
 		
-		/*
-		std::cerr << "_clm" << std::endl;
-		for(int i=0;i<_clm_end;i++){
-			std::cerr << "clm:" << i << " " << _clmt[i]<< std::endl;
-		}
-		
-		std::cerr << "_row" << std::endl;
-		for(int i=0;i<_row_end;i++){
-			std::cerr << "rowt:" << i << " " << _rowt[i]<< std::endl;
-		}
-		//exit(1);
-		*/
-	
-
-
-
     // swap the variables in transpose mode
   	if ( _rw == NULL ){
   		_total_w_org = _total_pw_org = _rows_org; 
@@ -460,9 +429,6 @@ class FILE_COUNT{
 		int int_rows, int skip_clms, int int_clms, 
 	 	FILE_COUNT_INT row_limit)
 	{
-
-		std::cerr << flag << " " << skip_rows << " " 
-		<< int_rows<< " " << skip_clms<< " " <<  int_clms << " " << row_limit << std::endl;
 		
 	  FILE_COUNT_INT k=0, j, x, y, t=0;
 

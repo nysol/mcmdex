@@ -38,6 +38,10 @@ using namespace std;
  #define TRSACT_DEFAULT_WEIGHT 0  // default weight of the transaction, for missing weights in weight file
 #endif
 
+#ifndef TRSACT_MAXNUM 
+ #define TRSACT_MAXNUM 20000000LL
+#endif
+
 class TRSACT {
 
   int _flag;      
@@ -108,10 +112,11 @@ class TRSACT {
 	/*   print transactions */
 	void prop_print (void);
 
-	void end (void);
+	// デストラクタへ
+	void end (void){}
+
 	/* allocate memory, set permutation, and free C.clmt,rowt,rw,cw */
-	int alloc (FILE_COUNT *C);
-	int talloc(void);
+	int alloc(void);
 
 	/* load the file to allocated memory according to permutation, and free C.rw, C.cw */
 	void file_read ( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
@@ -134,7 +139,7 @@ class TRSACT {
 	/* be careful for overflow of jump */
 	/* if occ==NULL, scan all transactions */
 	/* flag&1: count only positive weights */
-	void delivery_iter ( WEIGHT *w, WEIGHT *pw, VEC_ID t, QUEUE_INT m);
+	//void delivery_iter ( WEIGHT *w, WEIGHT *pw, VEC_ID t, QUEUE_INT m);
 	//void delivery (QUEUE *jump, WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
 
 
@@ -148,6 +153,28 @@ class TRSACT {
 	/* if memory (T->buf) is short, do nothing and return 1               */
 	void itemweight_union (VEC_ID tt, VEC_ID t);
 	
+	/*****/
+	/* remove duplicated transactions from occ, and add the weight of the removed trsacts to the representative one */
+	/* duplicated trsacts are in occ[item_max]. Clear the queue when return */
+	/* T->flag&TRSACT_MAKE_NEW: make new trsact for representative
+   T->flag&TRSACT_INTSEC: take suffix intersection of the same trsacts
+   T->flag&TRSACT_UNION: take union of the same trsacts */
+	//void merge_trsact (QUEUE *o, QUEUE_INT end);
+	void merge_trsact (QUEUE_INT end);
+
+	/**************************************************************/
+	/* Find identical transactions in a subset of transactions, by radix-sort like method */
+	/* infrequent items (refer LCM_occ) and items larger than item_max are ignored */
+	/* INPUT: T:transactions, occ:subset of T represented by indices, result:array for output, item_max:largest item not to be ignored */
+	/* OUTPUT: if transactions i1, i2,..., ik are the same, they have same value in T->mark[i]
+	 (not all) isolated transaction may have mark 1 */
+	/* use 0 to end-1 of QQ temporary, and QQ[i].t and QQ[i].s have to be 0. */
+	/*************************************************************************/
+	void find_same ( QUEUE *occ, QUEUE_INT end);
+	
+	/* remove the unified transactions from occ (consider T->occ_unit) */
+	void reduce_occ (QUEUE *occ);
+
 
 	public:
 	TRSACT(void):
@@ -289,6 +316,22 @@ class TRSACT {
 	void clrOQend(int i){ _OQ[i].endClr(); }
 	void clrOQt(int i){ _OQ[i].tClr(); }
 
+	void clrOQendByJump(){ 
+
+		for(QUEUE_INT *x = _jump.begin(); x<_jump.end() ;x++ ){ 
+  	 _OQ[*x].endClr();
+		}
+
+	}
+
+	//再考
+	QUEUE_INT * beginJump(){ return _jump.begin();} 
+	QUEUE_INT * endJump(){ return _jump.end();} 
+
+
+
+
+
 	void clrOQendELE(int i){ _OQELE[i].endClr(); }
 	void clrOQtELE(int i){ _OQELE[i].tClr(); }
 
@@ -339,9 +382,6 @@ class TRSACT {
 	KGLCMSEQ_ELM * beginOQvELE(int i){return _OQELE[i].get_v();}
 	KGLCMSEQ_ELM * endOQvELE(int i){  return _OQELE[i].get_v()+ _OQELE[i].get_t();}
 
-	//再考
-	QUEUE_INT * beginJump(){ return _jump.get_v();} //再考？
-	QUEUE_INT * endJump(){ return _jump.get_v()+_jump.get_t();} //再考？
 
 	void resizeOQ(int i,int v){ _OQ[i].resize(v); }
 
@@ -363,8 +403,6 @@ class TRSACT {
   void inc_OQtELE(int e){	_OQELE[e].inc_t(); }
   void inc_OQendELE(int e){	_OQELE[e].inc_end(); }
 	int get_OQ_endELE(int i){ return _OQELE[i].get_end(); }
-
-
 
 	VEC_ID get_mark(int i){ return _mark[i]; }
 
@@ -416,8 +454,6 @@ class TRSACT {
     _OQ[i].set_v ( o[i]);
   }
 	
-	/* remove the unified transactions from occ (consider T->occ_unit) */
-	void reduce_occ (QUEUE *occ);
 	
 	void set_occ_unit(int v){	_occ_unit	=v;};
 
@@ -454,8 +490,8 @@ class TRSACT {
 	void calloc_sc(VEC_ID sise){
 		calloc2 (_sc, sise, return);
 	}
-	void delivery ( WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
-	void deliv ( QUEUE *occ, QUEUE_INT m);
+	void delivery( WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
+	void deliv( QUEUE *occ, QUEUE_INT m);
 
 
 	void print ( QUEUE *occ, PERM *p);
@@ -468,8 +504,6 @@ class TRSACT {
 	 (not all) isolated transaction may have mark 1 */
 	/* use 0 to end-1 of QQ temporary, and QQ[i].t and QQ[i].s have to be 0. */
 	/*************************************************************************/
-	void find_same ( QUEUE *occ, QUEUE_INT end);
-
 	void find_same ( KGLCMSEQ_QUE *occ, QUEUE_INT end);
 
 	/*****/
@@ -478,8 +512,17 @@ class TRSACT {
 	/* T->flag&TRSACT_MAKE_NEW: make new trsact for representative
    T->flag&TRSACT_INTSEC: take suffix intersection of the same trsacts
    T->flag&TRSACT_UNION: take union of the same trsacts */
-	void merge_trsact (QUEUE *o, QUEUE_INT end);
+	//void merge_trsact (QUEUE *o, QUEUE_INT end);
 	void merge_trsact (KGLCMSEQ_QUE *o, QUEUE_INT end);
+
+
+	void dbReduction(QUEUE *occ, QUEUE_INT item){
+
+   	find_same (occ, item);
+   	merge_trsact (item);
+    reduce_occ(occ);
+	}
+
 
 	void Mque_alloc(VEC_ID *p){
 		size_t cmn_size_t = 0;

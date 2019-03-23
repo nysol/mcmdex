@@ -15,17 +15,16 @@
 #pragma once
 #define WEIGHT_DOUBLE
 
-//#define ITEMSET_ITERS2 4  // output #iters2
 #define ITEMSET_PRE_FREQ 8  // output frequency preceding to each itemset
 #define ITEMSET_FREQ 16  // output frequency following to each itemset
 #define ITEMSET_ALL 32 // concat all combinations of "add" to each itemset
 
 #define ITEMSET_TRSACT_ID 64  // output transaction ID's in occurrences
-// #define ITEMSET_OUTPUT_EDGE 128  // output itemset as edge set (refer AGRAPH)
+
 #define ITEMSET_IGNORE_BOUND 256 // ignore constraint for frequency
 #define ITEMSET_RM_DUP_TRSACT 512 // remove duplicated transaction ID's
 #define ITEMSET_MULTI_OCC_PRINT 1024 //print each component of occ
-   // TRSACT_ID+MULTI_OCC_PRINT means print first two components of occ
+
 #define ITEMSET_NOT_ITEMSET  2048 // do not print itemset to the output file
 #define ITEMSET_RULE_SUPP  4096 // output confidence and item frquency by abusolute value
 #define ITEMSET_OUTPUT_POSINEGA  8192 // output negative/positive frequencies
@@ -51,7 +50,6 @@
 #define ITEMSET_LAMP 256   // LAMP mode
 #define ITEMSET_LAMP2 512   // 2D LAMP mode
 
-//#define ITEMSET_RULE (ITEMSET_RULE_FRQ + ITEMSET_RULE_INFRQ + ITEMSET_RULE_RFRQ + ITEMSET_RULE_RINFRQ + ITEMSET_RFRQ + ITEMSET_RINFRQ + ITEMSET_SET_RULE)  // for check any rule is true
 #define ITEMSET_RULE (ITEMSET_RULE_FRQ + ITEMSET_RULE_INFRQ + ITEMSET_RULE_RFRQ + ITEMSET_RULE_RINFRQ + ITEMSET_SET_RULE)  // for check any rule is true
 
 #ifndef ITEMSET_INTERVAL
@@ -69,9 +67,6 @@
 
 class ITEMSET{
 
-	//  I->topk = INIT_AHEAP;
-	//	_itemset = I->add = INIT_QUEUE;
-  //I->minh = I->maxh = INIT_IHEAP;
 	
 	int _flag, _flag2; // <=_flag2 (LAMPの時)使われてないようなきが 
 	int _progress;
@@ -121,8 +116,6 @@ class ITEMSET{
   int _multi_core;  // number of processors
 
   AHEAP *_itemtopk;  // heap for topk mining. valid if topk->h is not NULL
-  //AHEAP **_itemtopk;  // heap for topk mining. valid if topk->h is not NULL
-
 
   AHEAP _topk; 
 
@@ -146,36 +139,38 @@ class ITEMSET{
 	/* topk.end>0 => initialize heap for topk mining */
 	/* all pointers will be set to 0, but not for */
 	/* if topK mining, set topk.end to "K" */
-	//void init ();
 	void end ();
 
-
+	void lamp (LONG s);
+	void lamp2 (LONG s);
+	
+	
+	// ================================================
+	//  OUTPUT
+	// ================================================
 
 	/* output frequency, coverage */
 	void output_frequency (WEIGHT frq, WEIGHT pfrq, int core_id);
 
-
+	/*************************************************************************/
+	//  OUTPUT QUEUE
+	/*************************************************************************/
 	/* output itemsets with adding all combination of "add"
 	   at the first call, i has to be "add->t" */
 	void solution_iter (QUEUE *occ, int core_id);
 	void solution ( QUEUE *occ, int core_id);
 
-	/*************************************************************************/
 	/* ourput a rule */
-	/*************************************************************************/
 	void output_rule ( QUEUE *occ, double p1, double p2, size_t item, int core_id);
 
-	/*************************************************************************/
 	/* check all rules for a pair of itemset and item */
-	/*************************************************************************/
 	void check_rule ( WEIGHT *w, QUEUE *occ, size_t item, int core_id);
 
-
-	void lamp (LONG s);
-	void lamp2 (LONG s);
 	void output_occ( QUEUE *occ, int core_id);
 
-
+	/*************************************************************************/
+	//  OUTPUT KGLCMSEQ_QUE
+	/*************************************************************************/
 	void output_occ( KGLCMSEQ_QUE *occ, int core_id);
 	void check_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, size_t item, int core_id);
 	void solution ( KGLCMSEQ_QUE *occ, int core_id);
@@ -184,7 +179,7 @@ class ITEMSET{
 
 
 	public:
-	// ,_iters2(0),_iters3(0)
+
 	ITEMSET(void):	  
 		_flag(0),_flag2(0),_progress(0),_iters(0),_solutions(0),_solutions2(0),
   	_max_solutions(0),_outputs(0),_outputs2(0),_item_max(0),_item_max_org(0),
@@ -324,28 +319,54 @@ class ITEMSET{
 	void iadd_set_t(QUEUE_ID t){ _add.set_t(t);}
 
 	void item_cal_prob(){ 
-		QUEUE_INT *x;
-		//MQUE_FLOOP_CLS (_itemset, x) _prob *= _item_frq[*x];
-		// MQUE_FLOOP_CLS(V,z)    
-		// for((z)=(V).get_v();(z)<(V).get_v()+(V).get_t() ; (z)++)
-		for(x=_itemset.get_v();(x)<_itemset.get_v()+_itemset.get_t(); x++){
+		for(QUEUE_INT *x=_itemset.begin(); x<_itemset.end(); x++){
 			_prob *= _item_frq[*x];
 		}
 	}
 
 	void iadd_cal_prob(){ 
-		QUEUE_INT *x;
-		//MQUE_FLOOP_CLS (_add, x) _prob *= _item_frq[*x];
-		for(x=_add.get_v();(x)<_add.get_v()+_add.get_t(); x++){
+		for(QUEUE_INT *x=_add.begin();(x)<_add.end(); x++){
 			_prob *= _item_frq[*x];
 		}
-
 	}
 
 
 	QUEUE_ID iadd_get_t(){ return _add.get_t();}
 	QUEUE_ID item_get_t(){ return _itemset.get_t();}
 
+	void addCurrent(QUEUE_INT v){
+		_itemset.push_back(v);
+	  _itemflag[v]=1;	
+	}
+	void addEquiSupport(QUEUE_INT v){
+		_add.push_back(v);
+	  _itemflag[v]=1;	
+	}
+
+	QUEUE_INT delCurrent(void){ 
+  	QUEUE_INT item = _itemset.pop_back();
+	  _itemflag[item]=0;
+	  return item;
+	}
+
+	QUEUE_INT delEquiSupport(void){ 
+  	QUEUE_INT item = _add.pop_back();
+	  _itemflag[item]=0;
+	  return item;
+	}
+
+/*
+	void item_add_item(QUEUE_INT v){ 
+		_itemset.push_back(v)
+	  _itemflag[item]=1;
+	  return;
+	}
+
+	void item_add_item(QUEUE_INT v){ 
+		_itemset.push_back(v)
+	  _itemflag[item]=1;
+	  return;
+	}
 
 	QUEUE_INT item_del_item(){ 
   	QUEUE_INT item = _itemset.pop_back();
@@ -359,7 +380,7 @@ class ITEMSET{
 	  return item;
 	}
 
-
+*/
 	QUEUE_INT get_target(void){ return _target;}
 	QUEUE_INT get_item_max(void){ return _item_max;}
 	LONG get_itemtopk_end(void){ return _itemtopk_end;}

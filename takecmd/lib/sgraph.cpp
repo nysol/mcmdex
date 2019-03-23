@@ -239,21 +239,15 @@ int SGRAPH::load (int flag ,char* fname){
   }
   F1->union_flag( _flag & (LOAD_ELE + LOAD_EDGEW + LOAD_EDGE + LOAD_RC_SAME + LOAD_ID1 + LOAD_NUM + LOAD_GRAPHNUM));
   if ( !(_flag&LOAD_BIPARTITE) ) F1->union_flag(LOAD_RC_SAME);
-  F1->set_fname(_fname); F1->set_wfname(_wfname);
-  //SETFAMILY_load (F1);
+
+  F1->set_fname(_fname); 
+  F1->set_wfname(_wfname);
+
   F1->load();
 
   if ( _nwfname ){
   
-	  //FILE2::ARY_Load(_node_w, i, _nwfname, 1);
 	  i = FILE2::ARY_Load(_node_w, _nwfname, 1);
-	/*  
-#ifdef WEIGHT_DOUBLE
-    ARY_LOAD (_node_w, double, i, _nwfname, 1, EXIT);
-#else
-    ARY_LOAD (_node_w, int, i, _nwfname, 1, EXIT);
-#endif
-*/
     reallocx_ (_node_w, i, SGRAPH_NODE_NUM + 1, 0, EXIT);
   }
 
@@ -334,7 +328,6 @@ void SGRAPH::replace_index (PERM *perm, PERM *invperm){
 
   if ( _edge.exist_v() ){
     FLOOP (i, 0, SGRAPH_NODE_NUM ){
-      //MQUE_FLOOP_CLS (_edge._v[i], x) *x = perm[*x];
 			for(x=_edge.get_vv(i); x<_edge.get_vv(i) + _edge.get_vt(i) ; x++){
 				*x = perm[*x];
 			}
@@ -344,7 +337,6 @@ void SGRAPH::replace_index (PERM *perm, PERM *invperm){
 
   if ( _in.exist_v() ){
     FLOOP (i, 0, SGRAPH_NODE_NUM ) {
-      //MQUE_FLOOP_CLS (_in._v[i], x) *x = perm[*x];
     	for(x=_in.get_vv(i); x<_in.get_vv(i) + _in.get_vt(i) ; x++){
     		*x = perm[*x];
     	}
@@ -355,7 +347,6 @@ void SGRAPH::replace_index (PERM *perm, PERM *invperm){
 
   if ( _out.exist_v() ){
     FLOOP (i, 0, SGRAPH_NODE_NUM ){
-      //MQUE_FLOOP_CLS (_out._v[i], x) *x = perm[*x];
       for(x=_out.get_vv(i); x<_out.get_vv(i) + _out.get_vt(i) ; x++){
     		*x = perm[*x];
     	}
@@ -368,6 +359,7 @@ void SGRAPH::replace_index (PERM *perm, PERM *invperm){
   if ( _in.exist_w() ) ARY_INVPERMUTE (_in.get_w(), invperm, w, SGRAPH_NODE_NUM , EXIT);
   if ( _out.exist_w() ) ARY_INVPERMUTE (_out.get_w(), invperm, w, SGRAPH_NODE_NUM , EXIT);
   if ( _node_w ) ARY_INVPERMUTE (_node_w, invperm, ww, SGRAPH_NODE_NUM , EXIT);
+
   _perm = perm;
 
 }

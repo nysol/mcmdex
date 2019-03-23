@@ -576,7 +576,8 @@ void *KGSSPC::iter (void *p){
     if ( _problem & (SSPC_POLISH+SSPC_POLISH2) ) m = _TT.get_clms();
     else m = (_dir>0)?_TT.get_sep():i;
 
-    jump.cp_s2t(); //jump.set_t(jump.get_s());
+    jump.setEndByStart(); //jump.set_t(jump.get_s());
+
 
     if (_problem & SSPC_NO_NEIB){ // for no_neib
     

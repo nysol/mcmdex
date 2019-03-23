@@ -206,10 +206,6 @@ extern PARAMS internal_params;
 */
 
 /*  equal/inequal with allowing numerical error for double  */
-/*
-#define ISGREAT(a,b)    ((a)-(b)>ISEQUAL_VALUE)
-#define ISLESS(a,b) 	((b)-(a)>ISEQUAL_VALUE)
-*/
 #define ISEQUAL(a,b)	((a)-(b)<ISEQUAL_VALUE&&(b)-(a)<ISEQUAL_VALUE)
 #define RANGE(a,b,c)  (((a)<=(b))&&((b)<=(c)))
 #define BITRM(a,b)    ((a)-=((a)&(b)));
@@ -243,14 +239,7 @@ extern PARAMS internal_params;
 #define   BLOOP(i,x,y)  for ((i)=(x) ; ((i)--)>(y) ; )
 #define   MLOOP(z,x,M)  for ((z)=(x) ; *(z)<(M) ; (z)++)
 
-/* binary search: return maximum index no larger than c */
-/*
-#define BIN_SRCH(x,a,s,t,c) \
- do {\
-  x=s; common_size_t=t; while ( x<common_size_t-1 ){\
-   if ( a[(x+common_size_t)/2] <= c ) x = (x+common_size_t)/2; else common_size_t = (x+common_size_t)/2;\
- } while (0)\
-*/
+
 /* allocate memory, and exit with error message if fault */
 #ifdef _cplusplus_
 #define   malloc2(f,b,x)     do{if(!((f)=(typeof(f))malloc(((size_t)sizeof((f)[0]))*(b)))){fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
@@ -261,9 +250,6 @@ extern PARAMS internal_params;
 #define   calloc2(f,b,x)     do{if(!((f)=calloc(sizeof((f)[0]),b))){fprintf(stderr,"memory allocation error: line %d: " #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
 #define   realloc2(f,b,x)    do{if(!(f=realloc(f,((size_t)sizeof((f)[0]))*(b)))){fprintf(stderr,"memory allocation error: line %d: " #f " (" LONGF " byte)\n",__LINE__, (LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
 #endif
-
-//#define   malloc2d(f,b,d,x)  do{malloc2(f,b,x);malloc2((f)[0],(b)*(d)+2,{free2(f);x;});FLOOP(common_size_t,0,(size_t)b)(f)[common_size_t]=&((f)[0][common_size_t*(d)]);}while(0)
-//#define   calloc2d(f,b,d,x)  do{malloc2(f,b,x);calloc2((f)[0],((size_t)(b))*((size_t)(d))+2,{free2(f);x;});FLOOP(common_size_t,0,(size_t)b)(f)[common_size_t]=&((f)[0][common_size_t*(d)]);}while(0)
 
 /* reallocate memory and expand the memory size */
 #define   reallocx_(f,end,end2,e,x)  do{realloc2(f,end2,x);FLOOP(common_size_t,(size_t)end,(size_t)end2)(f)[common_size_t]=(e);}while(0)
@@ -277,58 +263,12 @@ extern PARAMS internal_params;
 #define   ARY_MIN(m,i,f,x,y)   do{(m)=(f)[x];(i)=(x);FLOOP(common_INT,(x)+1,y)if((m)>(f)[common_INT]){(i)=common_INT;(m)=(f)[i];}}while(0)
 #define   ARY_SUM(f,v,x,y)       do{(f)=0;FLOOP(common_INT,x,y)(f)+=(v)[common_INT];}while(0)
 
-/*
-#define   ARY_REALLOCX(f,i,e,x)  reallocz((f).v,(f).end,i,e,x)
-#define   ARY_REALLOCZ(f,i,x)  reallocz((f).v,(f).end,i,x)
-#define   ARY_DUP(f,p,end,x)  do{malloc2(f,end,x);memcpy(f,p,sizeof(*(f))*(end));}while(0)
-#define   ARY_REV(S,start,end,tmp)   do{FLOOP(common_size_t,0,((end)-(start))/2){(tmp)=(S)[(start)+common_size_t];(S)[(start)+common_size_t]=(S)[(end)-1-common_size_t];(S)[(end)-1-common_size_t]=tmp;}}while(0)
-#define   ARY_NORM(f,v,b)      do{(f)=0;FLOOP(common_INT,0,b)(f)+=(v)[common_INT]*(v)[common_INT];(f)=sqrt(f);}while(0)
-#define   ARY_NORMALIZE(v,b)   do{ARY_NORM(common_double,v,b);FLOOP(common_INT,0,b)(v)[common_INT]/=common_double;}while(0)
-#define   ARY_INPRO(f,u,v,b)   do{(f)=0;for (common_INT=0 ; common_INT<(b)-3 ; common_INT+=4) (f)+=(u)[common_INT]*(v)[common_INT] + (u)[common_INT+1]*(v)[common_INT+1] + (u)[common_INT+2]*(v)[common_INT+2] + (u)[common_INT+3]*(v)[common_INT+3]; if (common_INT+1<(b)){(f)+=(u)[common_INT]*v[common_INT]+(u)[common_INT+1]*(v)[common_INT+1]; if (common_INT+2<(b)) (f)+=(u)[common_INT+2]*(v)[common_INT+2];} else if (common_INT<(b)) (f)+=(u)[common_INT]*(v)[common_INT];}while(0)
-#define   ARY_DIST(f,u,v,b)   do{(f)=0;for (common_INT=0 ; common_INT<(b) ; common_INT++) (f)+=((u)[common_INT]-(v)[common_INT])*((u)[common_INT]-(v)[common_INT]); (f)=sqrt(f);}while(0)
-*/
-
-/* macros for permutation arrays */
-/*
-#define   ARY_INIT_PERM(f,end)  do{FLOOP(common_INT,0,(INT)end)(f)[common_INT]=common_INT;}while(0)
-#define   ARY_INV_PERM_(f,p,end)      do{ARY_FILL(f,0,end,-1);FLOOP(common_INT,0,end)if((p)[common_INT]>=0&&(p)[common_INT]<(end))(f)[(p)[common_INT]]=common_INT;}while(0)
-#define   ARY_INV_PERM(f,p,end,x) do{malloc2(f,end,x);ARY_INV_PERM_(f,p,end);}while(0)
-#define   ARY_RND_PERM_(f,end)        do{(f)[0]=0;FLOOP(common_INT,1,end){common_INT2=rnd(common_INT+1);(f)[common_INT]=(f)[common_INT2];(f)[common_INT2]=common_INT;}}while(0)
-#define   ARY_RND_PERM(f,end,x)   do{malloc2(f,end,x);ARY_RND_PERM_(f,end);}while(0)
-*/
 /* permute f so that f[i]=f[p[i]] (inverse perm). p will be destroyed (filled by end). s is temporary variable of type same as f[] */
 #define   ARY_INVPERMUTE_(f,p,s,end)  do{ FLOOP(common_INT,0,end){ if ( (p)[common_INT]<(end) ){ (s)=(f)[common_INT]; do { common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; (p)[common_INT2]=end; }while ( (p)[common_INT]<(end) ); (f)[common_INT2] = (s);}}}while(0)
 
 /* permute f so that f[i]=f[p[i]] (inverse perm). not destroy p by allocating tmp memory,  s is temporary variable of type same as f[] */
 #define   ARY_INVPERMUTE(f,p,s,end,x) do{ calloc2(common_pnt,end,x);FLOOP(common_INT,0,end){ if ( common_pnt[common_INT]==0 ){ (s)=(f)[common_INT]; do{ common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; common_pnt[common_INT2]=1; }while( common_pnt[common_INT]==0 ); (f)[common_INT2] = (s); }} free(common_pnt); }while(0)
 
-/* macros for printing (writing to file) arrays */
-/*
-#define   ARY_PRINT(f,x,y,a) do{FLOOP(common_size_t,x,y)printf(a,(f)[common_size_t]);printf("\n");}while(0)
-#define   ARY_FPRINT(fp,f,x,y,a) do{FLOOP(common_size_t,(size_t)x,(size_t)y)fprintf((FILE *)fp,a,(f)[common_size_t]);fputc('\n',(FILE *)fp);}while(0)
-
-#define   ST_MAX(m,i,S,a,x,y)   do{(m)=(S)[x].a;(i)=(x);FLOOP(common_INT,(x)+1,y)if((m)<(S)[common_INT].a){(i)=common_INT;(m)=(S)[i].a;}}while(0)
-#define   ST_MIN(m,i,S,a,x,y)   do{(m)=(S)[x].a;(i)=(x);FLOOP(common_INT,(x)+1,y)if((m)>(S)[common_INT].a){(i)=common_INT;(m)=(S)[i].a;}}while(0)
-#define   ST_SUM(k,S,a,x,y)       do{(k)=0;FLOOP(common_INT,x,y)(k)+=(S)[common_INT].a;}while(0)
-#define   ST_FILL(S,a,start,end,c) do{for(common_INT=(start);common_INT<(end);common_INT++)(S)[common_INT].a = (c);}while(0)
-#define   ST_PRINT(S,a,start,end,form) do{FLOOP(common_size_t,start,end)printf(form,(S)[common_size_t].a );printf("\n");}while(0)
-*/
-
-/* macros for QUE type structure (have .s, .t, .v) */
-/*
-#define   QUE_EXP(f,a,x)   do{reallocx((f).v,a,(f).end,(f).t,e,x);}while(0)
-#define   QUE_INSZ(f,a,x)    do{reallocz((f).v,(f).end,(f).t+1,x);QUE_INS(f,a);}while(0)
-#define   QUE_INIT_PERM(f,end)   do{ARY_INIT_PERM((f).v,(end));(f).t=(end);(f).s=0;}while(0)
-*/
-/*
-#ifdef _FILE2_LOAD_FROM_MEMORY_
-#define   FILE2_open(f,a,b,x) do{__load_from_memory__=__load_from_memory_org__;(f).fp=NULL;malloc2((f).buf_org,FILE2_BUFSIZ+1,x);(f).buf=(f).buf_org;(f).buf_end=(f).buf_org-1;(f).bit=0;*(f).buf=0;}while(0)
-#define   FILE2_open_(f,a,x)  do{__load_from_memory__=__load_from_memory_org__;(f).fp=a;malloc2((f).buf_org,FILE2_BUFSIZ+1,x);(f).buf=(f).buf_org;(f).buf_end=(f).buf_org-1;(f).bit=0;*(f).buf=0;}while(0)
-#else
-#define   FILE2_open(f,a,b,x) do{if(a)fopen2((f).fp,a,b,x);else(f).fp=NULL;malloc2((f).buf_org,FILE2_BUFSIZ+1,x);(f).buf=(f).buf_org;(f).buf_end=(f).buf_org-1;(f).bit=0;*(f).buf=0;}while(0)
-#define   FILE2_open_(f,a,x)  do{(f).fp=a;malloc2((f).buf_org,FILE2_BUFSIZ+1,x);(f).buf=(f).buf_org;(f).buf_end=(f).buf_org-1;(f).bit=0;*(f).buf=0;}while(0)
-#endif
-*/
 /* macros for allocating memory with exiting if an error occurs */
 #define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
 #define free2d(a)  do{if(a){free2((a)[0]);free(a);(a)=NULL;}}while(0)
@@ -346,31 +286,11 @@ extern PARAMS internal_params;
  #define fclose2(a) do{if(a){fclose(a);(a)=NULL;}}while(0)
 #endif
 
-/* macros for reading integers from file, d=0 read one-line, d=1 read all file */
-//#define   ARY_WRITE(n,f,num,q,x)  do{fopen2(common_FILE,n,"w",x);ARY_FPRINT(common_FILE,f,0,num,q);fclose(common_FILE);}while(0)
 
 #ifndef MQUE_ONEMORE
  #define MQUE_ONEMORE 1
 #endif
 
-/* macros for generalized queue; end mark is necessary for INTSEC */
-/*
-#define   MQUE_FLOOP(V,z)    for((z)=(V)._v;(z)<(V)._v+(V)._t ; (z)++)
-#define   MQUE_FLOOP_CLS(V,z)    for((z)=(V).get_v();(z)<(V).get_v()+(V).get_t() ; (z)++)
-
-#define   MQUE_MLOOP(V,z,M)  for((z)=(V)._v; *((QUEUE_INT *)z)<(M) ; (z)++)
-#define   MQUE_FLOOP__CLS(V,z,s)    for((z)=(V).get_v() ; (char *)(z)<((char *)(V).get_v())+(V).get_t()*(s) ; (z)=(typeof(z))(((char *)(z))+(s)))
-#define   MQUE_MLOOP_CLS(V,z,M)  for((z)=(V).get_v(); *((QUEUE_INT *)z)<(M) ; (z)++)
-*/
-
-#define   MQUE_UNIFY(V,a)      do{\
-if((V)._t>1){\
- common_INT=0;\
- FLOOP(common_INT2,1,(V)._t){\
-  if ( *((QUEUE_INT *)(&((V)._v[common_INT2-1]))) != *((QUEUE_INT *)(&((V)._v[common_INT2]))) ) (V)._v[++common_INT]=(V)._v[common_INT2];\
-  else *((a*)(((QUEUE_INT *)(&((V)._v[common_INT2])))+1)) += *((a*)(((QUEUE_INT *)(&((V)._v[common_INT2])))+1));\
- } (V)._t=common_INT+1;\
-}}while(0)
 
 
 
@@ -426,26 +346,17 @@ struct VEC {
 	void alloc (VEC_ID clms);
 	void end ();
 	bool operator>(const VEC& rhs) const{
-		printf("vvvop0 %d %d\n",_t ,rhs._t);
 	  if ( _t < rhs._t ) return (-1);
   	else return ( _t >  rhs._t);
 	}
 	bool operator<(const VEC& rhs) const{
-		printf("vvvop1 %d %d\n",_t ,rhs._t);
 	  if ( _t > rhs._t ) return (-1);
   	else return ( _t < rhs._t);
 	}
 
 } ;
 
-extern VEC INIT_VEC;
-extern PERM common_PERM, *common_PERMp;
-extern VEC_VAL common_VEC_VAL, *common_VEC_VALp;
-extern VEC_ID common_VEC_ID;
-
 // remove a file on the specified directory
-#define REMOV(dir,fn) do{ sprintf(common_comm,"%s%s",dir,fn); remove (common_comm); }while(0)
-#define RENAM(dir,fn,fn2) do{ sprintf(common_comm,"%s%s",dir,fn); sprintf(common_comm2,"%s%s",dir,fn2); rename (common_comm, common_comm2); }while(0)
 #define MREMOV(dir,...) mremove_(dir, __VA_ARGS__, NULL, NULL)
 
 
@@ -501,44 +412,11 @@ void print_WEIGHT (WEIGHT f);
 
 #define FILE_COUNT_INT VEC_ID
 #define FILE_COUNT_INTF VEC_IDF
-/*
-typedef struct {
-  int flag;
-  FILE_COUNT_INT clms, rows, eles, clm_end, row_end, row_btm, clm_btm; // #rows, #column, #elements, minimum elements
-  FILE_COUNT_INT row_min, row_max, clm_min, clm_max;  // maximum/minimum size of column
-  FILE_COUNT_INT *rowt, *clmt;   // size of each row/clmn
-  WEIGHT total_rw, total_cw, *rw, *cw;  // WEIGHTs for rows/columns ... reserved.
-  FILE_COUNT_INT rw_end, cw_end;
-  PERM *rperm, *cperm;   // permutation (original->internal) of rows and columns
-} FILE_COUNT;
 
-extern FILE_COUNT INIT_FILE_COUNT;
-*/
-
-/******************************* permutation routines ****************/
-/* permutation is given by an integer array  */
-
-/* sort an array of size "siz", composed of a structure of size "unit" byte
- in the order of perm */
-/* use temporary memory of siz*unit byte */
-//void perm_struct (void *a, int unit, int *perm, size_t siz);
-
-/* SLIST:very simple one-sided list */
-/*
-void SLIST_init (int *l, int num, int siz);
-void SLIST_end (int *l);
-#define SLIST_INS(l,m,e) (l[e]=l[m],l[m]=e);
-*/
 
 /* quick sort macros // templateにする?*/ //common_INT common_pntどうにかする
 #define QQSORT_ELE(a,x)  ((a *)(&(common_pnt[(*((PERM *)(x)))*common_INT])))
 #define QQSORT_ELEt(a,x) (((a *)&(common_pnt[(*((PERM *)(x)))*common_INT]))->get_t())
-/*
-template<typename T >
-T *QQSORT_ELE(const void *x,char* c_pnt,INT c_int){
-	return ((T *)(&(c_pnt[(*((PERM *)(x)))*c_int])));
-}
-*/
 
 template<typename T>
 int qsort_cmp_(const void *x,const void *y){
@@ -613,15 +491,7 @@ size_t bin_search_ (T *v, T u, size_t siz, int unit){
 }
 // bin search returns the position that is equal to u, or the smallest in larger's
 
-/*
-int qsort_cmp_VECt (const void *x, const void *y);
-int qsort_cmp__VECt (const void *x, const void *y);
-void qsort_VECt (VEC *v, size_t siz, int unit);
-int qqsort_cmp_VECt (const void *x, const void *y);
-int qqsort_cmp__VECt (const void *x, const void *y);
-void qsort_perm__VECt (VEC *v, size_t siz, PERM *perm, int unit);
-PERM *qsort_perm_VECt (VEC *v, size_t siz, int unit);
-*/
+
 /* swap macro for integer, double, char, and pointer */
 template<typename T>
 void SWAP_(T *a,T *b){ T stmp = *a; *a=*b; *b=stmp; }
@@ -641,10 +511,6 @@ extern int BITMASK_UPPER16[8];
 extern int BITMASK_LOWER16[8];
 extern int BITMASK_FACT16[8];
 
-/* bit operations */
-#define BIT_SET(v,x)  (v[x/32]|=BITMASK_1[x%32])
-#define BIT_DEL(v,x)  (v[x/32]&=BITMASK_31[x%32])
-#define ISBIT(v,x)    (v[x/32]&BITMASK_1[x%32])
 
 #ifndef UNIONFIND_ID
  #ifdef UNIONFIND_ID_LONG
@@ -666,10 +532,6 @@ extern int BITMASK_FACT16[8];
  #endif
 #endif
 
-//#define UNIONFIND_ID int
-//#define UNIONFIND_ID_END INTHUGE
-//#define UNIONFIND_IDF "%d"
-//#define UNIONFIND_ID_LONG "xx"
 UNIONFIND_ID UNIONFIND_getID (UNIONFIND_ID v, UNIONFIND_ID *ID);
 void UNIONFIND_unify (UNIONFIND_ID u, UNIONFIND_ID v, UNIONFIND_ID *ID);
 void UNIONFIND_unify_set (UNIONFIND_ID u, UNIONFIND_ID v, UNIONFIND_ID *ID, UNIONFIND_ID *set);

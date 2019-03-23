@@ -81,6 +81,7 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
       _frq_lb = -WEIGHTHUGE * _topk_sign;
     }
   }
+
   if ( _itemtopk_end > 0 ){ // allocate topkheap for each element
 
     _itemtopk = new AHEAP[_itemtopk_end];
@@ -101,10 +102,9 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
     if ( _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ){
         calloc2 (_set_occ, siz, goto ERR);
         calloc2 (_set_occELE, siz, goto ERR);
-
-
     }
   }
+
   _iters = _solutions = 0; //_iters2 =
   _item_max = item_max;
   _item_max_org = (QUEUE_INT)item_max_org;
@@ -120,12 +120,16 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
   if ( _flag&ITEMSET_ITEMFRQ ){
 	  malloc2 (_item_frq, item_max+2, goto ERR);
 	}
+
   if ( _flag&ITEMSET_RULE ){
     calloc2 (_itemflag, item_max+2, goto ERR);
   }
+
   _total_weight = 1;
   j = MAX(_multi_core,1);
+
   calloc2 (_multi_iters, j*7, goto ERR);
+
   _multi_iters2 = _multi_iters + j;
   _multi_iters3 = _multi_iters2 + j;
   _multi_outputs = _multi_iters3 + j;
@@ -134,8 +138,10 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
   _multi_solutions2 = _multi_solutions + j;
   
   calloc2 (_multi_fp, j, goto ERR);
-  FLOOP (i, 0, j)
-      _multi_fp[i].open_ ( _fp);
+
+	FLOOP (i, 0, j){
+		_multi_fp[i].open_ ( _fp);
+  }
 
 #ifdef MULTI_CORE
   if ( _multi_core > 0 ){
@@ -144,8 +150,6 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
     pthread_spin_init (_lock_output, PTHREAD_PROCESS_PRIVATE);
   }
 #endif
-
-
 
   return;
   ERR:;
@@ -182,11 +186,11 @@ void ITEMSET::end (){
 
   LONG i;
 
+  // for 2D LAMP 大丈夫？
+  if ( _flag2 & ITEMSET_LAMP2 ) _minh.xFree();  
   
-  if ( _flag2 & ITEMSET_LAMP2 ) _minh.xFree();  // for 2D LAMP 大丈夫？
   FLOOP (i, 0, _itemtopk_end){
 	  _itemtopk[i].end();
-    //AHEAP_end (&_itemtopk[i]);
     if ( _itemtopk_ary ) free2 (_itemtopk_ary[i]);
   }
   delete [] _itemtopk; 
@@ -194,8 +198,9 @@ void ITEMSET::end (){
   fclose2 (_fp);
   mfree (_sc, _sc2, _item_frq, _itemflag, _perm, _set_weight, _set_occ, _itemtopk_ary);
   
-  if ( _multi_fp )
-      FLOOP (i, 0, MAX(_multi_core,1)) _multi_fp[i].clear();
+  if ( _multi_fp ){
+		FLOOP (i, 0, MAX(_multi_core,1)) _multi_fp[i].clear();
+  }
 
   mfree (_multi_iters, _multi_fp);
 
@@ -214,6 +219,7 @@ void ITEMSET::end (){
 /* print #of itemsets of size k, for each k */
 /*******************************************************************/
 void ITEMSET::last_output (){
+
   QUEUE_ID i;
   LONG n=0, nn=0;
   WEIGHT w;
@@ -233,6 +239,7 @@ void ITEMSET::last_output (){
     print_err ("\n");
     return;
   }
+
   if ( _flag2 & ITEMSET_LAMP2 ){   // to be constructed
 
     print_err ("iters=" LONGF, _iters);
@@ -240,6 +247,7 @@ void ITEMSET::last_output (){
     print_err ("\n");
     return;
   }
+
   if ( _itemtopk_end > 0 ){  // output values of the kth-best solution for each item
     FLOOP (n, 0, _itemtopk_end){
       c = 0;
@@ -298,13 +306,16 @@ void ITEMSET::last_output (){
 
 /* output frequency, coverage */
 void ITEMSET::output_frequency ( WEIGHT frq, WEIGHT pfrq, int core_id){
+
   FILE2 *fp = &_multi_fp[core_id];
+
   if ( _flag&(ITEMSET_FREQ+ITEMSET_PRE_FREQ) ){
     if ( _flag&ITEMSET_FREQ ) fp->putc (' ');
     fp->print_WEIGHT (frq, _digits, '(');
     fp->putc ( ')');
     if ( _flag&ITEMSET_PRE_FREQ ) fp->putc (' ');
   }
+
   if ( _flag&ITEMSET_OUTPUT_POSINEGA ){ // output positive sum, negative sum in the occurrence
     fp->putc ( ' ');
     fp->print_WEIGHT ( pfrq, _digits, '(');
@@ -372,7 +383,8 @@ void ITEMSET::lamp2 (LONG s){
 }
 
 //for _trsact_h_
-void ITEMSET::output_occ ( QUEUE *occ, int core_id){
+void ITEMSET::output_occ ( QUEUE *occ, int core_id)
+{
   QUEUE_INT *x;
   FILE2 *fp = &_multi_fp[core_id];
   TRSACT *TT = (TRSACT *)(_X);
@@ -972,8 +984,18 @@ void ITEMSET::output_rule ( KGLCMSEQ_QUE *occ, double p1, double p2, size_t item
 /*************************************************************************/
 /* check all rules for a pair of itemset and item */
 /*************************************************************************/
+// lcm
 void ITEMSET::check_rule (WEIGHT *w, KGLCMSEQ_QUE *occ, size_t item, int core_id){
+
   double p = w[item]/_frq, pp, ff;
+ 	_prob = 1.0;
+	for(QUEUE_INT *x=_itemset.begin(); x<_itemset.end(); x++){
+		_prob *= _item_frq[*x];
+	}
+	for(QUEUE_INT *x=_add.begin();x<_add.end(); x++){
+		_prob *= _item_frq[*x];
+	}
+
 
   if ( _itemflag[item]==1 ) return;
   if ( w[item] <= -WEIGHTHUGE ) p = 0;
@@ -994,6 +1016,7 @@ void ITEMSET::check_rule (WEIGHT *w, KGLCMSEQ_QUE *occ, size_t item, int core_id
 /*************************************************************************/
 /* check all rules for an itemset and all items */
 /*************************************************************************/
+// lcm_seq
 void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT total, int core_id){
 
   QUEUE_ID i, t;
@@ -1031,6 +1054,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
         _multi_fp[core_id].putc ( ' ');
         _multi_fp[core_id].print_real ( _frq/_set_weight[i], _digits, '(');
         _multi_fp[core_id].putc ( ')');
+
 #ifdef _FILE2_LOAD_FROM_MEMORY_
   FILE2_WRITE_MEMORY (QUEUE_INT, FILE2_LOAD_FROM_MEMORY_END);
 #else

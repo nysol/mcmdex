@@ -47,12 +47,83 @@ class SGRAPH {
 
   SETFAMILY _edge, _in, _out;  // setfamily for edge, in-arc, out-arc
 
+  QUEUE_INT *_itemary;
+
 
 	public:
 	SGRAPH():
-		_type(TYPE_SGRAPH),_fname(NULL),_flag(0),_node1_num(0),
+		_type(TYPE_SGRAPH),_fname(NULL),_flag(0),_node1_num(0),_itemary(NULL),
 		_node_w(NULL),_wbuf(NULL),_perm(NULL),_wfname(NULL),_nwfname(NULL)
 	{}
+
+
+	int itemAlloc(size_t siz){
+
+		calloc2(_itemary, siz+2, return 1); 
+		
+		return 0;
+
+	}
+
+	void itemCntUp(QUEUE_INT item){
+
+		for(QUEUE_INT *x=_edge.get_vv(item); *x < item ; x++){
+			_itemary[*x]++;
+		}
+	}
+	void itemCntDown(QUEUE_INT item){
+
+		for(QUEUE_INT *x=_edge.get_vv(item); *x < item ; x++){
+			_itemary[*x]--;
+		}
+	}
+	QUEUE_INT itemCnt(QUEUE_INT item){ return _itemary[item]; }
+	
+	void adaptPerm(VEC_ID t,PERM * perm){
+
+		PERM *sperm = NULL;
+		PERM *tmp=NULL;
+
+    malloc2 (sperm, _edge.get_t(), EXIT);
+    
+		for(size_t i=0 ; i< _edge.get_t(); i++){  sperm[i]=i; }
+		
+		for(size_t i=0 ; i <  MIN(t, _edge.get_t()) ;i++ ){
+			sperm[i] = perm[i];
+		}
+		
+		malloc2(tmp , _edge.get_t() , {free(sperm);EXIT;});
+
+		for(size_t st=0; st < _edge.get_t() ;st++){ tmp[st] = -1; }
+		
+		for(int i=0;i<_edge.get_t();i++){
+			if(sperm[i]>=0 && sperm[i] < _edge.get_t() ){ tmp[sperm[i]]=i; }
+		}
+
+		replace_index(sperm, tmp);
+    mfree (tmp, sperm);
+		_perm =NULL;
+		
+		/*
+      malloc2 (sperm, _SG.edge_t(), EXIT);
+      //ARY_INIT_PERM (sperm, _SG._edge.get_t());
+			for(size_t i=0 ; i< _SG.edge_t(); i++){ sperm[i]=i; }
+
+      FLOOP (i, 0, MIN(_TT.get_t(), _SG.edge_t())) sperm[i] = _TT.get_perm(i);
+
+      //ARY_INV_PERM (tmp, sperm, _SG._edge.get_t(), {free(sperm);EXIT;});
+			malloc2(tmp,_SG.edge_t(),{free(sperm);EXIT;});
+			for(size_t st=0; st<_SG.edge_t() ;st++){ tmp[st]=-1; }
+			for(int i=0;i<_SG.edge_t();i++){
+				if(sperm[i]>=0 && sperm[i]<_SG.edge_t()){ tmp[sperm[i]]=i; }
+			}
+      _SG.replace_index (sperm, tmp);
+      mfree (tmp, sperm);
+      _SG.set_perm( NULL);
+		*/
+	}
+	
+	
 
 
 

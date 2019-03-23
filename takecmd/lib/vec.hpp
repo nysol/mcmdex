@@ -26,105 +26,7 @@
  #endif
 #endif
 
-#define VEC_LOAD_BIN 16777216   // read binary file 
-#define VEC_LOAD_BIN2 33554432   // read binary file with 2byte for each number 
-#define VEC_LOAD_BIN4 67108864   // read binary file with 4byte for each number
-#define VEC_LOAD_CENTERIZE 134217728  // read binary file, and minus the half(128) from each number
-#define VEC_NORMALIZE 268435456  // read binary file, and minus the half(128) from each number
-/*
-class MAT{
-  //unsigned char _type;  // mark to identify type of the structure
-  char *_fname, *_wfname;      // input/weight file name
-  int _flag;         // flag
 
-  VEC *_v;
-  VEC_ID _end;
-  VEC_ID _t;
-  VEC_VAL *_buf, *_buf2;
-  VEC_ID _clms;
-  size_t _eles;
-  VEC_VAL *_buf_org, *_buf2_org;
-
-	//MAT method
-	//void end (); // ok
-	void alloc ( VEC_ID rows, VEC_ID clms);// ok
-	void load_bin ( FILE2 *fp, int unit);
-	void file_load ( FILE2 *fp);
-	void print (FILE *fp);
-	void *getvec ( int i ){ return &_v[i]; }
-	public:
-	MAT():
-		_fname(NULL),_wfname(NULL),_flag(0),_v(NULL),
-		_end(0),_t(0),_buf(NULL),_buf2(NULL),_clms(0),_eles(0),
-		_buf_org(NULL),_buf2_org(NULL){}
-
-	~MAT(){
-	  free2 (_buf_org);
-  	free2 (_buf2_org);// double free?
-  	free2 (_v);
-  }
-	// アクセッサ
-	char * get_fname(void){return _fname;}
-	void set_fname(char *fname){ _fname=fname;}
-
-	VEC_ID get_t(void){return _t;}
-	VEC_ID get_clms(void){return _clms;}
-	VEC_ID get_vv(int i,int x){return _v[i]._v[x];}
-
-	void load ();
-
-
-};
-
-struct SVEC_ELE{
-  QUEUE_ID i;
-  SVEC_VAL a;
-};
-
-struct SVEC {
-  unsigned char _type;  // mark to identify type of the structure
-  SVEC_ELE *_v;
-  VEC_ID _end;
-  VEC_ID _t;
-
-	void end (); 
-	void alloc (VEC_ID end);
-	void print (FILE *fp);
-	double norm (SVEC *V);
-	void normalize (SVEC *V);
-	SVEC_VAL2 SVEC_inpro (SVEC *V1, SVEC *V2);
-	double SVEC_eucdist (SVEC *V1, SVEC *V2);
-};
-*/
-/* sparse vector, matrix */
-/*
-struct SMAT{
-  unsigned char _type;  // mark to identify type of the structure
-  char *_fname, *_wfname;      // input/weight file name
-  int _flag;         // flag
-
-  SVEC *_v;
-  VEC_ID _end;
-  VEC_ID _t;
-  SVEC_ELE *_buf, *_buf2;
-  VEC_ID _clms;
-  size_t _eles, _ele_end;
-
-	SMAT():
-		_type(TYPE_SMAT),_fname(NULL),_wfname(NULL),_flag(0),_v(NULL),_end(0),_t(0),
-		_buf(NULL),_buf2(NULL),_clms(0),_eles(0),_ele_end(0){}
-
-	void end ();
-	void alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles);
-	void load ();
-	void print (FILE *fp);
-	// SETFAMILY?
-	void file_load (FILE2 *fp);
-
-	void * getvec(int i){ return &_v[i]; }
-
-};
-*/
 class SETFAMILY{
   //unsigned char _type;  // mark to identify type of the structure
   char *_fname, *_wfname;      // input/weight file name
@@ -170,8 +72,8 @@ class SETFAMILY{
 		void alloc_weight (QUEUE_ID *t);
 		void alloc_w();
 		void alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles);
-		void load ();
-		void sort ();
+		void load();
+		void sort();
 
 		void clrMark(int i,char* mark){
 			_v[i].clrMark(mark);
@@ -187,29 +89,8 @@ class SETFAMILY{
   		QUEUE_INT *x;
 
 		  if ( _w!=NULL ){  y = _w[t]; }
-
-
 		  _v[t].delivery_iter( w, pw, t, m ,jmp,oq,tw,tpw,y,f);
 		  
-/*
-			for( x=_v[t].get_v(); *x <m ; x++){
-				if ( oq[*x].get_end() == 0 ){ 
-					jmp->INS(*x); 
-					w[*x] = 0; 
-					if ( f ) pw[*x] = 0; 
-   			}
-    		oq[*x].inc_end();
-
-		    if ( y ){
-    		  w[*x] += *y; if ( *y>0 && f) pw[*x] += *y;
-      		y++;
-    		}
-    		else {
-					w[*x] += tw[t]; 
-					if ( f ) pw[*x] += tpw[t];
-				}
-			}
-*/
 		}
 
 

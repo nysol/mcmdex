@@ -74,11 +74,12 @@ class KGLCM{
 
 	WEIGHT * _occ_w,*_occ_w2,*_occ_pw,*_occ_pw2;
 
-  QUEUE_INT *_itemary;
 	QUEUE _itemcand;
-	QUEUE_INT _clms;
 	QUEUE _oo;
 	char* _ERROR_MES;
+
+
+	bool _clmsFlag; //orignal _clms
 
 	void help();
 
@@ -89,35 +90,17 @@ class KGLCM{
 		QUEUE_ID siz = _TT.get_clms();
 		PERM *perm   = _TT.get_perm();
 
-//		int f =
-//			PROBLEM_ITEMCAND 
-//			+ ( _sgfname ? PROBLEM_ITEMARY:0) 
-//			+ ( (_tFlag2 & TRSACT_NEGATIVE)? PROBLEM_OCC_PW: PROBLEM_OCC_W ) 
-//			+ ( (_problem&PROBLEM_FREQSET )? 0 : PROBLEM_OCC_W2 );
-
 	  PERM *p=NULL;
   	int j;
 
-  	// if ( f&(PROBLEM_OCC_W+PROBLEM_OCC_PW) ) calloc2 (_occ_w, siz+2, goto ERR);
 		calloc2 (_occ_w, siz+2, goto ERR);
 
-	  // if ( f&PROBLEM_OCC_PW ){ calloc2 (_occ_pw, siz+2, goto ERR); }
-	  // else{ _occ_pw = _occ_w;}
 		if ( _tFlag2 & TRSACT_NEGATIVE){
 			calloc2 (_occ_pw, siz+2, goto ERR);
 		}else{
 			_occ_pw = _occ_w;
 		}
 
-	  //if ( f&PROBLEM_OCC_W2 ){
-  	//  calloc2 (_occ_w2, siz+2, goto ERR);
-    //	if ( f&PROBLEM_OCC_PW ) calloc2 (_occ_pw2, siz+2, goto ERR);
-		//	else  _occ_pw2 = _occ_w2;
-		//}
-		//else {
-		//	_occ_w2 = _occ_w;
-		//	_occ_pw2 = _occ_pw; 
-		//}
 		if( _problem&PROBLEM_FREQSET){
 			_occ_w2 = _occ_w;
 			_occ_pw2 = _occ_pw; 
@@ -132,9 +115,11 @@ class KGLCM{
 			}
 		}
 
-		// if ( f&PROBLEM_ITEMARY ) calloc2(_itemary, siz+2, goto ERR);
-	  // if ( f&PROBLEM_ITEMCAND ) _itemcand.alloc ( siz+2);
-	  if(_sgfname) { calloc2(_itemary, siz+2, goto ERR); }
+	  if(_sgfname) { 
+	  	if ( _SG.itemAlloc(siz+2) ){
+	  		goto ERR; 
+	  	}
+	  }
 	  _itemcand.alloc ( siz+2);
 
 	   // set outperm
@@ -162,12 +147,9 @@ class KGLCM{
 
 	void _init (){
 
-
-	  PERM *sperm = NULL, *tmp=NULL;
   	QUEUE_INT i;
 
-	  //なにこれ..
-	  _clms = ((_problem&PROBLEM_FREQSET)&&(_iFlag&ITEMSET_RULE)==0);
+	  _clmsFlag = ((_problem&PROBLEM_FREQSET)&&(_iFlag&ITEMSET_RULE)==0);
 
 		preALOCC();
 
@@ -203,22 +185,9 @@ class KGLCM{
         print_mesf (&_TT, "#nodes in constraint graph is smaller than #items\n");
 
     if ( _TT.exist_perm() ){
-    
-      malloc2 (sperm, _SG.edge_t(), EXIT);
-      //ARY_INIT_PERM (sperm, _SG._edge.get_t());
-			for(size_t i=0 ; i< _SG.edge_t(); i++){ sperm[i]=i; }
 
-      FLOOP (i, 0, MIN(_TT.get_t(), _SG.edge_t())) sperm[i] = _TT.get_perm(i);
+    	_SG.adaptPerm(_TT.get_t(), _TT.get_perm());
 
-      //ARY_INV_PERM (tmp, sperm, _SG._edge.get_t(), {free(sperm);EXIT;});
-			malloc2(tmp,_SG.edge_t(),{free(sperm);EXIT;});
-			for(size_t st=0; st<_SG.edge_t() ;st++){ tmp[st]=-1; }
-			for(int i=0;i<_SG.edge_t();i++){
-				if(sperm[i]>=0 && sperm[i]<_SG.edge_t()){ tmp[sperm[i]]=i; }
-			}
-      _SG.replace_index (sperm, tmp);
-      mfree (tmp, sperm);
-      _SG.set_perm( NULL);
     }
     
     _SG.edge_union_flag(LOAD_INCSORT +LOAD_RM_DUP);
@@ -226,22 +195,13 @@ class KGLCM{
   }
 
   _II.set_total_weight(_TT.get_total_w());
-  if ( (_II.get_flag2()&ITEMSET_LAMP) && _II.get_topk_base() == 0) _II.set_topk_base( _TT.get_rows_org());
+ 
+ 	 // LAMPはとりあえず除去
+   // if ( (_II.get_flag2()&ITEMSET_LAMP) && _II.get_topk_base() == 0) _II.set_topk_base( _TT.get_rows_org());
 
 }	
 
-	
-	void read_param (int argc, char *argv[]);
-
 	int setArgs(int argc, char *argv[]);
-
-
-	void add_item ( QUEUE *Q, QUEUE_INT item);//未使用
-	void add_item ( QUEUE_INT item);
-
-	void del_item (QUEUE *Q);
-
-
 
 	void reduce_occ_by_posi_equisupp ( QUEUE *occ, QUEUE_INT item, QUEUE_INT full);
 
@@ -253,8 +213,9 @@ class KGLCM{
 	public:
 
 	KGLCM():
+		_tFlag(0),_tFlag2(0),_iFlag(0),
 		_problem(0),_th(0),_occ_w(NULL),_occ_w2(NULL),_occ_pw(NULL),_occ_pw2(NULL),
-		_clms(0),_outperm_fname(NULL),_output_fname(NULL),_itemary(NULL),_wfname(NULL),
+		_clmsFlag(false),_outperm_fname(NULL),_output_fname(NULL),_wfname(NULL),
 		_sgfname(NULL),_ERROR_MES(NULL),
 		_ub(INTHUGE),_lb(0),
 		_prob_ub(1),_prob_lb(0),

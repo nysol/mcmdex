@@ -22,14 +22,32 @@
 void QUEUE::delivery( QUEUE *OQ, VEC_ID *c, QUEUE *jump, QUEUE *Q, QUEUE *occ, VEC_ID t, QUEUE_INT M){  
 	VEC_ID i, e;
   QUEUE_INT *x;
+
   FLOOP(i, 0, occ? occ->_t: _t){
+
     e = occ? occ->_v[i]: i;
+
     if ( c ){
-      if ( jump ){ MLOOP (x, Q[e]._v, M){ if ( c[*x]==0 ) jump->push_back(*x); c[*x]++; }
-      } else { MLOOP (x, Q[e]._v, M) c[*x]++; }
-    } else {
-      if ( jump ){ MLOOP (x, Q[e]._v, M){ if ( OQ[*x]._t==0 ) jump->push_back(*x); OQ[*x].push_back(e); }
-      } else MLOOP (x, Q[e]._v, M){ OQ[*x].push_back(e); }
+      if ( jump ){ 
+      	MLOOP (x, Q[e]._v, M){ 
+      		if ( c[*x]==0 ) jump->push_back(*x); 
+      		c[*x]++; 
+      	}
+      } 
+      else { 
+      	MLOOP (x, Q[e]._v, M) c[*x]++; 
+      }
+    }
+    else {
+      if ( jump ){ 
+      	MLOOP (x, Q[e]._v, M){ 
+      		if ( OQ[*x]._t==0 ) jump->push_back(*x); 
+      		OQ[*x].push_back(e); 
+      	}
+      }
+      else{
+      	 MLOOP (x, Q[e]._v, M){ OQ[*x].push_back(e); }
+      }
     }
   }
 }
