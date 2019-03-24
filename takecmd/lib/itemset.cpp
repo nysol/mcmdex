@@ -53,23 +53,15 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
   _frq = 0;
   _perm = perm;
 
-  _itemset.alloc((QUEUE_ID)siz);
-  _itemset.set_end((QUEUE_ID)siz);
+  _itemset.alloc((QUEUE_ID)siz,(QUEUE_ID)siz);
 
   if ( _flag&ITEMSET_ADD ) _add.alloc((QUEUE_ID)siz);
 
   calloc2 (_sc, siz+2, goto ERR);  
 
-  if ( _flag  & ITEMSET_SC2 ) calloc2 (_sc2, _frq_ub+2, goto ERR); // upper bound of frequency
-  if ( _flag2 & ITEMSET_LAMP ) _topk_frq = _frq_lb = 1;  // LAMP mode
-  if ( _flag2 & ITEMSET_LAMP2 ){
-    _topk_frq = _frq_lb = -WEIGHTHUGE;  // 2D LAMP mode
-    malloc2 (_patn, 100, goto ERR);
-    IHEAP_KEY *x_tmp;
-    malloc2 (x_tmp, 101, goto ERR);
-    _minh.alloc(100, 1, x_tmp);
-    _maxh.alloc(100, 2, x_tmp);
-    _minh.vFill(0,100);
+  if ( _flag  & ITEMSET_SC2 ) {
+	  // upper bound of frequency
+  	calloc2 (_sc2, _frq_ub+2, goto ERR); 
   }
 
   if ( _topk_k > 0 ){  // allocate topk heap
@@ -77,7 +69,7 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
       _frq_lb = 1; _topk_frq = 0;
       _sc2[_topk_frq] = _topk_k;
     } else {
-    	_topk.allocFill(_topk_k,-WEIGHTHUGE);
+    	_topk.alloc(_topk_k,-WEIGHTHUGE);
       _frq_lb = -WEIGHTHUGE * _topk_sign;
     }
   }
@@ -85,14 +77,18 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
   if ( _itemtopk_end > 0 ){ // allocate topkheap for each element
 
     _itemtopk = new AHEAP[_itemtopk_end];
-    if ( _itemtopk_item2 > 0 )
-        calloc2 (_itemtopk_ary, _itemtopk_end, goto ERR); // allocate itemary
+    if ( _itemtopk_item2 > 0 ){
+	    // allocate itemary
+			calloc2 (_itemtopk_ary, _itemtopk_end, goto ERR); 
+    }
 
-    FLOOP (i, 0, _itemtopk_end){
+    for(LONG i = 0 ; i<_itemtopk_end ; i++){
 
-      if ( _itemtopk_item2 > 0 )
-          calloc2 (_itemtopk_ary[i], _itemtopk_item, goto ERR); // allocate each itemary
-    	_itemtopk[i].allocFill(_itemtopk_item,-WEIGHTHUGE);
+      if ( _itemtopk_item2 > 0 ){
+		    // allocate each itemary
+        calloc2 (_itemtopk_ary[i], _itemtopk_item, goto ERR); 
+			}
+    	_itemtopk[i].alloc(_itemtopk_item,-WEIGHTHUGE);
 
     }
   }
@@ -186,8 +182,6 @@ void ITEMSET::end (){
 
   LONG i;
 
-  // for 2D LAMP 大丈夫？
-  if ( _flag2 & ITEMSET_LAMP2 ) _minh.xFree();  
   
   FLOOP (i, 0, _itemtopk_end){
 	  _itemtopk[i].end();
@@ -227,26 +221,10 @@ void ITEMSET::last_output (){
 
   FILE2 *fp = &_multi_fp[0];
 
-  // ITEMSET_merge_counters (I);
   merge_counters();
 
   if ( !(_flag&SHOW_MESSAGE) ) return;  // "no message" is specified
 
-  if ( _flag2 & ITEMSET_LAMP ){
-    printf ("frq= %lld ,#sol.= %lld\n", _topk_frq, _topk_k);
-    print_err ("iters=" LONGF, _iters);
-    // if ( _flag&ITEMSET_ITERS2 ) print_err (", iters2=" LONGF, _iters2);
-    print_err ("\n");
-    return;
-  }
-
-  if ( _flag2 & ITEMSET_LAMP2 ){   // to be constructed
-
-    print_err ("iters=" LONGF, _iters);
-    // if ( _flag&ITEMSET_ITERS2 ) print_err (", iters2=" LONGF, _iters2);
-    print_err ("\n");
-    return;
-  }
 
   if ( _itemtopk_end > 0 ){  // output values of the kth-best solution for each item
     FLOOP (n, 0, _itemtopk_end){
@@ -294,7 +272,6 @@ void ITEMSET::last_output (){
   
   END:;
   print_err ("iters=" LONGF, _iters);
-  //if ( _flag&ITEMSET_ITERS2 ) print_err (", iters2=" LONGF, _iters2);
   print_err ("\n");
   
   if (_flag & ITEMSET_SC2){ // count by frequency
@@ -317,7 +294,7 @@ void ITEMSET::output_frequency ( WEIGHT frq, WEIGHT pfrq, int core_id){
   }
 
   if ( _flag&ITEMSET_OUTPUT_POSINEGA ){ // output positive sum, negative sum in the occurrence
-    fp->putc ( ' ');
+    fp->putc (' ');
     fp->print_WEIGHT ( pfrq, _digits, '(');
     fp->print_WEIGHT ( pfrq-frq, _digits, ',');
     fp->print_WEIGHT ( pfrq/(2*pfrq-frq), _digits, ',');
@@ -325,103 +302,36 @@ void ITEMSET::output_frequency ( WEIGHT frq, WEIGHT pfrq, int core_id){
   }
 }
 
-   // topk.end: #records, topk.base: #positive records, PP.th: \alpha, topk_k: #patterns found
-void ITEMSET::lamp (LONG s){
-  if ( _frq >= _topk_frq ){ // LAMP  histogram version
-    _topk_k += s;
-    while ( _topk_k >= _th ){
-      _topk_k -= _sc2[_topk_frq]; _sc2[_topk_frq] = 0;
-      _th = _th * (_topk.base() - _topk_frq+1) / (_topk.end() - _topk_frq+1);
-      _topk_frq++; _frq_lb = _topk_frq;
-      if ( _topk_frq == _topk.end() ) _frq_lb = _topk.base()+1;
-    }
-  }
-  return;
-}
-
-////////////////////// to be constructed
-   // topk.end: #records, topk.base: #positive records, PP.th: \alpha, topk_k: #patterns found
-void ITEMSET::lamp2 (LONG s){
-  IHEAP_ID i, e;
-  if ( _frq >= _topk_frq ){ // LAMP2  double-heap version
-    _topk_k += s;
-    if (_minh.size() > _topk_k/2 ){  // heaps reached maximum size
-      i = _maxh.v(0);
-      if (_frq >= _minh.x(i)){ _patn[i] += s; } // in the maximum group 
-      else {
-        _minh.x(i, _frq);
-        _maxh.chg (0, i);
-        _patn[_maxh.v(0)] += _patn[i]; // merge first&second maximum groups
-        _patn[i] = s;
-      }
-    }
-    else {
-      i = _minh.v(_minh.size());  // set the value to the next cell
-      _minh.x(i,_frq);
-      e = _minh.end();
-      _minh.ins(i); 
-      _maxh.ins(i);
-
-      if (_minh.size() == e){  // heap overflow
-	      _minh.xEnlarge();
-        _maxh.xSync(_minh);   // synchronize the keys for max/min heaps
-        _minh.vFill(e,_minh.end());
-      }
-    }
-    
-    //////////////////// Ç±Ç±Ç©ÇÁêÊÇÕñ¢íÖéË
-    
-    while ( _topk_k >= _th ){
-    
-      _topk_k -= _sc2[_topk_frq]; _sc2[_topk_frq] = 0;
-      _th = _th * (_topk.base() - _topk_frq+1) / (_topk.end() - _topk_frq+1);
-      _topk_frq++; _frq_lb = _topk_frq;
-      if ( _topk_frq == _topk.end() ) _frq_lb = _topk.base()+1;
-    }
-  }
-  return;
-}
-
 //for _trsact_h_
+// QUEUE 用
 void ITEMSET::output_occ ( QUEUE *occ, int core_id)
 {
   QUEUE_INT *x;
   FILE2 *fp = &_multi_fp[core_id];
-  TRSACT *TT = (TRSACT *)(_X);
-  VEC_ID j, ee = TT->get_rows_org();
+
+  VEC_ID j, ee = _rows_org;
 
   int flag = _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT), flush_flag=0;
 
-  //MQUE_FLOOP__CLS (*occ, x, TT->get_occ_unit()){
-	for(x=occ->get_v() ; (char *)x<((char *)occ->get_v())+occ->get_t()*(TT->get_occ_unit()) ; (x)=(typeof(x))(((char *)(x))+(TT->get_occ_unit()))){
+
+	for(x=occ->begin() ; x < occ->end() ; x++ ){
+
 
     if ( (_flag&ITEMSET_RM_DUP_TRSACT)==0 || *x != ee ){
-      fp->print_int ( TT->exist_trperm()? TT->get_trperm(*x): *x, _separator);
-      if (flag == ITEMSET_MULTI_OCC_PRINT ){
-        FLOOP (j, 1, (VEC_ID)(TT->get_occ_unit()/sizeof(QUEUE_INT)))
-            fp->print_int ( *(x+j), _separator);
-      } else if ( flag == (ITEMSET_MULTI_OCC_PRINT+ITEMSET_TRSACT_ID) ){
-         fp->print_int ( *(x+1), _separator);
-      }
+      fp->print_int ( _trperm ? _trperm[*x]: *x , _separator);
     }
     ee = *x;
     if ( !(_flag&ITEMSET_MULTI_OUTPUT) || (fp->get_size()) > FILE2_BUFSIZ/2 ){
       SPIN_LOCK(_multi_core, _lock_output);
       flush_flag = 1;
       fp->flush_();
-      //FILE2_flush_ (fp);
     }
   }
-#ifdef _FILE2_LOAD_FROM_MEMORY_
-  *((int *)__write_to_memory__) = INTHUGE;
-  __write_to_memory__ = (char *)(((int *)__write_to_memory__) + 1);
-#else
   fp->putc ('\n');
   if ( flush_flag ){
     fp->flush_ ();
     SPIN_UNLOCK(_multi_core, _lock_output);
   }
-#endif
 }
 
 /* output an itemset to the output file */
@@ -452,8 +362,6 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *o
   if (_flag & ITEMSET_SC2) _sc2[(QUEUE_INT)frq]++;  // histogram for LAMP
   SPIN_UNLOCK(_multi_core, _lock_sc);
 
-  if ( _flag2 & ITEMSET_LAMP ) { lamp  (1); return; }  // LAMP mode
-  if ( _flag2 & ITEMSET_LAMP2 ){ lamp2 (1); return; }  // 2D LAMP mode
   if ( _itemtopk_end > 0 ){
 
     e = _itemtopk[itemtopk_item].findmin_head();
@@ -513,11 +421,7 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *o
     }
     if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( frq, pfrq, core_id);
     if ( ((_flag & ITEMSET_NOT_ITEMSET) == 0) || (_flag&ITEMSET_FREQ) || (_flag&ITEMSET_PRE_FREQ) ){
-#ifdef _FILE2_LOAD_FROM_MEMORY_
-  FILE2_WRITE_MEMORY (QUEUE_INT, FILE2_LOAD_FROM_MEMORY_END);
-#else
       fp->putc ('\n');
-#endif
     }
 		// for _trsact_h_
     if (_flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) output_occ ( occ, core_id);
@@ -545,8 +449,9 @@ void ITEMSET::solution_iter (QUEUE *occ, int core_id){
 	//BLOOP(i,x,y) for ((i)=(x) ; ((i)--)>(y) ; )
   //BLOOP (_add._t, _add._t, 0){
   for(;_add.get_dec_t()>0;){
+  	
 
-    _itemset.push_back(_add.pop_back());
+    _itemset.push_back(_add.tail());
 
     solution_iter ( occ, core_id);
 
@@ -572,9 +477,7 @@ void ITEMSET::solution (QUEUE *occ, int core_id){
       if (_flag & ITEMSET_SC2){
         s = 1<< _add.get_t();
         _sc2[(QUEUE_INT)_frq] += s;  // histogram for LAMP
-        if ( _flag2 & ITEMSET_LAMP )  lamp  ( s);  // LAMP mode
-        if ( _flag2 & ITEMSET_LAMP2 ) lamp2 ( s);  // 2D LAMP mode
-        else if ( _topk_k > 0 && _frq > _topk_frq ){ // top-k histogram version
+        if ( _topk_k > 0 && _frq > _topk_frq ){ // top-k histogram version
           while (1){
             if ( _sc2[_topk_frq] > s ){ _sc2[_topk_frq] -= s; break; }
             s -= _sc2[_topk_frq];
@@ -652,8 +555,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
       if ( _frq/_set_weight[i] >= _setrule_lb && _fp ){
         _sc[i]++;
         if ( _flag  & ITEMSET_SC2)     _sc2[(QUEUE_INT)_frq]++;  // histogram for LAMP
-        if ( _flag2 & ITEMSET_LAMP )   lamp (1);  // LAMP mode
-        if ( _flag2 & ITEMSET_LAMP2 )  lamp2 (1);  // 2D LAMP mode
+
         if ( _flag  & ITEMSET_PRE_FREQ ) output_frequency ( _frq, _pfrq, core_id);
         FLOOP (t, 0, _itemset.get_t()){
           _multi_fp[core_id].print_int ( _itemset.get_v(t), t?_separator:0);
@@ -672,11 +574,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
         _multi_fp[core_id].putc ( ' ');
         _multi_fp[core_id].print_real ( _frq/_set_weight[i], _digits, '(');
         _multi_fp[core_id].putc ( ')');
-#ifdef _FILE2_LOAD_FROM_MEMORY_
-  FILE2_WRITE_MEMORY (QUEUE_INT, FILE2_LOAD_FROM_MEMORY_END);
-#else
         _multi_fp[core_id].putc ( '\n');
-#endif
 			//for _trsact_h_
         if ( _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ){
             output_occ ( _set_occ[i], core_id);
@@ -749,8 +647,8 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
 void ITEMSET::output_occ ( KGLCMSEQ_QUE *occ, int core_id){
   KGLCMSEQ_ELM *x;
   FILE2 *fp = &_multi_fp[core_id];
-  TRSACT *TT = (TRSACT *)(_X);
-  VEC_ID j, ee = TT->get_rows_org();
+  //TRSACT *TT;// = (TRSACT *)(_X);
+  VEC_ID j, ee = _rows_org;
 
   int flag = _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT), flush_flag=0;
 
@@ -758,7 +656,7 @@ void ITEMSET::output_occ ( KGLCMSEQ_QUE *occ, int core_id){
 	for(x=occ->begin() ; x< occ->end() ;  x++){
 
     if ( (_flag&ITEMSET_RM_DUP_TRSACT)==0 || x->_t != ee ){
-      fp->print_int ( TT->exist_trperm()? TT->get_trperm(x->_t): x->_t, _separator);
+      fp->print_int ( _trperm? _trperm[x->_t]: x->_t, _separator);
       if (flag == ITEMSET_MULTI_OCC_PRINT ){
         //FLOOP (j, 1, (VEC_ID)(TT->get_occ_unit()/sizeof(QUEUE_INT)))
         //    fp->print_int ( *(x+j), _separator);
@@ -820,8 +718,6 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ
   if (_flag & ITEMSET_SC2) _sc2[(QUEUE_INT)frq]++;  // histogram for LAMP
   SPIN_UNLOCK(_multi_core, _lock_sc);
 
-  if ( _flag2 & ITEMSET_LAMP ) { lamp  (1); return; }  // LAMP mode
-  if ( _flag2 & ITEMSET_LAMP2 ){ lamp2 (1); return; }  // 2D LAMP mode
   if ( _itemtopk_end > 0 ){
 
     e = _itemtopk[itemtopk_item].findmin_head();
@@ -942,9 +838,7 @@ void ITEMSET::solution (KGLCMSEQ_QUE *occ, int core_id){
       if (_flag & ITEMSET_SC2){
         s = 1<< _add.get_t();
         _sc2[(QUEUE_INT)_frq] += s;  // histogram for LAMP
-        if ( _flag2 & ITEMSET_LAMP )  lamp  ( s);  // LAMP mode
-        if ( _flag2 & ITEMSET_LAMP2 ) lamp2 ( s);  // 2D LAMP mode
-        else if ( _topk_k > 0 && _frq > _topk_frq ){ // top-k histogram version
+        if ( _topk_k > 0 && _frq > _topk_frq ){ // top-k histogram version
           while (1){
             if ( _sc2[_topk_frq] > s ){ _sc2[_topk_frq] -= s; break; }
             s -= _sc2[_topk_frq];
@@ -1034,8 +928,6 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
       if ( _frq/_set_weight[i] >= _setrule_lb && _fp ){
         _sc[i]++;
         if ( _flag  & ITEMSET_SC2)     _sc2[(QUEUE_INT)_frq]++;  // histogram for LAMP
-        if ( _flag2 & ITEMSET_LAMP )   lamp (1);  // LAMP mode
-        if ( _flag2 & ITEMSET_LAMP2 )  lamp2 (1);  // 2D LAMP mode
         if ( _flag  & ITEMSET_PRE_FREQ ) output_frequency ( _frq, _pfrq, core_id);
         FLOOP (t, 0, _itemset.get_t()){
           _multi_fp[core_id].print_int ( _itemset.get_v(t), t?_separator:0);

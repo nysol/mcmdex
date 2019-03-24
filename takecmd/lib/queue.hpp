@@ -256,6 +256,10 @@ class QUEUE {
 		_end =  siz+1;
 		malloc2(_v, siz+1, EXIT);
 	}
+	void alloc (QUEUE_ID siz,QUEUE_ID end){
+		malloc2(_v, siz+1, EXIT);
+		_end =  end;
+	}
 
 	void init(){
 		_v = NULL;

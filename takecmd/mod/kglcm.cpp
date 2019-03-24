@@ -503,8 +503,9 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
     _occ_w[e] = _occ_pw[e] = -WEIGHTHUGE;  // unnecessary?
     
-    if ( (_II.get_flag() & SHOW_PROGRESS) && (_II.item_get_t() == 0 ) ){
-      f++; print_err ("%d/%d (" LONGF " iterations)\n", f, cnt, _II.get_iters());
+    if ( (_iFlag & SHOW_PROGRESS) && (_II.item_get_t() == 0 ) ){
+      f++; 
+      print_err ("%d/%d (" LONGF " iterations)\n", f, cnt, _II.get_iters());
     }
   }
 	

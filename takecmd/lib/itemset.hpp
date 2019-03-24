@@ -96,12 +96,14 @@ class ITEMSET{
   char _topk_sign, _itemtopk_sign;  // determine min/max (1, -1) for topk/itemtopk heaps 
   LONG *_patn;  // cardinarity of each patten group
 
+	VEC_ID _rows_org; // _Xのかわり
+	PERM *_trperm; // _Xのかわり 仮
 
   char *_itemflag;       // 1 if it is include in the pattern (and 2 if included in add)
   PERM *_perm;   // permutation array for output itemset: item => original item
   WEIGHT *_item_frq;    // frequency of each item
   LONG *_sc, *_sc2;    // #itemsets classified by the sizes / frequencies
-  void *_X;  // pointer to the original data
+  // void *_X;  // pointer to the original data
   FILE *_fp;    // file pointer to the output file
   QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
   WEIGHT *_set_weight;  // the frequency of each prefix of current itemset
@@ -119,8 +121,6 @@ class ITEMSET{
 
   AHEAP _topk; 
 
-  IHEAP _minh, _maxh;  // for 2D LAMP mode
-
 	//これはあとで
 	QUEUE _itemset;   // current operating itemset
   QUEUE _add;       // for equisupport (hypercube decomposition)
@@ -131,8 +131,6 @@ class ITEMSET{
   pthread_spinlock_t _lock_output;   // couneter locker for #output 
 #endif
 
-
-	
 	/* Output information about ITEMSET structure. flag&1: print frequency constraint */
 	void print (int flag);
 
@@ -141,10 +139,6 @@ class ITEMSET{
 	/* if topK mining, set topk.end to "K" */
 	void end ();
 
-	void lamp (LONG s);
-	void lamp2 (LONG s);
-	
-	
 	// ================================================
 	//  OUTPUT
 	// ================================================
@@ -195,13 +189,15 @@ class ITEMSET{
 		_separator(' '),_digits(4),
 		_topk_sign(1) ,_itemtopk_sign(1),  // initialization ; max topk
 		_itemflag(NULL),_perm(NULL),_item_frq(NULL),
-		_sc(NULL),_sc2(NULL),_X(NULL),_fp(NULL),
+		_sc(NULL),_sc2(NULL),_fp(NULL),
 		_itemtopk_ary(NULL),
   	_set_weight(NULL),_set_occ(NULL),_patn(NULL),
 		_multi_outputs(NULL),_multi_outputs2(NULL),
 		_multi_iters(NULL),_multi_iters2(NULL),_multi_iters3(NULL),
 		_multi_solutions(NULL),_multi_solutions2(NULL),_multi_fp(NULL),
-		_multi_core(0),_itemtopk(NULL){}
+		_multi_core(0),_itemtopk(NULL),
+		_rows_org(0),_trperm(NULL)
+		{}
 	
 		// SSPC
 		void setParams(
@@ -355,32 +351,6 @@ class ITEMSET{
 	  return item;
 	}
 
-/*
-	void item_add_item(QUEUE_INT v){ 
-		_itemset.push_back(v)
-	  _itemflag[item]=1;
-	  return;
-	}
-
-	void item_add_item(QUEUE_INT v){ 
-		_itemset.push_back(v)
-	  _itemflag[item]=1;
-	  return;
-	}
-
-	QUEUE_INT item_del_item(){ 
-  	QUEUE_INT item = _itemset.pop_back();
-	  _itemflag[item]=0;
-	  return item;
-	}
-
-	QUEUE_INT iadd_del_item(){ 
-  	QUEUE_INT item = _add.pop_back();
-	  _itemflag[item]=0;
-	  return item;
-	}
-
-*/
 	QUEUE_INT get_target(void){ return _target;}
 	QUEUE_INT get_item_max(void){ return _item_max;}
 	LONG get_itemtopk_end(void){ return _itemtopk_end;}
@@ -499,11 +469,15 @@ class ITEMSET{
 
 
 	void set_total_weight(WEIGHT v) { _total_weight=v; }  
+	// _Xの代わり
+	void set_rows_org(VEC_ID v){ _rows_org = v; }
+	void set_trperm(PERM *v){ _trperm = v; }
 
 	void set_itemflag(char * v){ free2 (_itemflag); _itemflag = v;}
 
 	void set_itemflag(int i,char v){_itemflag[i] = v;}
 	char get_itemflag(int i){return _itemflag[i];}
+
 
 	void alloc(char *fname, PERM *perm, QUEUE_INT item_max, size_t item_max_org);
 

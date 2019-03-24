@@ -348,6 +348,8 @@ class TRSACT {
 	VEC_ID get_rows_org(void){ return _C.rows();}//_rows_org;}
 	int get_occ_unit(void){ return _occ_unit;}
 	PERM get_trperm(int i) { return _trperm[i]; }
+	PERM* get_trperm(void) { return _trperm; } //かり
+
 	char * get_sc(){return _sc; }
 	WEIGHT get_total_w(void){ return _total_w;}
 	WEIGHT get_total_w_org(void){ return _C.get_total_w_org();}

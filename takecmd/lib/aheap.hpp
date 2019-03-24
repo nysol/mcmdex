@@ -129,7 +129,7 @@ class AHEAP {
   		update (i);
 		}
 
-		void allocFill(AHEAP_ID siz,AHEAP_KEY val){
+		void alloc(AHEAP_ID siz,AHEAP_KEY val){
 			LONG i;
 			alloc(siz);
       FLOOP (i, 0, siz) chg( (AHEAP_ID)i, val);

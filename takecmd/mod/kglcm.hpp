@@ -195,7 +195,8 @@ class KGLCM{
   }
 
   _II.set_total_weight(_TT.get_total_w());
- 
+	_II.set_rows_org(_TT.get_rows_org());
+	_II.set_trperm(_TT.get_trperm());
  	 // LAMPはとりあえず除去
    // if ( (_II.get_flag2()&ITEMSET_LAMP) && _II.get_topk_base() == 0) _II.set_topk_base( _TT.get_rows_org());
 
