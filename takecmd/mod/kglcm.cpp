@@ -439,15 +439,14 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
     if ( !(_II.get_flag() & ITEMSET_POSI_RATIO) || 
     			(rposi<=_II.get_rposi_ub() && rposi>=_II.get_rposi_lb()) ){
-
       _II.check_all_rule ( _occ_w, occ, _TT.getp_jump(), _TT.get_total_pw_org(), 0);     
 
     }
   } 
 
   // select freqeut (and addible) items with smaller indices
-
 	for(x=_TT.beginJump();x<_TT.endJump() ; x++){
+		
 
 		// in the case of freqset mining, automatically done by rightmost sweep;
     _TT.clrOQend(*x);  
@@ -456,7 +455,6 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
     if ( *x<item && _II.get_itemflag(*x) == 0 ){
       _itemcand.push_back(*x);
-
       _occ_w2[*x] = _occ_w[*x];
       if ( _TT.get_flag2() & TRSACT_NEGATIVE ) _occ_pw2[*x] = _occ_pw[*x];
 
@@ -478,6 +476,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
 	// loop for recursive calls
   cnt = _itemcand.size(); f=0;   // for showing progress
+  
 
   while (_itemcand.size() > 0 ){
 
@@ -486,7 +485,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
     if ( _occ_pw2[e] >= MAX(_II.get_frq_lb(), _II.get_posi_lb()) ){  // if the item is frequent
 
 			_II.addCurrent(e);
-		  if ( _sgfname  ){ _SG.itemCntUp(item); }
+		  if ( _sgfname  ){ _SG.itemCntUp(e); }
 
 
       LCMCORE( e, _TT.getp_OQ(e), _occ_w2[e], _occ_pw2[e]); // recursive call
@@ -494,7 +493,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 			if ( _ERROR_MES ) return;
 
 			_II.delCurrent();
-		  if ( _sgfname  ){ _SG.itemCntDown(item); }
+		  if ( _sgfname  ){ _SG.itemCntDown(e); }
 			
     }
     // clear the occurrences, for the further delivery
@@ -509,7 +508,6 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
     }
   }
 	
-	//これいる？
   _TT.set_new_t(new_t);
   _TT.set_bnum(bnum);
   _TT.set_bblock(bblock);
@@ -547,7 +545,6 @@ int KGLCM::run (int argc, char *argv[]){
   if ( _iFlag & ITEMSET_RULE ){ _w_lb = -WEIGHTHUGE; } 
   else												{ _w_lb = _frq_lb;}
 
-  _sgFlag = LOAD_EDGE;
 
   if( 
 	  //_TT.load(
@@ -564,7 +561,7 @@ int KGLCM::run (int argc, char *argv[]){
 	}
 
 	if ( _sgfname ){ 
-		if (_SG.load(_sgFlag,_sgfname)) return 1;
+		if (_SG.loadEDGE(_sgfname)) return 1;
   }
   
 	_iFlag |= (ITEMSET_ITEMFRQ + ITEMSET_ADD); 
@@ -586,8 +583,8 @@ int KGLCM::run (int argc, char *argv[]){
 	);
  
   if ( !ERROR_MES && _TT.get_clms()>0 ){
-    _init ();
-    if ( !ERROR_MES ) LCMCORE (_TT.get_clms(), &_oo, _TT.get_total_w_org(), _TT.get_total_pw_org());
+    _init();
+    if ( !ERROR_MES ) LCMCORE(_TT.get_clms(), &_oo, _TT.get_total_w_org(), _TT.get_total_pw_org());
     _II.last_output();
   }
 

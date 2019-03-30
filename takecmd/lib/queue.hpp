@@ -197,16 +197,47 @@ class QUEUE {
 
 	//void INS(QUEUE_INT v){ _v[_t++]=v; }
 
+	void show(){
+		std::cerr << "QUE";
+		for(QUEUE_INT * x= begin() ; x < end(); x++){
+			std::cerr << " " << *x  ;
+ 		}
+ 		std::cerr << std::endl;
+	
+	}
 
 	void posClr(){ _t = 0; _s = 0; }
 	void endClr(){ _end = 0;  }
 	void tClr()  { _t = 0;  }
+	void sClr()  { _s = 0;  }
+
 	void setEndByStart(){ _t = _s; }
 	void setStartByEnd(){ _s = _t; }
-
-
-
 	
+	void queSort(int flag){ qsort_<QUEUE_INT>( _v, _t , flag); }
+
+	void rmDup(QUEUE_INT dmy){ 
+		if( _t > 1 ){
+			int cmm1 = 1;
+			for( int cmm2 = 1 ; cmm2 < _t ; cmm2++){
+
+				if( _v[cmm2-1] != _v[cmm2] ){
+					_v[cmm1++] = _v[cmm2]; 
+				}
+			}
+			_t = cmm1;		
+		}
+		_v[_t] = dmy;
+	}
+
+   void initVprem(size_t vt){
+
+		for(size_t i=0 ; i< vt; i++){ 
+			_v[i]=i; 
+		}
+		_t = vt;
+
+	}
 	QUEUE_ID    get_t(){return _t;}
 	QUEUE_ID    get_s(){return _s;}
 	QUEUE_ID    get_end(){return _end;}
@@ -230,6 +261,7 @@ class QUEUE {
 
 	void inc_t(){ _t++;}
 	QUEUE_ID get_dec_t(){ return _t--;}
+
 	void dec_t(){ _t--; }
 
 	void inc_end(){ _end++;}
@@ -256,10 +288,16 @@ class QUEUE {
 		_end =  siz+1;
 		malloc2(_v, siz+1, EXIT);
 	}
-	void alloc (QUEUE_ID siz,QUEUE_ID end){
+	void alloc (QUEUE_ID siz , QUEUE_ID end){
 		malloc2(_v, siz+1, EXIT);
 		_end =  end;
 	}
+
+	void alloc(QUEUE_ID siz , QUEUE_INT *v){
+		_v = v;
+		_end =  siz;
+	}
+
 
 	void init(){
 		_v = NULL;
@@ -389,112 +427,4 @@ class QUEUE {
 
 	
 };
-
-
-
-// ===============以下必要なものは復活させる===============
-	//void print_ ();
-
-	// from macro
-	/*
-	void QUE_t_INC(){ _t = ( (_t>=_end-1) ? 0 : _t+1); }
-	void QUE_s_INC(){ _s = ( (_s>=_end-1) ? 0 : _s+1); }
-
-	void QUE_t_DEC(){ _t = ( (_t==0) ? _end-1 : _t-1); }
-	void QUE_s_DEC(){ _s = ( (_s==0) ? _end-1 : _s-1); }
-	}*/
-	
-
-
-	//void print__();/// add 未使用？ 
-  //QUEUE_INT *_v;  // pointer to the array
-  //QUEUE_ID _end;  // the length of the array
-  //QUEUE_ID _t;  // end position+1
-  //QUEUE_ID _s;  // start position
-
-	//QUEUE_ID QUE_INC(QUEUE_ID i){ return (i>=_end-1) ? 0 : i+1 ;}
-	//QUEUE_ID QUE_DEC(QUEUE_ID i){ return (i==0) ? _end-1 : i-1 ;}
-
-
-	/* insert an element to the tail/head */
-//	void ins_ ( QUEUE_INT e);
-//	void ins  ( QUEUE_INT e);
-//	void ins_head_ ( QUEUE_INT e);
-//	void ins_head  ( QUEUE_INT e);
-
-	/* extract an element from the head/tail, without checking the underflow */
-//	QUEUE_INT ext_ ();
-//	QUEUE_INT ext ();
-//	QUEUE_INT ext_tail ();
-
-	/* remove the j-th element and replace it by the tail/head or shift */
-//	void rm_ ( QUEUE_ID j);
-//	void rm_head_ ( QUEUE_ID j);
-//	void rm_head  ( QUEUE_ID j);
-//	int  rm_ele_  ( QUEUE_INT e);
-
-/*
-	void ins_ele_( QUEUE_INT e);    /// add 未使用？
-	int cmp_ (QUEUE *Q2); /// add 未使用？ 
-	QUEUE_ID intsec_ (QUEUE *Q2);/// add 未使用？ 
-	void perm_print (QUEUE_ID *q);/// add 未使用？ 
-	void printn ();/// add 未使用？ 
-	void perm_printn (QUEUE_ID *q);/// add 未使用？ 
-*/	
-	
-	/* Append Q2 to the tail of Q1. Q2 will (not) be deleted */
-/*
-	void append_ ( QUEUE *Q2);
-	void append  ( QUEUE *Q2);
-	void concat_ ( QUEUE *Q2);
-	void concat  ( QUEUE *Q2);
-*/
-	/* Append from j to jj th elements to the tail of Q1. Q2 will not be deleted */
-/*
-	void subconcat_ ( QUEUE *Q2, QUEUE_ID j, QUEUE_ID jj);
-	void subconcat  ( QUEUE *Q2, QUEUE_ID j, QUEUE_ID jj);
-*/
-
-	/* initialize Q1 by length of Q2, and copy Q2 to Q1 */
-//	void store_ ( QUEUE *Q2);
-//	void store  ( QUEUE *Q2);
-	/* copy Q2 to Q1 and delete Q2 */
-//	void restore_ ( QUEUE *Q2);
-//	void restore  ( QUEUE *Q2);
-
-	/* copy Q2 to Q1 */
-//	void cpy_ ( QUEUE *Q2);
-
-	/* copy l elements of Q2 starting from s2 to the s1th position of Q1.
-	   size of Q1 is not increasing */
-//	void subcpy_ ( QUEUE_ID s1, QUEUE *Q2, QUEUE_ID s2, QUEUE_ID l);
-//	void subcpy  ( QUEUE_ID s1, QUEUE *Q2, QUEUE_ID s2, QUEUE_ID l);
-
-	/* merge/minum/intersection of Q1 and Q2, and set Q1 to it.
- 		Both Q1 and Q2 have to be sorted in increasing order */
-/*	void merge_ ( QUEUE *Q2);
-	void merge  ( QUEUE *Q2);
-	void minus_ ( QUEUE *Q2);
-	void minus ( QUEUE *Q2);
-	void _and   ( QUEUE *Q2);
-*/ 
-	/* insertion sort */
-//	void sort ();
-
-	// #define QUEUE_LENGTH(Q) (((Q)._t-(Q)._s+(Q)._end)%(Q)._end)
-	// #define QUEUE_LENGTH_(Q) ((Q)._t-(Q)._s)
-
-	//int LENGTH(){ return(_t-_s+_end)%_end;}
-
-
-	//#define QUEUE_HEAD(Q) ((Q)._v[(Q)._s])//いる？
-	//QUEUE_INT TAIL_(){ return _v[_t-1];}
-	//void RMALL(void){ _t=_s;}
-	
-	
-/*
-	void checkprn(){
-		std::cerr << "chkprn " << _t << " "  << _s << " " << _end << std::endl; 
-	}
-*/
 

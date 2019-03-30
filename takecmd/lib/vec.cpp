@@ -111,6 +111,8 @@ void SETFAMILY::sort (){
     if ( _rw ) ARY_INVPERMUTE(_rw, p, w, _t, EXIT);
     if ( _w ) ARY_INVPERMUTE(_w, p, ww, _t, EXIT);
     ARY_INVPERMUTE_(_v, p, Q, _t);
+
+
     free2 (p);
   }
 
@@ -207,6 +209,145 @@ void SETFAMILY::SMAT_flie_load(FILE2 *fp){
   if ( _wfname ) wfp.close ();
 
 }
+
+
+
+void SETFAMILY::flie_load(FILE2 *fp){
+
+  WEIGHT z=0;
+  VEC_ID t;
+  LONG x, y;
+  int fc=0, FILE_err_=0, flag2=_flag;
+  int flag=0;
+
+  int wflag =  ( _wfname || (_flag&LOAD_EDGEW));
+  FILE_COUNT C;
+  FILE2 wfp;
+
+  if ( flag && !_wfname ) flag2 = _flag | LOAD_EDGEW;
+
+  C.count(fp,(_flag&(LOAD_ELE+LOAD_TPOSE+LOAD_RC_SAME+LOAD_EDGE)) | FILE_COUNT_ROWT, 0, 0, 0, (flag2&LOAD_EDGEW)?1:0, 0);
+
+  if ( _clms == 0 ) _clms = C.get_clms();
+  if ( _t == 0 ) _t = C.get_rows();
+  if ( flag ) SMAT_alloc ( _t, C.getp_rowt(), _clms, 0);
+  else {
+    alloc ( _t, C.getp_rowt(), _clms, 0);
+    if ( wflag ) alloc_weight ( C.getp_rowt());
+  }
+
+  //free2 (C.rowt);
+
+  if ( _wfname ) wfp.open ( _wfname, "r");
+  if ( ERROR_MES ) return;
+
+  fp->reset ();
+  if ( _flag&(LOAD_NUM+LOAD_GRAPHNUM) ) fp->read_until_newline ();
+  t=0;
+  do {
+    if ( _flag&LOAD_ELE ){
+      if ( fp->read_pair ( &x, &y, &z, flag2) ) continue;
+    } else {
+      x = t;
+      FILE_err_ = fp->read_item ( _wfname?&wfp:NULL, &x, &y, &z, fc, flag2);
+      if ( FILE_err&4 ) goto LOOP_END;
+    }
+
+    if ( y >= _clms || x >= _t ) continue;
+
+    if ( flag ){
+      _v[x].inc_t();
+    } else {
+      if ( wflag ) _w[x][_v[x].get_t()] = z;
+      _v[x].push_back(y);
+      if ( (_flag&LOAD_EDGE) && x != y ){
+        if ( wflag ) _w[y][_v[y].get_t()] = z;
+        _v[y].push_back(x);
+      }
+    }
+    if ( !(_flag&LOAD_ELE) ){
+      fc = 0;
+      if ( FILE_err&3 ){
+        LOOP_END:;
+        t++; if ( t >= _t ) break;
+        fc = FILE_err_? 0: 1; FILE_err_=0; // even if next weight is not written, it is the rest of the previous line
+      }
+    }
+  } while ( (FILE_err&2)==0 );
+  if ( _wfname ) wfp.close ();
+
+}
+
+
+/* scan file and load the data from file to SMAT structure */
+void SETFAMILY::load (int flag , char *fname)
+{
+
+  FILE2 fp;
+  VEC_ID i;
+  _fname = fname;
+  _flag = flag;
+
+  fp.open ( _fname, "r");
+	flie_load(&fp);
+  fp.close ();     
+
+  if(ERROR_MES) EXIT;
+
+  print_mes (this, "setfamily: %s ,#rows %d ,#clms %d ,#eles %zd", _fname, _t, _clms, _eles);
+
+  if (_wfname ) print_mes (this, " ,weightfile %s", _wfname);
+  print_mes (this, "\n");
+ 
+  sort ();
+
+	// end mark これいる？
+  FLOOP (i, 0, _t) _v[i].set_v(_v[i].get_t(),_clms); 
+
+  _eles = _ele_end;
+
+	for(int i=0 ; i< _t;i++){ // allvvInitByT();
+		_v[i].set_v( _v[i].get_t() , _t);
+	}
+
+  sort(); //これいる？
+}
+
+
+
+/* scan file and load the data from file to SMAT structure */
+void SETFAMILY::load (int flag , char *fname ,char *wfname)
+{
+
+  FILE2 fp;
+  VEC_ID i;
+  _fname = fname;
+  _wfname = wfname;
+  _flag = flag;
+
+  fp.open ( _fname, "r");
+	flie_load(&fp);
+  fp.close ();     
+
+  if(ERROR_MES) EXIT;
+
+  print_mes (this, "setfamily: %s ,#rows %d ,#clms %d ,#eles %zd", _fname, _t, _clms, _eles);
+
+  if (_wfname ) print_mes (this, " ,weightfile %s", _wfname);
+  print_mes (this, "\n");
+ 
+  sort ();
+
+	// end mark
+  FLOOP (i, 0, _t) _v[i].set_v(_v[i].get_t(),_clms); 
+
+  _eles = _ele_end;
+
+}
+
+
+
+
 
 /* scan file and load the data from file to SMAT structure */
 void SETFAMILY::load (){

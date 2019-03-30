@@ -69,7 +69,7 @@ class KGLCM{
 
 	// SG
 	char *_sgfname;
-	int _sgFlag;
+	//int _sgFlag;
 
 
 	WEIGHT * _occ_w,*_occ_w2,*_occ_pw,*_occ_pw2;
@@ -85,7 +85,7 @@ class KGLCM{
 
 
 	/* allocate arrays and structures */
-	void preALOCC (){
+	void preALOCC(){
 
 		QUEUE_ID siz = _TT.get_clms();
 		PERM *perm   = _TT.get_perm();
@@ -149,6 +149,7 @@ class KGLCM{
 
   	QUEUE_INT i;
 
+		// Fが指定されていて かつ -A ,-a -r -R が指定されていない時
 	  _clmsFlag = ((_problem&PROBLEM_FREQSET)&&(_iFlag&ITEMSET_RULE)==0);
 
 		preALOCC();

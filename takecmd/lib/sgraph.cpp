@@ -12,7 +12,6 @@
 #include"sgraph.hpp"
 #include"vec.hpp"
 
-//SGRAPH INIT_SGRAPH = {TYPE_SGRAPH,NULL,0,INIT_SETFAMILY_,INIT_SETFAMILY_,INIT_SETFAMILY_,0,NULL,NULL,NULL,NULL};
 
 /*  initialization  */
 void SGRAPH::alloc ( QUEUE_ID nodes, size_t edge_num, size_t arc_num){
@@ -52,8 +51,8 @@ void SGRAPH::edge_mk (QUEUE_INT u, QUEUE_INT v, WEIGHT w){
     _edge.set_w(u,_edge.get_vt(u),w);
     _edge.set_w(v,_edge.get_vt(v),w);
   }
-  _edge.INS_v(u,v);
-  _edge.INS_v(v,u);
+  _edge.push_back(u,v);
+  _edge.push_back(v,u);
   _edge.add_eles(2);
 }
 
@@ -66,8 +65,8 @@ void SGRAPH::arc_mk (QUEUE_INT u, QUEUE_INT v, WEIGHT w){
   if ( _in.exist_w() ){
   	_in.set_w(v,_in.get_vt(v), w);
   }
-  _out.INS_v(u,v);
-  _in.INS_v(v,u);
+  _out.push_back(u,v);
+  _in.push_back(v,u);
   _in.add_eles(1);
   _out.add_eles(1);
 }
@@ -218,6 +217,33 @@ void SGRAPH::print (FILE *fp){
 
 
 /* load edges/arcs (determined by G->flag) from file */
+// LCM用 undirect
+int SGRAPH::loadEDGE (char* fname){
+
+  VEC_ID i;
+  _fname = fname;
+
+	_edge.load( LOAD_EDGE + LOAD_RC_SAME , _fname);
+
+	/*
+	_edge.allvvInitByT();
+
+  _edge.set_rw(_node_w);
+  _edge.sort();
+  _edge.set_rw(NULL); 
+	*/
+  _perm = _edge.get_rperm(); 
+  _edge.set_rperm(NULL);
+
+  print_mes (this, "sgraph: %s ,#nodes %d ,#edges %zd ,#arcs %zd", _fname, SGRAPH_NODE_NUM, _edge.get_eles()/2,  _edge.get_eles());
+  if ( _wfname ) print_mes (this, " ,weight file: %s", _wfname);
+  if (_nwfname ) print_mes (this, " ,node weight file: %s", _nwfname);
+  print_mes (this, "\n");
+	return 0;
+}
+
+
+
 int SGRAPH::load (int flag ,char* fname){
 
   VEC_ID i;
@@ -275,7 +301,7 @@ int SGRAPH::load (int flag ,char* fname){
       FLOOP (j, 0, c[i]){
         e = F1->get_vv(i,j);
         if ( F2->exist_w() ) F2->set_w(e,F2->get_vt(e),F1->get_w(i,j));
-        F2->INS_v(e,i);
+        F2->push_back(e,i);
       }
     }
     free (c);
@@ -364,36 +390,6 @@ void SGRAPH::replace_index (PERM *perm, PERM *invperm){
 
 }
 
-/* sort the nodes according to the permutation *tmp */
-/*
-void SGRAPH::perm_node (PERM *tmp){
-  VEC_ID c1=0, c2=_node1_num, i;
-  PERM *perm;
-  malloc2 (perm, SGRAPH_NODE_NUM, {free(tmp);EXIT;});
-  FLOOP (i, 0, SGRAPH_NODE_NUM){
-      if ( tmp[i] < _node1_num ){ perm[tmp[i]] = c1++;  }
-      else { perm[tmp[i]] = c2++; }
-
-	}
-
-  //ARY_INV_PERM_ (tmp, perm, SGRAPH_NODE_NUM);
-	for(size_t st=0; st<SGRAPH_NODE_NUM ;st++){ tmp[st]=-1; }
-	for(int i=0;i<SGRAPH_NODE_NUM;i++){
-		if(perm[i]>=0 && perm[i]<SGRAPH_NODE_NUM){ tmp[perm[i]]=i; }
-	}
-  replace_index (perm, tmp);
-//  free2 (tmp);
-}
-*/
-/* sort the nodes by Q->t, increasing if flag=1, decreasing if flag=-1 */
-/*未使用
-void SGRAPH::sort_node (int flag){
-  PERM *tmp;
-  tmp = qsort_perm_VECt ((VEC *)(_edge._v), _edge._t, flag==1?sizeof(QUEUE):-sizeof(QUEUE));//ここ警告
-  perm_node (tmp);
-  free2 (tmp);
-}
-*/
 
 /* remove all selfloops */
 void SGRAPH::rm_selfloop (){

@@ -265,6 +265,7 @@ void ITEMSET::last_output (){
     n += _sc[i];
     if ( _sc[i] != 0 ) nn = i;
   }
+
   if ( n!=0 ){
     printf (LONGF "\n", n);
     FLOOP (i, 0, nn+1) printf (LONGF "\n", _sc[i]);
@@ -440,18 +441,23 @@ void ITEMSET::output_itemset ( QUEUE *occ, int core_id){
 /* output itemsets with adding all combination of "add"
    at the first call, i has to be "add->t" */
 void ITEMSET::solution_iter (QUEUE *occ, int core_id){
+
   QUEUE_ID t=_add.get_t();
+ 	
   if ( _itemset.get_t() > _ub ) return;
-  output_itemset ( occ, core_id);
+  output_itemset( occ, core_id);
 
 	if ( ERROR_MES ) return;
 	
 	//BLOOP(i,x,y) for ((i)=(x) ; ((i)--)>(y) ; )
   //BLOOP (_add._t, _add._t, 0){
-  for(;_add.get_dec_t()>0;){
-  	
+
+  //for(;_add.get_dec_t()>0;){
+  //	printf("add %d %d\n",_add.tail() ,_add.get_t());
+  for(;_add.get_t()>0;){
 
     _itemset.push_back(_add.tail());
+    _add.dec_t();
 
     solution_iter ( occ, core_id);
 
@@ -462,13 +468,14 @@ void ITEMSET::solution_iter (QUEUE *occ, int core_id){
 }
 
 void ITEMSET::solution (QUEUE *occ, int core_id){
-
   QUEUE_ID i;
   LONG s;
 
   if ( _itemset.get_t() > _ub ) return;
   if ( _flag & ITEMSET_ALL ){
-    if ( _fp || _topk.end() ) solution_iter ( occ, core_id);
+    if ( _fp || _topk.end() ){
+    	solution_iter ( occ, core_id);
+    }
     else {
       s=1; FLOOP (i, 0, _add.get_t()+1){
         _sc[_itemset.get_t()+i] += s;
@@ -595,12 +602,12 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
       if ( _target < _item_max ){
 
 				for(x=jump->get_v();x<jump->get_v()+jump->get_t() ; x++){
-        // MQUE_FLOOP_CLS (*jump, x){
           if ( *x == _target ){ 
              check_rule ( w, occ, *x, core_id);   if (ERROR_MES) return;
           }
         }
-      } else {
+      } 
+      else {
         if ( _flag & (ITEMSET_RULE_FRQ + ITEMSET_RULE_RFRQ) ){
           if ( _add.get_t()>0 ){
             f = _add.get_v(_add.get_t()-1); t = _add.get_t(); _add.dec_t();
@@ -612,7 +619,6 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
             }
             _add.inc_t();
           }
-          // MQUE_FLOOP_CLS (*jump, x)
 					for(x=jump->get_v();x<jump->get_v()+jump->get_t() ; x++){
             check_rule ( w, occ, *x, core_id);   
   	        if (ERROR_MES) return;			
@@ -628,7 +634,8 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
           }
         }
       }
-    } else {  // usual mining (not rule mining)
+    } 
+    else {  // usual mining (not rule mining)
       if ( _fp && (_flag&(ITEMSET_RFRQ+ITEMSET_RINFRQ))){
         _multi_fp[core_id].print_real ( d, _digits, '[');
         _multi_fp[core_id].print_real ( _prob, _digits, ',');

@@ -106,6 +106,18 @@ class FILE2 {   // structure for fast file reader routines
 			return num;
 		}
 
+		static void ARY_Write(char* fname, int *p ,size_t size){
+
+    	FILE *fp;
+			fopen2(fp ,fname,"w",EXIT);
+			for( size_t i=0 ; i< size ;i++){
+				fprintf(fp, "%d " ,p[i]);
+			}
+			fputc('\n',fp);
+			fclose(fp);
+		}
+
+
 		static void copy(char *f1, char *f2){
 		  FILE *fp, *fp2;
 			char buf[16384];
