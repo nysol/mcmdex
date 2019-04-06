@@ -97,7 +97,7 @@ class KGMACE{
 
 
 	QUEUE_ID **_shift;
-	VEC_ID *_occ_t;
+	// VEC_ID *_occ_t;
 
 
 	QUEUE *_OQ;
@@ -122,13 +122,10 @@ class KGMACE{
 	void clq_iter ( QUEUE_INT v, QUEUE *occ);
 	void iter (int v);
 	void MACECORE ();
-	void preRUN();
 
 	void help(void);
 
 	int setArgs (int argc, char *argv[]);
-
-	//void read_param (int argc, char *argv[]);
 
 
 	/* allocate arrays and structures */
@@ -136,18 +133,17 @@ class KGMACE{
 
 	  PERM *p=NULL;
 
-	  int j;
+	  size_t siz = _SG.edge_t()+2;
 
 	 // PROBLEM_ITEMJUMP + PROBLEM_ITEMCAND + PROBLEM_SHIFT + PROBLEM_OCC_T
+		
+		calloc2 (_shift, siz, goto ERR);
 
-		calloc2 (_shift, _SG.edge_t()+2, goto ERR);
-		calloc2 (_occ_t, _SG.edge_t()+2, goto ERR);
-
-		_itemcand.alloc(_SG.edge_t()+2);
+		_itemcand.alloc(siz);
 
     // set outperm
 		if ( _outperm_fname ){
-			j = FILE2::ARY_Load (p,  _outperm_fname, 1);
+			FILE2::ARY_Load(p, _outperm_fname, 1);
 	  }
 
   	_II.alloc(_output_fname, p, _SG.edge_t() , _SG.edge_eles());

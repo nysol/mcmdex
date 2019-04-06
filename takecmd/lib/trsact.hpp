@@ -211,7 +211,7 @@ class TRSACT {
 		int flag ,int flag2 ,
 		char *fname,char *wfname,char *iwfname,char *fname2,
 		WEIGHT w_lb,WEIGHT w_ub,double clm_lb_ ,double clm_ub_ ,
-		QUEUE_ID row_lb,QUEUE_ID row_ub ,double row_lb_,double row_ub_
+		QUEUE_ID row_lb,QUEUE_ID row_ub ,double row_lb_,double row_ub_,VEC_ID sep
 	){
 	  // パラメータセット
 		_flag = flag;
@@ -227,6 +227,7 @@ class TRSACT {
 		_row_ub = row_ub ;
 		_row_lb_ = row_lb_;
 		_row_ub_ = row_ub_;
+		_sep = sep;
 		return loadMain();
 
 	}
@@ -259,7 +260,8 @@ class TRSACT {
     }
     return lb;
 	}
-	
+
+	// using only sspc 
 	void QUEINS(){
 		VEC_ID i, e;
  		QUEUE_INT *x;
@@ -382,6 +384,7 @@ class TRSACT {
 
 	QUEUE_INT * beginOQv(int i){ return _OQ[i].get_v();}
 	QUEUE_INT * endOQv(int i){ return _OQ[i].get_v()+ _OQ[i].get_t();}
+	QUEUE_INT * startOQv(int i){ return _OQ[i].get_v()+_OQ[i].get_s();}
 
 	KGLCMSEQ_ELM * beginOQvELE(int i){return _OQELE[i].get_v();}
 	KGLCMSEQ_ELM * endOQvELE(int i){  return _OQELE[i].get_v()+ _OQELE[i].get_t();}

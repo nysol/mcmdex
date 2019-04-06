@@ -71,12 +71,12 @@ class SETFAMILY{
 			mfree (_buf, _buf2, _v, _rw, _cw, _wbuf, _w, _rperm, _cperm);
 		}
 		void alloc_weight (QUEUE_ID *t);
-		void alloc_w();
+		void alloc_w(void);
 		void alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles);
-		void sort();
-		void load (int flag , char *fname ,char *wfname);
-		void load();
+		void sort(void);
+		void load(int flag , char *fname ,char *wfname);
 		void load(int flag , char *fname);
+		void load(void);
 		void clrMark(int i,char* mark){
 			_v[i].clrMark(mark);
 		}
@@ -112,8 +112,10 @@ class SETFAMILY{
 
 
 		QUEUE_ID get_vt(int i){ return _v[i].get_t(); }
+
 		QUEUE_INT * get_vv(int i){ return _v[i].get_v(); }
 		QUEUE_INT get_vv(int i,int j){ return _v[i].get_v(j); }
+
 		QUEUE get_v(int i){ return _v[i]; }
 
 		QUEUE* getp_v(int i){ return &_v[i]; }
@@ -162,6 +164,62 @@ class SETFAMILY{
 		LONG get_v_ele(int i,QUEUE_INT v){ return _v[i].ele(v); }
 
 		void v_rm(int u,QUEUE_ID i){ _v[u].rm(i); }
+
+		void vw_rm(QUEUE_INT u,QUEUE_ID v){ 
+
+		  QUEUE_INT i;
+
+			if ( (i=(QUEUE_INT)_v[u].ele(v) ) >= 0 ){
+				_v[u].rm(i); 
+				if(_w){ _w[u][i] = _w[u][_v[u].get_t()]; }
+				_eles--;
+			}
+
+			if ( (i=(QUEUE_INT)_v[v].ele(u) ) >= 0 ){
+				_v[v].rm(i); 
+				if(_w){ _w[v][i] = _w[v][_v[v].get_t()]; }
+				_eles--;
+			}
+
+		}
+		
+		void vw_mk(QUEUE_INT u, QUEUE_INT v, WEIGHT w){
+			if(_w){
+				_w[u][_v[u].get_t()] = w;
+				_w[v][_v[v].get_t()] = w;
+			}
+			_v[u].push_back(v);
+			_v[v].push_back(u);
+			_eles += 2;
+  	}
+
+		void rmSelfLoop(){
+
+			QUEUE_ID jj;
+			QUEUE_INT x;
+
+			if ( !_v ) { return ;}
+
+			for(QUEUE_ID i=0 ; i<_t ; i++){
+
+	      jj = 0;
+	
+				for(QUEUE_ID j=0 ; j < _v[i].get_t() ; j++){
+		
+					x = _v[i].get_v(j);		
+
+      	  if ( x != i ){
+        	  if ( j != jj ){
+        	  	_v[i].cp_v(j,jj);
+        	    if ( _w ){ _w[i][jj]=_w[i][j]; }
+	          }
+  	        jj++;
+    	    }
+      	}
+      	_v[i].set_t(jj);
+			}
+		}
+
 
 		void swap_vv(int i,int j){
 			_v[i].swap_v(j);
@@ -271,9 +329,6 @@ class SETFAMILY{
 			return rmax;
 		}
 		
-
-
-
 		void any_INVPERMUTE(PERM * rperm){
 		  QUEUE Q;	
 			ARY_INVPERMUTE (_v, rperm, Q, _t, EXIT);  // sort transactions
@@ -286,8 +341,6 @@ class SETFAMILY{
 		void ary_INVPERMUTE( PERM *invperm ,QUEUE& Q,VEC_ID num){
 	    ARY_INVPERMUTE (_v, invperm, Q, num, EXIT);
 		}
-		// アクセッサ  		
-  	//QUEUE *get_v(int i){ return _w[i]; }
 
   	bool exist_w(){ return _w!=NULL; }
   	bool exist_rw(){ return _rw!=NULL; }
@@ -329,12 +382,12 @@ class SETFAMILY{
   	void set_end(VEC_ID end){ _end=end; }
   	void set_buf(QUEUE_INT *buf){ _buf = buf; }
 
+  	void dec_eles(){  _eles--; }
+
   	void adjustEnd(int dblFlg){ 
   		_ele_end = _eles;
   		_end = _t * ( ( dblFlg ? 2 : 1 ) + 1 ) ;
   	}
-
-
 
   	void set_w(int i,int j,WEIGHT w){ _w[i][j]=w;}
   	void set_w(int i,WEIGHT *w){ _w[i]=w;}
@@ -352,6 +405,56 @@ class SETFAMILY{
   	void trim_flag(int flag){ BITRM(_flag, flag);}
 
 
+		void replace_index(PERM *perm, PERM *invperm){
+
+		  if ( _v ){
+		  	for(size_t i=0; i<_t ; i++){
+			  	for( QUEUE_INT *x = _v[i].begin() ; x < _v[i].end() ; x++ ){
+  					*x = perm[*x];
+					}
+    		}
+		    // INVPERMUTE
+				char * cmmp; 
+			  QUEUE Q;
+			  int i1,i2;
+				calloc2(cmmp,_t,EXIT);
+				for( i1 = 0; i1 < _t ; i1++ ){
+					if ( cmmp[i1]==0 ){ 
+						Q = _v[i1]; 
+						do{ 
+							i2 = i1; 
+							i1 = invperm[common_INT]; 
+							_v[i2]=_v[i1]; 
+							cmmp[i2] = 1;
+						} while( cmmp[i1]==0 );
+						_v[i2] = Q; 
+					}
+				}
+				free(cmmp);
+    	}
+
+		  if ( _w ){
+		    // INVPERMUTE
+				char * cmmp; 
+ 				WEIGHT *w;
+ 			  int i1,i2;
+				calloc2(cmmp,_t,EXIT);
+				for( i1 = 0; i1 < _t ; i1++ ){
+					if ( cmmp[i1]==0 ){ 
+						w = _w[i1]; 
+						do{ 
+							i2 = i1; 
+							i1 = invperm[common_INT]; 
+							_w[i2]=_w[i1]; 
+							cmmp[i2] = 1;
+						} while( cmmp[i1]==0 );
+						_w[i2] = w; 
+					}
+				}
+				free(cmmp);
+		  }
+
+	  }
 
 };
 

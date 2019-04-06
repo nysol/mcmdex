@@ -254,7 +254,7 @@ class ITEMSET{
 			double ratio_lb , double ratio_ub , double prob_lb , double prob_ub,
 			WEIGHT rposi_lb , WEIGHT rposi_ub , WEIGHT nega_lb , WEIGHT nega_ub,
 			WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
-			char separator ,  WEIGHT frq,  WEIGHT pfrq, int len_ub
+			char separator ,  WEIGHT frq,  WEIGHT pfrq, int len_ub ,WEIGHT setrule_lb
 		){
 			_flag = flag;
 			_frq_lb = frq_lb;
@@ -278,7 +278,7 @@ class ITEMSET{
 			_pfrq = pfrq;
 			_frq = frq;
 			_len_ub = len_ub;
-		
+			_setrule_lb = setrule_lb;
 		}
 
 		// MACE
@@ -484,6 +484,11 @@ class ITEMSET{
 	/* output an itemset to the output file */
 	void output_itemset  ( QUEUE *occ, int core_id);
 	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
+
+
+	// for sspc
+	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
+
 
 	void output_itemset  ( KGLCMSEQ_QUE *occ, int core_id);
 	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);

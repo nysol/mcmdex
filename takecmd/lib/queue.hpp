@@ -258,6 +258,7 @@ class QUEUE {
 	void set_v(int i,QUEUE_ID v){ _v[i]=v;}
 
 	void set_end(QUEUE_ID v){ _end=v;}
+	void set_endv(QUEUE_ID end,QUEUE_ID *v){ _end=end; _v=v;  }
 
 	void inc_t(){ _t++;}
 	QUEUE_ID get_dec_t(){ return _t--;}
@@ -270,6 +271,8 @@ class QUEUE {
 
 	void minus_v(int i,int v){ _v[i] -= v;}
 	void minus_t(int v){ _t -= v;}
+
+	void cp_v(int fr,int to){ _v[to] = _v[fr]; }
 
 
 	void swap_v(int i){
@@ -296,6 +299,15 @@ class QUEUE {
 	void alloc(QUEUE_ID siz , QUEUE_INT *v){
 		_v = v;
 		_end =  siz;
+	}
+
+	void allocBySequence(QUEUE_ID siz){
+
+		_end =  siz+1;
+		malloc2(_v, siz+1, EXIT);
+		for(size_t i=0 ; i< siz; i++){ _v[i] = i; }
+		_t = siz;
+
 	}
 
 
@@ -372,8 +384,7 @@ class QUEUE {
 	*/
 	LONG ele (QUEUE_INT e){
 	  QUEUE_INT *x;
-	  //MQUE_FLOOP (*Q, x)
-  	for( x=_v; (x)<_v+_t ; x++){
+  	for( x=_v ; x < _v + _t ; x++){
     	if ( *x == e ) return (x - _v);
 	  }
   	return (-1);

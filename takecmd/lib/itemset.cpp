@@ -434,6 +434,116 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *o
   }
 }
 
+
+/* output an itemset to the output file for sspc */
+void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id){
+  QUEUE_ID i;
+  QUEUE_INT e;
+
+  int flush_flag = 0;
+  FILE2 *fp = &_multi_fp[core_id];
+  
+  _multi_outputs[core_id]++;
+
+  if ( (_flag&SHOW_PROGRESS ) && (_multi_outputs[core_id]%(ITEMSET_INTERVAL) == 0) ){
+      print_err ("---- " LONGF " solutions in " LONGF " candidates\n",
+                  _multi_solutions[core_id], _multi_outputs[core_id]);
+  }
+
+  if ( itemset->get_t() < _lb || itemset->get_t() > _ub ) return;
+
+  if ( (_flag&ITEMSET_IGNORE_BOUND)==0 && (frq < _frq_lb || frq > _frq_ub) ) return;
+
+  if ( (_flag&ITEMSET_IGNORE_BOUND)==0 && (pfrq < _posi_lb || pfrq > _posi_ub || (frq - _pfrq) > _nega_ub || (frq - _pfrq) < _nega_lb) ) return;
+
+  _multi_solutions[core_id]++;
+
+  if ( _max_solutions > 0 && _multi_solutions[core_id] > _max_solutions ){
+    last_output ();
+    ERROR_MES = "reached to maximum number of solutions";
+    EXIT;
+  }
+
+  SPIN_LOCK(_multi_core, _lock_sc);
+
+  _sc[itemset->get_t()]++;
+
+  SPIN_UNLOCK(_multi_core, _lock_sc);
+
+  if ( _itemtopk_end > 0 ){
+
+    e = _itemtopk[itemtopk_item].findmin_head();
+
+    if ( frq*_itemtopk_sign > _itemtopk[itemtopk_item].H(e) ){
+
+      SPIN_LOCK(_multi_core, _lock_sc);
+      _itemtopk[itemtopk_item].chg(e, frq * _itemtopk_sign);
+      if ( _itemtopk_ary ) _itemtopk_ary[itemtopk_item][e] = itemtopk_item2;
+      SPIN_UNLOCK(_multi_core, _lock_sc);
+
+    }
+    return;
+  }
+
+  if ( _topk_k > 0 ){
+    if ( _topk.end() ){
+
+      e = _topk.findmin_head();
+      if ( frq * _topk_sign > _topk.H(e) ){
+
+        SPIN_LOCK(_multi_core, _lock_sc);
+
+        _topk.chg( e, frq * _topk_sign);
+        e = _topk.findmin_head ();
+        _frq_lb = _topk.H(e) * _topk_sign;
+
+        SPIN_UNLOCK(_multi_core, _lock_sc);
+
+      }
+
+    } else {  // histogram version
+      if ( frq > _topk_frq ){
+
+        SPIN_LOCK(_multi_core, _lock_sc);
+
+        _sc2[_topk_frq]--;
+        while (_sc2[_topk_frq]==0) _topk_frq++;
+        _frq_lb = _topk_frq+1;
+
+        SPIN_UNLOCK(_multi_core, _lock_sc);
+
+      }
+    }
+    return;
+  }
+  
+  if ( _fp ){
+    if ( _flag&ITEMSET_PRE_FREQ ) output_frequency ( frq, pfrq, core_id);
+    if ( (_flag & ITEMSET_NOT_ITEMSET) == 0 ){
+      FLOOP (i, 0, itemset->get_t()){
+        e = itemset->get_v(i);
+        fp->print_int ( _perm? _perm[e]: e, i==0? 0: _separator);
+        if ( !(_flag&ITEMSET_MULTI_OUTPUT) || (fp->get_size()) > FILE2_BUFSIZ/2 ){
+          SPIN_LOCK(_multi_core, _lock_output);
+          flush_flag = 1;
+          fp->flush_ ();
+        }
+      }
+    }
+    if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( frq, pfrq, core_id);
+    if ( ((_flag & ITEMSET_NOT_ITEMSET) == 0) || (_flag&ITEMSET_FREQ) || (_flag&ITEMSET_PRE_FREQ) ){
+      fp->putc ('\n');
+    }
+
+    if ( flush_flag ){
+      fp->flush_ ();
+      SPIN_UNLOCK(_multi_core, _lock_output);
+    }
+  }
+}
+
+
+
 void ITEMSET::output_itemset ( QUEUE *occ, int core_id){
   output_itemset_ ( &_itemset, _frq, _pfrq, occ, _itemtopk_item, _itemtopk_item2, core_id);
 }
@@ -449,8 +559,6 @@ void ITEMSET::solution_iter (QUEUE *occ, int core_id){
 
 	if ( ERROR_MES ) return;
 	
-	//BLOOP(i,x,y) for ((i)=(x) ; ((i)--)>(y) ; )
-  //BLOOP (_add._t, _add._t, 0){
 
   //for(;_add.get_dec_t()>0;){
   //	printf("add %d %d\n",_add.tail() ,_add.get_t());
@@ -770,7 +878,9 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ
   }
   
   if ( _fp ){
+
     if ( _flag&ITEMSET_PRE_FREQ ) output_frequency ( frq, pfrq, core_id);
+
     if ( (_flag & ITEMSET_NOT_ITEMSET) == 0 ){
       FLOOP (i, 0, itemset->get_t()){
         e = itemset->get_v(i);
@@ -778,17 +888,13 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ
         if ( !(_flag&ITEMSET_MULTI_OUTPUT) || (fp->get_size()) > FILE2_BUFSIZ/2 ){
           SPIN_LOCK(_multi_core, _lock_output);
           flush_flag = 1;
-          fp->flush_ ();
+          fp->flush_();
         }
       }
     }
     if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( frq, pfrq, core_id);
     if ( ((_flag & ITEMSET_NOT_ITEMSET) == 0) || (_flag&ITEMSET_FREQ) || (_flag&ITEMSET_PRE_FREQ) ){
-#ifdef _FILE2_LOAD_FROM_MEMORY_
-  FILE2_WRITE_MEMORY (QUEUE_INT, FILE2_LOAD_FROM_MEMORY_END);
-#else
       fp->putc ('\n');
-#endif
     }
 		// for _trsact_h_
     if (_flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) output_occ ( occ, core_id);

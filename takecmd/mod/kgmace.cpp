@@ -82,101 +82,12 @@ int KGMACE::setArgs (int argc, char *argv[]){
   }
 
   NEXT:;
+
   _sgfname = argv[c];
   if ( argc>c+1 ) _output_fname = argv[c+1];
+
   return 0;
 }
-
-/***************************************************/
-/*  initialization                                 */
-/***************************************************/
-void KGMACE::preRUN (){
-/*
-  QUEUE_INT i;
-  VBMINT p;
-
-  _II.union_flag(ITEMSET_ADD);
-  _sgFlag |= LOAD_INCSORT + LOAD_RM_DUP + LOAD_EDGE;
-
-	preLOAD();
-
-	if (_ERROR_MES) return;
-	
-  preALLOC (
-  	_SG.edge_t(), _SG.edge_t(), _SG.edge_eles(), NULL, 
-  	PROBLEM_ITEMJUMP + PROBLEM_ITEMCAND + PROBLEM_SHIFT + PROBLEM_OCC_T
-  );
-
-  _SG.rm_selfloop();
-
-  FLOOP (i, 0, _SG.edge_t()) _SG.edge_setvv(i,_SG.edge_vt(i),_SG.edge_t());
-  
-
-// delivery
-  //QUEUE_delivery (NULL, _occ_t, NULL, _SG.edge.v, NULL, _SG._edge.get_t(), _SG._edge.get_t());
-
-	//===================
-	VEC_ID iv, ev;
-	QUEUE_INT *x;
-	for (iv=0 ; iv<_SG.edge_t(); iv++){
-  	ev =  iv;
-  	MLOOP (x, _SG.edge_vv(ev), _SG.edge_t()) _occ_t[*x]++;
-	}
-	// MQUE_ALLOC(Q,rows,rowt,unit,ext,x)   
-  //MQUE_ALLOC (_OQ, _SG._edge.get_t(), _occ_t, 0, 2, EXIT);
-  {
-		size_t cmn_size_t = 0;
-		for(VEC_ID cmm_vecid=0; cmm_vecid < _SG.edge_t() ; cmm_vecid++){
-			cmn_size_t += _occ_t[cmm_vecid];
-		}
-		_OQ = new QUEUE[_SG.edge_t()+1];
-		char *cmn_pnt;
-		malloc2 (cmn_pnt,(cmn_size_t+(_SG.edge_t()*2)+2)*(sizeof(QUEUE_INT)), {delete(_OQ); EXIT;}); 
-
-		for(VEC_ID cmm_vecid=0; cmm_vecid < _SG.edge_t() ; cmm_vecid++){
-			_OQ[cmm_vecid].set_end(_occ_t[cmm_vecid]);
-			_OQ[cmm_vecid].set_v((QUEUE_ID *)cmn_pnt);
-			cmn_pnt += (sizeof(QUEUE_INT)) * (_occ_t[cmm_vecid]+(2));
-		}
-  }
-
-  if ( _problem & PROBLEM_CLOSED ){
-    _VV._edge = _VV._set = _VV._reset = NULL; _VV._pos = NULL; _VV._dellist.set_v(NULL);
-    malloc2 (_VV._edge, _SG.edge_t(), goto ERR);
-    malloc2 (_VV._pos, _SG.edge_t(), goto ERR);
-    malloc2 (_VV._set, VBMINT_MAX, goto ERR);
-    malloc2 (_VV._reset, VBMINT_MAX, goto ERR);
-    //QUEUE_alloc (&VV->dellist, VBMINT_MAX+2);
-    _VV._dellist.alloc(VBMINT_MAX+2);
-		if ( _ERROR_MES ) goto ERR;
-    _VV._dellist.set_t(VBMINT_MAX);
-
-    //ARY_FILL (_VV._edge, 0, _SG.edge_t(), 0);
-		for(size_t _common_size_t =0;common_size_t<_SG.edge_t();common_size_t++){
-		  _VV._edge[common_size_t] = 0;
-		}
-
-
-    for (i=0,p=1 ; i<VBMINT_MAX ; i++,p*=2){
-      _VV._set[i] = p;
-//        VV->reset[i] = 0xffffffff-p;
-      _VV._reset[i] = -1-p;
-      _VV._dellist.set_v(i, i);
-    }
-//      for (i=1,MACEVBM_mark_max=1 ; i<VBMMARK_MAX ; i++ ) MACEVBM_mark_max*=2;
-//      malloc2 (MACEVBM_mark, char, MACEVBM_mark_max, "MACE_init:MACEVBM_mark");
-//      for (i=0 ; i<MACEVBM_mark_max ; i++) MACEVBM_mark[i] = 0;
-  }
-  return;
-  ERR:;
-	_VV._dellist.clear();
-  free2 (_VV._edge);
-  free2 (_VV._pos);
-  free2 (_VV._set);
-  free2 (_VV._reset);
-*/
-}
-
 
 /******************************************************************/
 /* iteration of clique enumeration   */
@@ -371,27 +282,42 @@ LONG KGMACE::parent_check ( QUEUE *K, QUEUE_INT w){
 /*  BITMAP version */
 /****************************************************************/
 LONG KGMACE::VBM_parent_check ( QUEUE *K, QUEUE *Q, QUEUE_INT w){
+
   QUEUE_INT v=Q[w].get_v(0);
   QUEUE_ID i;
   VBMINT p=0, pp;
+
   QUEUE_INT *y = _SG.edge_vv(w) + _SG.edge_vt(w)-1, *x, *z=K->get_v();
+
   K->set_v(K->get_t(), -1);  // loop stopper
-  FLOOP (i, 0, Q[w].get_t()) p |= _VV._set[_VV._pos[Q[w].get_v(i)]];
+
+  FLOOP (i, 0, Q[w].get_t()) {
+  	p |= _VV._set[_VV._pos[Q[w].get_v(i)]];
+  }
+
   pp = p;
+
   for (x=_SG.edge_vv(v) + _SG.edge_vt(v)-1 ; *x>w ; x--){
-    while ( *x < *z ){ pp |= _VV._set[_VV._pos[*z]]; z++; }
-//    if ( *z>=0 ) pp |= VV->set[VV->pos[*z]];
+    while ( *x < *z ){ 
+    	pp |= _VV._set[_VV._pos[*z]]; 
+    	z++; 
+    }
 
     if ( *x == *z ){ pp |= _VV._set[_VV._pos[*z]]; z++; continue; }
     if ( pp==(pp&_VV._edge[*x]) ) return (*x);  // parentness
 
-    if ( p == (p & _VV._edge[*x]) ){ // maximality w.r.t P\cap N(w) (=occ[w]) 
+		// maximality w.r.t P\cap N(w) (=occ[w]) 
+    if ( p == (p & _VV._edge[*x]) ){ 
+
       if ( y<_SG.edge_vv(w) ) goto NEXT;
-      while ( *x < *y ){  // check *x is incident to w?  
+
+      // check *x is incident to w?  
+      while ( *x < *y ){  
         y--;
         if ( y<_SG.edge_vv(w) ) goto NEXT;
       }
-      if ( *x==*y ) return (*x); // if *x is incident to w, parent is different.
+      // if *x is incident to w, parent is different.
+      if ( *x==*y ) return (*x); 
     }
     NEXT:;
   }
@@ -404,25 +330,26 @@ LONG KGMACE::VBM_parent_check ( QUEUE *K, QUEUE *Q, QUEUE_INT w){
 /*************************************************************************/
 LONG KGMACE::parent_check_max ( QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w){
   QUEUE_INT *x;
-  //QUEUE_cpy (ad, &G->edge.v[w]);
-  //ad->cpy(&_SG._edge._v[w]);
 	
 	ad->cpy( _SG.getp_v(w) );
 
 	for( x = Q[w].begin() ; x < Q[w].end() ; x++){
-  	 //ad->and_ (& _SG._edge._v[*x]);
   	 ad->and_(_SG.getp_v(w));
   }
 
   if ( ad->get_t()==0 ) return (-1);
   if ( ad->get_v(ad->get_t()-1) > w ) return (ad->get_v(ad->get_t()-1));
+
   return (-1);
 
 }
 
 LONG KGMACE::parent_check_parent (QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w){
+
   QUEUE_INT t=0, *x, i;
+
   K->set_v(K->get_t(),-1); // loop stopper;
+
   ad->cpy ( _SG.getp_v(Q[w].get_v(0)) );
 
 	for(x = Q[w].begin(); x < Q[w].end() ; x++){
@@ -448,23 +375,24 @@ LONG KGMACE::parent_check_parent (QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w){
 /* MACE main iteration */
 /*************************************************************************/
 void KGMACE::iter (int v){
+
   LONG ii;
   QUEUE_INT u;
   QUEUE_ID js = _itemcand.get_s();
   QUEUE *Q = _OQ;
 
-//printf ("%d:   ", II->iters);
-//printf ("%d:  ", v); QUEUE_print__ (&Q[v]);
 
   _II.inc_iters();
   _itemcand.set_s(_itemcand.get_t());
 
-  add_vertex ( &Q[v], v);
+  add_vertex( &Q[v], v);
+
   extend ( &Q[v], v);
-//  MACE_make_same_list (v);
 
   _II.set_itemset_t(0);
+
   memcpy (_II.item_get_v(), Q[v].get_v(), sizeof(QUEUE_INT)*Q[v].get_t());
+
   _II.item_set_t(Q[v].get_t());
   _II.output_itemset ( (QUEUE*)NULL, 0);
 
@@ -490,20 +418,23 @@ void KGMACE::iter (int v){
   }
   _itemcand.set_s(js);
   if ( _problem & PROBLEM_CLOSED ) VBM_reset_vertex (v);
+
 }
 
 /* MACE main */
 void KGMACE::MACECORE (){
-  QUEUE *E = _SG.getp_v(); // 後回し
+
   QUEUE_INT v;
 
-  FLOOP (v, 0, _SG.edge_t()){
-    if ( E[v].get_t()==0 ){
+	for( QUEUE_INT v=0 ; v < _SG.edge_t() ;v++ ){
+
+    if ( _SG.edge_vt(v)==0 ){
       _II.item_set_t(0);
       _II.itemINS(v);
-      _II.output_itemset ((QUEUE*) NULL, 0);
+      _II.output_itemset((QUEUE*) NULL, 0);
     } 
-    else if ( E[v].get_v(E[v].get_t()-1) <= v ){
+    //else if ( E[v].get_v(E[v].get_t()-1) <= v ){
+		else if ( _SG.edge_Lastvv(v) <= v ){    
       iter (v);
     }
     _OQ[v].set_t(0);
@@ -521,21 +452,20 @@ int KGMACE::run (int argc, char *argv[]){
 
 	if( setArgs (argc, argv) ) { return (1); }
 
-
-	// flag for the use of VBM
-  if ( _problem & PROBLEM_MAXIMAL ){
-    _problem |= PROBLEM_CLOSED;  
-    flag = 1;
-  }
-
-	// ここから prerun
-  _iFlag  |= ITEMSET_ADD;
+	// load base prerun
   _sgFlag |= LOAD_INCSORT + LOAD_RM_DUP + LOAD_EDGE;
+  
+  
+	// _sgFlag
+	// =>  LOAD_INCSORT + LOAD_RM_DUP + LOAD_EDGE 
+	//   or  LOAD_INCSORT + LOAD_RM_DUP + LOAD_EDGE + LOAD_ELE;
+  if ( _SG.loadEDGE(_sgFlag,_sgfname) ) { return 1; }
 
-	if ( _sgfname ){ 
-  	_SG.load(_sgFlag,_sgfname);
-  	if (ERROR_MES) EXIT; 
-  }
+
+
+	// _iFlag ＝＞ messege関係 + ITEMSET_ADD
+	
+  _iFlag  |= ITEMSET_ADD;
 
 	_II.setParams( 
 		_iFlag,_lb,_ub,_max_solutions ,_separator
@@ -543,57 +473,43 @@ int KGMACE::run (int argc, char *argv[]){
 
 	preALLOC();
 
+	// flag for the use of VBM
+  if ( _problem & PROBLEM_MAXIMAL ){
+    _problem |= PROBLEM_CLOSED;  
+    flag = 1;
+  }
+
   _SG.rm_selfloop();
 	_SG.edgeSetEnd();
 
 	int i;
   VBMINT p;
 	
-
-	VEC_ID iv, ev;
-	QUEUE_INT *x;
-
-	for (iv=0 ; iv<_SG.edge_t(); iv++){
-  	ev =  iv;
-  	MLOOP (x, _SG.edge_vv(ev), _SG.edge_t()) _occ_t[*x]++;
-	}
-
-
-  { // 混在してるのはあとで
-		size_t cmn_size_t = 0;
-		for(VEC_ID cmm_vecid=0; cmm_vecid < _SG.edge_t() ; cmm_vecid++){
-			cmn_size_t += _occ_t[cmm_vecid];
-		}
-		_OQ = new QUEUE[_SG.edge_t()+1];
-		char *cmn_pnt;
-		malloc2 (cmn_pnt,(cmn_size_t+(_SG.edge_t()*2)+2)*(sizeof(QUEUE_INT)), {delete(_OQ); EXIT;}); 
-
-		for(VEC_ID cmm_vecid=0; cmm_vecid < _SG.edge_t() ; cmm_vecid++){
-			_OQ[cmm_vecid].set_end(_occ_t[cmm_vecid]);
-			_OQ[cmm_vecid].set_v((QUEUE_ID *)cmn_pnt);
-			cmn_pnt += (sizeof(QUEUE_INT)) * (_occ_t[cmm_vecid]+(2));
-		}
-  }
-
+	
+	_OQ = new QUEUE[_SG.edge_t()+1];
+	char *cmn_pnt = _SG.initOQ( _OQ );
 	
   if ( _problem & PROBLEM_CLOSED ){ // _VVをクラス化
-  	_VV.alloc(_SG.edge_t());
   }
 
 	// ここまで prerun
-  if ( !_ERROR_MES && _SG.edge_eles() > 0 ){
+	if( _ERROR_MES || _SG.edge_eles() <= 0 ){
+	  return (_ERROR_MES?1:0);
+	}
+	
 
-    if ( _problem & PROBLEM_FREQSET ){
-      FLOOP (v, 0, _SG.edge_t()){
-      	clq_iter ( v, _SG.getp_v(v) );
-      }
-    } 
-    else{
-    	 MACECORE();
+
+  if ( _problem & PROBLEM_FREQSET ){
+    FLOOP (v, 0, _SG.edge_t()){
+			clq_iter ( v, _SG.getp_v(v) );
     }
-    _II.last_output();
-
+  } 
+  else{
+  	_VV.alloc(_SG.edge_t());
+    MACECORE();
   }
+  _II.last_output();
+
 
   if ( flag ){
     free2 (_VV._edge);
@@ -602,8 +518,8 @@ int KGMACE::run (int argc, char *argv[]){
     free2 (_VV._reset);
     //_VV._dellist.end();
   }
+	  return (_ERROR_MES?1:0);
 
-  return (_ERROR_MES?1:0);
 }
 
 int KGMACE::mrun(int argc ,char* argv[]){

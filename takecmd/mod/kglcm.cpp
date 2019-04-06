@@ -561,7 +561,7 @@ int KGLCM::run (int argc, char *argv[]){
 	}
 
 	if ( _sgfname ){ 
-		if (_SG.loadEDGE(_sgfname)) return 1;
+		if (_SG.loadEDGE(LOAD_EDGE + LOAD_RC_SAME , _sgfname)) return 1;
   }
   
 	_iFlag |= (ITEMSET_ITEMFRQ + ITEMSET_ADD); 

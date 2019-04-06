@@ -149,7 +149,8 @@ int KGSSPC::setArgs(int argc, char *argv[]){
       	_item_wfname = argv[c+1];
  
       break; case 'c': 
-				_dir = 1; _root = atoi(argv[c+1]) ;
+				_dir = 1; 
+				_root = atoi(argv[c+1]) ;
 				_sep = _root;
 
       break; case '2': 
@@ -503,7 +504,7 @@ void KGSSPC::list_comp(){
       xw++;
       END:;
     }
-    comp2 ( i, j, c, wi, wx, sqrt(w[i]), &cnt, fp2, _II.getp_itemset(), 0);
+    comp2( i, j, c, wi, wx, sqrt(w[i]), &cnt, fp2, _II.getp_itemset(), 0);
 
   } while ( (FILE_err&2)==0 );
   fp.close();
@@ -539,13 +540,6 @@ void *KGSSPC::iter (void *p){
   size_t b, bb;
   int f;
 
-  // dealing with only positive weitht, not yet implemented
-  // occ_pw がつかわれない
-	// int pf = _tflag2&TRSACT_NEGATIVE;  
-	// WEIGHT *occ_pw,
-  // calloc2 (occ_pw, _TT.get_clms(), EXIT); 
-  
-
   if ( _problem & SSPC_NO_NEIB ) calloc2 (mark, _TT.get_clms(), EXIT);
   calloc2 (occ_w, _TT.get_clms(), EXIT);
   calloc2 (OQend, _TT.get_clms(), EXIT);
@@ -564,7 +558,7 @@ void *KGSSPC::iter (void *p){
       i_ = MIN(_TT.get_clms(), i + 100);
       (*(SM->_lock_i)) = i_;
 
-      if ( _II.get_flag() & SHOW_PROGRESS ){
+      if ( _iFlag & SHOW_PROGRESS ){
         if ( (int)((i-1)*100/_TT.get_clms()) < (int)(i*100/_TT.get_clms()) )
             fprintf (stderr, "%d%%\n", (int)(i*100/_TT.get_clms()));
       }
@@ -581,11 +575,10 @@ void *KGSSPC::iter (void *p){
 
     if (_problem & SSPC_NO_NEIB){ // for no_neib
     
-      //MQUE_FLOOP_CLS (_TT.get_Tv(i), x) mark[*x] |= 1;
 			for( x=_TT.beginTv(i) ; x < _TT.endTv(i) ; x++){
 				mark[*x] |= 1;
 			}
-      // MQUE_FLOOP_CLS (_TT.get_OQ(i), x) mark[*x] |= 2;
+
 			for( x=_TT.beginOQv(i) ; x<_TT.endOQv(i) ; x++){
 				mark[*x] |= 2;
 			}
@@ -626,20 +619,14 @@ void *KGSSPC::iter (void *p){
         if ( _TT.exist_Tw() ){
           if (_problem & SSPC_INNERPRODUCT){
             occ_w[*x] += (*y) * yy; 
-            // occ_pw使われないはず
-            // if ( *y>0 && pf) occ_pw[*x] += (*y) * yy; 
           }
           else { 
           	occ_w[*x] += *y;
-            // occ_pw使われないはず
-          	// if ( *y>0 && pf) occ_pw[*x] += *y; 
           }
           y++;
         }
         else {
           occ_w[*x] += _TT.get_w(t); 
-          // occ_pw使われないはず
-          // if ( pf ) occ_pw[*x] += _TT.get_pw(t);
         }
       }
     }
@@ -687,21 +674,19 @@ void *KGSSPC::iter (void *p){
           for (b=_itemary[i] ; b ; b=_buf[b]) _vecchr[_buf[b+1]] = 1;
 
       f = 0;
-      // FLOOP (ii, _TT.get_OQ_s(i), _TT.get_OQ_t(i)){
-      for(int ii = _TT.get_OQ_s(i) ; ii < _TT.get_OQ_t(i) ; ii++ ){
 
-        t = _TT.get_OQ_v(i,ii); 
+      for(QUEUE_INT *iq = _TT.startOQv(i) ; iq < _TT.endOQv(i) ; iq++ ){
+
         ff = 0;
 
-				for( x=_TT.beginTv(t); *x < _TT.get_clms() ; x++){
+				for( x=_TT.beginTv(*iq); *x < _TT.get_clms() ; x++){
 					if ( _vecchr[*x] ){ 
 						ff = 1; 
 						break; 
 					}
         }
-
         if ( ff ){
-          _II.getp_multi_fp(core_id)->print_int( t, f);
+          _II.getp_multi_fp(core_id)->print_int( *iq , f);
           f = _II.get_separator();
         }
       }
@@ -800,10 +785,7 @@ void KGSSPC::SSPCCORE(){
 
   // for multi-core
   malloc2 (SM, _II.get_multi_core(), EXIT);
-	//#define   BLOOP(i,x,y)  
-	// for ((i)=(x) ; ((i)--)>(y) ; )
 
-  //BLOOP (i, _II.get_multi_core(), 0){
 	for (i=_II.get_multi_core(); (i--) > 0 ; ){
     SM[i]._o = o;
     SM[i]._w = w;
@@ -818,12 +800,13 @@ void KGSSPC::SSPCCORE(){
       iter((void*)(&SM[i]));
   }
 
-      // wait until all-created-threads terminate
+  // wait until all-created-threads terminate
 #ifdef MULTI_CORE
-	//FLOOP (i, 1, _II.get_multi_core())
+
 	for(int i=1 ; i < _II.get_multi_core(); i++){
 		pthread_join(SM[i]._thr, &tr);
 	}
+
 #endif
 
   // termination これいる？
@@ -840,11 +823,9 @@ void KGSSPC::SSPCCORE(){
 /*************************************************************************/
 /* main function of SSPC */
 /*************************************************************************/
-//int SSPC_main (int argc, char *argv[]){
 int KGSSPC::run (int argc ,char* argv[]){
 
 	if( setArgs(argc, argv) ) return 1;
-	//read_param (argc, argv);
 
 	_tFlag  |= LOAD_INCSORT;
 	_tFlag2 |= TRSACT_ALLOC_OCC;
@@ -858,13 +839,12 @@ int KGSSPC::run (int argc ,char* argv[]){
 			_tFlag,_tFlag2,
 			_fname,_wfname,_item_wfname,_fname2,
 			_w_lb,_w_ub,_clm_lb_,_clm_ub_,
-			_row_lb,_row_ub,_row_lb_,_row_ub_)
+			_row_lb,_row_ub,_row_lb_,_row_ub_,_sep)
 	){ 
 		return 1;
 	}
 
 	// simsetで必要
-	// _ip_l2 = _TT.get_t(); <=使われない 
 	_ip_l3 = _TT.get_clms_org();
 
 	// addjust
@@ -874,6 +854,7 @@ int KGSSPC::run (int argc ,char* argv[]){
   if ( _itemtopk_item > 0 ) {
 	  _itemtopk_end= _TT.get_clms();
 	}
+
 	_II.setParams(
 		_iFlag,_frq_lb,_len_ub,_len_lb,
 		_topk_k,_itemtopk_item,_itemtopk_item2,_itemtopk_end,

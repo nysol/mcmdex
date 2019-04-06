@@ -92,7 +92,7 @@ int KGGRHFIL::setArgs(int argc, char *argv[]){
   if ( strchr(argv[c], '0') ){ _problem  |= FSTAR_INS_ROWID; }
   if ( strchr(argv[c], '9') ){ _problem  |= FSTAR_INS_ROWID_WEIGHT; }
   if ( strchr(argv[c], 'Z') ){ _problem2 |= GRHFIL_NORMALIZE; }
-  if ( strchr(argv[c], '1') ){ _problem  |= LOAD_RM_DUP; }
+  if ( strchr(argv[c], '1') ){ _problem  |= LOAD_RM_DUP ; }
   if ( _edge_dir == 2 ){
 		fprintf(stderr,"one of B, D, d, u or U has to be given\n");
   	return 1; 

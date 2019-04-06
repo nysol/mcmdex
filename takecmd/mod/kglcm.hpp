@@ -116,10 +116,9 @@ class KGLCM{
 		}
 
 	  if(_sgfname) { 
-	  	if ( _SG.itemAlloc(siz+2) ){
-	  		goto ERR; 
-	  	}
+	  	if ( _SG.itemAlloc(siz+2) ){ goto ERR; }
 	  }
+
 	  _itemcand.alloc ( siz+2);
 
 	   // set outperm
@@ -163,12 +162,11 @@ class KGLCM{
   		_oo = _TT.dup_OQ(_TT.get_clms()); // preserve occ
   	}
   	else {
-  		_oo.alloc(_TT.get_t()); 
-			for(size_t i=0 ; i< _TT.get_t(); i++){ _oo.set_v(i,i); }
-  	 	_oo.set_t( _TT.get_t()); 
+  		_oo.allocBySequence(_TT.get_t());
   	}
 
 		_TT.set_perm(NULL);
+
 	  _TT.resizeOQ(_TT.get_clms(),0);
 
 		print_mesf (&_TT, "separated at %d\n", _TT.get_sep());
@@ -181,27 +179,28 @@ class KGLCM{
   	_II.set_pfrq( _TT.get_total_pw_org());
 
 
-  if ( _sgfname ){
-    if ( _SG.edge_t() < _TT.get_clms() )
-        print_mesf (&_TT, "#nodes in constraint graph is smaller than #items\n");
+	  if ( _sgfname ){
 
-    if ( _TT.exist_perm() ){
+		  if ( _SG.edge_t() < _TT.get_clms() ){
+    		// dmyセットすべき？
+      	print_mesf (&_TT, "#nodes in constraint graph is smaller than #items\n");
+	    }
 
-    	_SG.adaptPerm(_TT.get_t(), _TT.get_perm());
+  	  if ( _TT.exist_perm() ){
 
-    }
+    		_SG.adaptPerm(_TT.get_t(), _TT.get_perm());
+
+    	}
     
-    _SG.edge_union_flag(LOAD_INCSORT +LOAD_RM_DUP);
-  	_SG.edge_sort();
-  }
+    	_SG.edge_union_flag(LOAD_INCSORT +LOAD_RM_DUP);
+  		_SG.edge_sort();
+  	}
 
-  _II.set_total_weight(_TT.get_total_w());
-	_II.set_rows_org(_TT.get_rows_org());
-	_II.set_trperm(_TT.get_trperm());
- 	 // LAMPはとりあえず除去
-   // if ( (_II.get_flag2()&ITEMSET_LAMP) && _II.get_topk_base() == 0) _II.set_topk_base( _TT.get_rows_org());
-
-}	
+	  _II.set_total_weight(_TT.get_total_w());
+		_II.set_rows_org(_TT.get_rows_org());
+		_II.set_trperm(_TT.get_trperm());
+ 
+	}	
 
 	int setArgs(int argc, char *argv[]);
 
