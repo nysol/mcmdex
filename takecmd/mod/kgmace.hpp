@@ -24,18 +24,28 @@
 #define VBMINT unsigned long     /* variable type for BITMAP */
 #define VBMINT_MAX 30  /* MAXsize of BITMAP */
 
-struct MACEVBM {
+class MACEVBM {
   VBMINT *_edge;  /* BITMAP representation w.r.t. columns of vertices in the current clique */
   VBMINT *_set, *_reset;  /* array for BITMASKs */
   int *_pos;   /* positions of vertices of the clique in the bitmap */
   QUEUE _dellist;
-  char *_mark;
-  int _mark_max;
+  //char *_mark;
+  //int _mark_max;
   
+  
+  public:
 	MACEVBM():
 		_edge(NULL),_set(NULL),_reset(NULL),_pos(NULL)
 	{
 		_dellist.set_v(NULL);
+	}
+
+	~MACEVBM(){
+		_dellist.clear();
+		free2(_edge);
+		free2(_pos);
+		free2(_set);
+		free2(_reset);	
 	}
 
 
@@ -45,30 +55,57 @@ struct MACEVBM {
     malloc2 (_pos,   size, goto ERR);
     malloc2 (_set,   VBMINT_MAX, goto ERR);
     malloc2 (_reset, VBMINT_MAX, goto ERR);
-    _dellist.alloc(VBMINT_MAX+2);
-    _dellist.set_t(VBMINT_MAX);
+    _dellist.alloc(VBMINT_MAX+2,VBMINT_MAX);
 
-
-    //ARY_FILL (_VV._edge, 0, _SG.edge_t(), 0);
 		for(size_t i =0; i<size ; i++){ _edge[i] = 0; }
+
+		_dellist.set_t(VBMINT_MAX);
+
 		VBMINT p;
     for (size_t i=0,p=1 ; i<VBMINT_MAX ; i++,p*=2){
       _set[i] = p;
       _reset[i] = -1-p;
       _dellist.set_v(i, i);
     }
-    return ;
 	  ERR:;
-		_dellist.clear();
-		free2 (_edge);
-		free2 (_pos);
-		free2 (_set);
-		free2 (_reset);
+    return ;
   }
+  
+  VBMINT reset_vertex(QUEUE_INT v){
+		_dellist.push_back(_pos[v]);
+  	return _reset[_pos[v]];
+  }
+  VBMINT set_vertex(QUEUE_INT v){
+	  _pos[v] = _dellist.pop_back();
+  	return _set[_pos[v]];
+  }
+
+  void andEdge(QUEUE_INT x,VBMINT p){
+  	_edge[x] &= p;
+  }
+  
+  void orEdge(QUEUE_INT x,VBMINT p){
+	  _edge[x] |= p;
+	}
+
+  VBMINT orByQUE(QUEUE Q){
+		VBMINT p=0;
+		for(size_t i=0 ; i < Q.get_t() ; i++){
+  		p |= _set[_pos[Q.get_v(i)]];
+	  }
+	  return p;
+	}
+	
+  VBMINT getSetByPos(QUEUE_INT z){
+		return _set[_pos[z]]; 
+	}
+	bool existEdge(QUEUE_INT x, VBMINT pp){
+		return pp == (pp&_edge[x]);
+	}
+
+
+
 } ;
-
-//int **PP->shift;    /* pointers to the positions of the current processing items in each transaction */
-
 
 
 class KGMACE{
@@ -106,17 +143,28 @@ class KGMACE{
 
 	void VBM_set_vertex (QUEUE_INT v);
 	void VBM_reset_vertex (QUEUE_INT v);
-	void VBM_set_diff_vertexes ( QUEUE *K1, QUEUE *K2);
-	void VBM_reset_diff_vertexes (QUEUE *K1, QUEUE *K2);
-	void add_vertex (QUEUE *K, QUEUE_INT v);
-	void scan_vertex_list ( QUEUE_INT v, QUEUE_INT w);
-	void extend (QUEUE *K, QUEUE_INT w);
-	
-	LONG parent_check ( QUEUE *K, QUEUE_INT w);
-	LONG VBM_parent_check ( QUEUE *K, QUEUE *Q, QUEUE_INT w);
-	LONG parent_check_max ( QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w);
 
-	LONG parent_check_parent (QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w);
+	void VBM_set_diff_vertexes ( QUEUE_INT K1, QUEUE_INT K2);
+	void VBM_reset_diff_vertexes (QUEUE_INT K1, QUEUE_INT K2);
+	LONG VBM_parent_check ( QUEUE_INT K , QUEUE_INT w);
+
+	void scan_vertex_list ( QUEUE_INT v, QUEUE_INT w);
+
+	LONG parent_check ( QUEUE_INT K, QUEUE_INT w);
+
+	void add_vertex (QUEUE_INT K, QUEUE_INT v);
+	void extend (QUEUE_INT w);
+
+
+
+	//LONG parent_check_max ( QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w);
+	//LONG parent_check_parent (QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w);
+	//void add_vertex (QUEUE *K, QUEUE_INT v);
+	//void extend (QUEUE *K, QUEUE_INT w);
+	//void VBM_set_diff_vertexes ( QUEUE *K1, QUEUE *K2);
+	//void VBM_reset_diff_vertexes (QUEUE *K1, QUEUE *K2);
+	// LONG VBM_parent_check ( QUEUE *K, QUEUE *Q, QUEUE_INT w);
+	//LONG parent_check ( QUEUE *K, QUEUE_INT w);
 
 
 	void clq_iter ( QUEUE_INT v, QUEUE *occ);

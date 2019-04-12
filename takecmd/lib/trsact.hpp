@@ -108,7 +108,7 @@ class TRSACT {
 	/* T->total_w, total_pw := sum of (positive) weights of transactions     */
 	/* C.clmt[i],C.cw[i] := the number/(sum of weights) of transactions including i  */
 	/****************************************/
-	int file_count (FILE_COUNT *C, FILE2 *fp, char *wf);
+	//int file_count (FILE_COUNT *C, FILE2 *fp, char *wf);
 
 	/*   print transactions */
 	void prop_print (void);

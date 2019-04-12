@@ -141,23 +141,12 @@
 
 
 
-extern size_t common_size_t;
-extern INT common_INT, common_INT2;
-extern char  *common_pnt, *common_charp;
-extern FILE *common_FILE;
-extern WEIGHT common_WEIGHT, *common_WEIGHTp;
+extern INT common_INT;
+extern char *common_pnt;
 extern char *ERROR_MES;
 extern int FILE_err;
-extern int print_time_flag;
+
 extern char common_comm[], common_comm2[], *common_argv[];
-typedef struct {
-  int i1, i2, i3, i4, i5, i6, i7, i8, i9;
-  LONG l1, l2, l3, l4, l5, l6, l7, l8, l9;
-  double d1, d2, d3, d4, d5, d6, d7, d8, d9;
-  char *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
-  void *p1, *p2, *p3, *p4, *p5, *p6, *p7, *p8, *p9;
-} PARAMS;
-extern PARAMS internal_params;
 
 
 /* lock&unlock for multi-core mode */
@@ -169,41 +158,6 @@ extern PARAMS internal_params;
   #define SPIN_LOCK(b,a)
   #define SPIN_UNLOCK(b,a)
 #endif
-
-#define TYPE_VEC 1
-#define TYPE_MAT 2
-#define TYPE_SVEC 3
-#define TYPE_SMAT 4
-#define TYPE_QUEUE 5
-#define TYPE_SETFAMILY 6
-#define TYPE_TRSACT 7
-#define TYPE_ALIST 8
-#define TYPE_MALIST 9
-#define TYPE_AGRAPH 10
-#define TYPE_SGRAPH 11
-#define TYPE_AHEAP 12
-#define TYPE_BASE 13
-#define TYPE_FSTAR 14
-#define TYPE_SEQ 15
-#define TYPE_BARRAY 16
-#define TYPE_VHEAP 17
-#define TYPE_IHEAP 18
-
-#define TYPE_FILE2 32
-
-//#define ADDR_FLOOR16(x)  do{common_charp=((char *)x)+15;x=(typeof(x))(common_charp-(((size_t)common_charp)&15));}while(0)
-
-// double SQRT(double x);
-
-/*  random  */
-// #define rnd(a)    (random()%(a))
-// #define prob(a)   ((random()%65536)<(int)((a)*65536.0))
-/*
-#define MARK      1
-#define UNMARK    0
-#define TRUE      1
-#define FALSE     0
-*/
 
 /*  equal/inequal with allowing numerical error for double  */
 #define ISEQUAL(a,b)	((a)-(b)<ISEQUAL_VALUE&&(b)-(a)<ISEQUAL_VALUE)
@@ -223,11 +177,6 @@ extern PARAMS internal_params;
 #define error_num(mes,n,x)  do{ERROR_MES=mes;fprintf(stderr,"%s: %g\n",mes,(double)(n));x;}while(0)
 #define print_mes(S,...)  do{if(((S)->_flag)&1)fprintf(stderr,__VA_ARGS__);}while(0)
 
-/*
-#define error_range(f,x,y,mes)  do{if(!RANGE((x),(f),(y))){ERROR_MES=mes;fprintf(stderr,"%s: %g\n",mes,(double)(f));EXIT;}}while(0)
-#define error_str(mes,s,x)  do{ERROR_MES=mes;fprintf(stderr,"%s: %s\n",mes,s);x;}while(0)
-//#define print_fname(s,fname,...)  do{if(fname)fprintf(stderr,s,fname,__VA_ARGS__);}while(0)
-*/
 #define print_fname(s,fname,...)  do{if(fname)fprintf(stderr,s,fname);}while(0)
 #define mfree(...)          mfree_(NULL, __VA_ARGS__, (void *)1)
 #define mfree2(...)          mfree2_(NULL, __VA_ARGS__, (void *)1)
@@ -252,22 +201,16 @@ extern PARAMS internal_params;
 #endif
 
 /* reallocate memory and expand the memory size */
-#define   reallocx_(f,end,end2,e,x)  do{realloc2(f,end2,x);FLOOP(common_size_t,(size_t)end,(size_t)end2)(f)[common_size_t]=(e);}while(0)
-#define   reallocx(f,end,i,e,x)  do{if((size_t)(i)>=(size_t)(end)){reallocx_(f,end,MAX((end)*2+16,(i)+1),e,x);end=MAX((end)*2,(i)+1);}}while(0)
-#define   reallocz(f,end,i,x)  do{if((size_t)(i)>=(size_t)(end)){end=MAX((end)*2,(i)+1);realloc2(f,end,x);}}while(0)
-#define   realloc_set(f,end,i,e,ee,x)  do{if((size_t)(i)>=(size_t)(end)){reallocx_(f,end,MAX((end)*2+16,(i)+1),e,x);end=MAX((end)*2,(i)+1);}f[i]=ee;}while(0)
 #define   realloci(f,i,x)  do{if(!((i)&((i)-1)))realloc2(f,(i)*2+1,x);}while(0)
+
+//#define   reallocx_(f,end,end2,e,x)  do{realloc2(f,end2,x);FLOOP(common_size_t,(size_t)end,(size_t)end2)(f)[common_size_t]=(e);}while(0)
+//#define   reallocx(f,end,i,e,x)  do{if((size_t)(i)>=(size_t)(end)){reallocx_(f,end,MAX((end)*2+16,(i)+1),e,x);end=MAX((end)*2,(i)+1);}}while(0)
+
 
 /* basic array operations */
 #define   ARY_MAX(m,i,f,x,y)   do{(m)=(f)[x];(i)=(x);FLOOP(common_INT,(x)+1,(y))if((m)<(f)[common_INT]){(i)=common_INT;(m)=(f)[i];}}while(0)
 #define   ARY_MIN(m,i,f,x,y)   do{(m)=(f)[x];(i)=(x);FLOOP(common_INT,(x)+1,y)if((m)>(f)[common_INT]){(i)=common_INT;(m)=(f)[i];}}while(0)
 #define   ARY_SUM(f,v,x,y)       do{(f)=0;FLOOP(common_INT,x,y)(f)+=(v)[common_INT];}while(0)
-
-/* permute f so that f[i]=f[p[i]] (inverse perm). p will be destroyed (filled by end). s is temporary variable of type same as f[] */
-#define   ARY_INVPERMUTE_(f,p,s,end)  do{ FLOOP(common_INT,0,end){ if ( (p)[common_INT]<(end) ){ (s)=(f)[common_INT]; do { common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; (p)[common_INT2]=end; }while ( (p)[common_INT]<(end) ); (f)[common_INT2] = (s);}}}while(0)
-
-/* permute f so that f[i]=f[p[i]] (inverse perm). not destroy p by allocating tmp memory,  s is temporary variable of type same as f[] */
-#define   ARY_INVPERMUTE(f,p,s,end,x) do{ calloc2(common_pnt,end,x);FLOOP(common_INT,0,end){ if ( common_pnt[common_INT]==0 ){ (s)=(f)[common_INT]; do{ common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; common_pnt[common_INT2]=1; }while( common_pnt[common_INT]==0 ); (f)[common_INT2] = (s); }} free(common_pnt); }while(0)
 
 /* macros for allocating memory with exiting if an error occurs */
 #define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
@@ -280,48 +223,10 @@ extern PARAMS internal_params;
  #define   fopen2(f,a,b,x)     do{if(!((f)=fopen(a,b))){ERROR_MES="file open error";fprintf(stderr,"file open error: file name %s, open mode %s\n",a,b);x;}}while(0)
 #endif
 
-#ifdef _FILE2_LOAD_FROM_MEMORY_
- #define fclose2(a) do{if(a){(a)=NULL;}}while(0)
-#else
- #define fclose2(a) do{if(a){fclose(a);(a)=NULL;}}while(0)
-#endif
-
-
-#ifndef MQUE_ONEMORE
- #define MQUE_ONEMORE 1
-#endif
+#define fclose2(a) do{if(a){fclose(a);(a)=NULL;}}while(0)
 
 
 
-
-
-#ifndef VEC_VAL
- #ifdef VEC_VAL_CHAR
-  #define VEC_VAL char
-  #define VEC_VAL2 LONG
-  #define VEC_VAL_END 128
-  #define VEC_VAL2_END LONGHUGE
-  #define VEC_VALF "%hhd"
- #elif defined(VEC_VAL_UCHAR)
-  #define VEC_VAL unsigned char
-  #define VEC_VAL2 LONG
-  #define VEC_VAL_END 256
-  #define VEC_VAL2_END LONGHUGE
-  #define VEC_VALF "%hhu"
- #elif defined(VEC_VAL_INT)
-  #define VEC_VAL int
-  #define VEC_VAL2 LONG
-  #define VEC_VAL_END INTHUGE
-  #define VEC_VAL2_END LONGHUGE
-  #define VEC_VALF "%d"
- #else
-  #define VEC_VAL double
-  #define VEC_VAL2 double
-  #define VEC_VAL_END DOUBLEHUGE
-  #define VEC_VAL2_END DOUBLEHUGE
-  #define VEC_VALF "%f"
- #endif
-#endif
 
 #ifndef VEC_ID
  #ifdef VEC_ID_LONG
@@ -336,28 +241,6 @@ extern PARAMS internal_params;
 #endif
 
 
-/* vector */
-struct VEC {
-  unsigned char _type;  // mark to identify type of the structure
-  VEC_VAL *_v;
-  VEC_ID _end;
-  VEC_ID _t;
-
-	void alloc (VEC_ID clms);
-	void end ();
-	bool operator>(const VEC& rhs) const{
-	  if ( _t < rhs._t ) return (-1);
-  	else return ( _t >  rhs._t);
-	}
-	bool operator<(const VEC& rhs) const{
-	  if ( _t > rhs._t ) return (-1);
-  	else return ( _t < rhs._t);
-	}
-
-} ;
-
-// remove a file on the specified directory
-#define MREMOV(dir,...) mremove_(dir, __VA_ARGS__, NULL, NULL)
 
 
 /*********************************************************/
@@ -390,12 +273,6 @@ struct VEC {
 #define LOAD_COMP 33554432   // read as a complement  
 #define LOAD_RC_SAME 67108864     // set #rows and #columns to the maximum of them
 
-#define FILE_COUNT_ROWT 32   // count size of each row
-#define FILE_COUNT_CLMT 64   // count size of each column
-#define FILE_COUNT_NUM LOAD_NUM   // read #columns, #rows and #elements
-#define FILE_COUNT_GRAPHNUM LOAD_GRAPHNUM   // read #vertices and #edges
-
-#define FILE2_BUFSIZ 16384
 
 /* free many pointers*/
 void mfree_(void *x, ...);
@@ -410,13 +287,20 @@ void print_real (double f);
 void fprint_WEIGHT (FILE *fp, WEIGHT f);
 void print_WEIGHT (WEIGHT f);
 
+
+#define FILE_COUNT_ROWT 32   // count size of each row
+#define FILE_COUNT_CLMT 64   // count size of each column
+#define FILE_COUNT_NUM LOAD_NUM   // read #columns, #rows and #elements
+#define FILE_COUNT_GRAPHNUM LOAD_GRAPHNUM   // read #vertices and #edges
+#define FILE2_BUFSIZ 16384
+
 #define FILE_COUNT_INT VEC_ID
 #define FILE_COUNT_INTF VEC_IDF
 
 
 /* quick sort macros // templateにする?*/ //common_INT common_pntどうにかする
 #define QQSORT_ELE(a,x)  ((a *)(&(common_pnt[(*((PERM *)(x)))*common_INT])))
-#define QQSORT_ELEt(a,x) (((a *)&(common_pnt[(*((PERM *)(x)))*common_INT]))->get_t())
+
 
 template<typename T>
 int qsort_cmp_(const void *x,const void *y){
@@ -454,11 +338,13 @@ void qsort_ (T *v, size_t siz, int unit){
 
 template<typename T>
 void qsort_perm__ (T *v, size_t siz, PERM *perm, int unit){
+
  if ( unit == 1 || unit==-1 ) unit *= sizeof(*v);  
  if ( unit == 1 || unit==-1 ) unit *= sizeof(PERM);  
  common_INT = MAX(unit,-unit); common_pnt = (char *)v;
- if (unit<0) qsort (perm, siz, sizeof(PERM), qqsort_cmp__<T>);
- else        qsort (perm, siz, sizeof(PERM), qqsort_cmp_<T>);
+ if (unit<0) qsort(perm, siz, sizeof(PERM), qqsort_cmp__<T>);
+ else        qsort(perm, siz, sizeof(PERM), qqsort_cmp_<T>);
+
 } 
 
 template<typename T>
@@ -470,8 +356,6 @@ PERM *qsort_perm_ (T *v, size_t siz, int unit){
 	qsort_perm__<T>(v, siz, perm, unit); 
 	return (perm);
 }
-
-
 
 template<typename T>
 size_t bin_search_ (T *v, T u, size_t siz, int unit){ 
@@ -489,52 +373,74 @@ size_t bin_search_ (T *v, T u, size_t siz, int unit){
    if ( u < n ) siz = t; else s = t;
  }
 }
-// bin search returns the position that is equal to u, or the smallest in larger's
 
-
-/* swap macro for integer, double, char, and pointer */
+/* swap macro */
 template<typename T>
 void SWAP_(T *a,T *b){ T stmp = *a; *a=*b; *b=stmp; }
 
-#define SWAP_PNT(a,b)  (common_pnt=(typeof(common_pnt))a,a=(typeof(a))b,b=(typeof(b))common_pnt)
+
+template<typename T ,typename TI>
+T* reallocx(T *f, TI *end ,size_t i,T e){
+
+	if( i >= *end ){
+		size_t end2 = MAX((*end)*2+16,i+1);
+
+		if(!( f = (T *) realloc( f , sizeof(T) * end2 ) ) ){
+
+			//fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof(T)*(b)));
+		}
+		for(TI j= *end ; j< end2  ; j++ ){
+			f[j]=e;
+		}
+		*end=MAX((*end)*2,(i)+1);
+	}
+	return f;
+
+}
+
+template<typename T,typename TI>
+T* reallocx(T* f, TI *end ,size_t i){
+
+	if( i >= *end ){
+
+		size_t end2 = MAX((*end)*2+16,i+1);
+
+		if(!( f= (T *)realloc( f ,sizeof(T)*end2 ) ) ){
+			//printf("x2 %d\n",end2);
+			//fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof(T)*(b)));
+		}
+		for(TI j= *end ; j<end2 ; j++ ){
+			f[j]=j;
+		}
+		*end=MAX((*end)*2,(i)+1);
+	}
+	return f;
+
+}
 
 
-/* bitmasks, used for bit operations */
-extern int BITMASK_UPPER1[32];
-extern int BITMASK_UPPER1_[32];
-extern int BITMASK_LOWER1[32];
-extern int BITMASK_LOWER1_[32];
-extern int BITMASK_1[32];
-extern int BITMASK_31[32];
-extern int BITMASK_16[8];
-extern int BITMASK_UPPER16[8];
-extern int BITMASK_LOWER16[8];
-extern int BITMASK_FACT16[8];
+
+// vectorでいいようなきもするが一応つくる？
+template<class T>
+class VECARY{
+	size_t _end;
+	T * _v;
+	
+	public:
+	
+	VECARY():_end(0),_v(NULL){}
+
+	~VECARY(){ free2(_v); }
+
+};
 
 
-#ifndef UNIONFIND_ID
- #ifdef UNIONFIND_ID_LONG
-  #define UNIONFIND_ID LONG
-  #define UNIONFIND_ID_END LONGHUGE
-  #define UNIONFIND_IDF LONGF
- #elif defined(UNIONFIND_ID_QUEUE)
-  #define UNIONFIND_ID QUEUE_ID
-  #define UNIONFIND_ID_END QUEUE_ID_END
-  #define UNIONFIND_IDF QUEUE_IDF
- #elif defined(UNIONFIND_ID_ALIST)
-  #define UNIONFIND_ID ALIST_ID
-  #define UNIONFIND_ID_END ALIST_ID_END
-  #define UNIONFIND_IDF ALIST_IDF
- #else
-  #define UNIONFIND_ID int
-  #define UNIONFIND_ID_END INTHUGE
-  #define UNIONFIND_IDF "%d"
- #endif
-#endif
 
-UNIONFIND_ID UNIONFIND_getID (UNIONFIND_ID v, UNIONFIND_ID *ID);
-void UNIONFIND_unify (UNIONFIND_ID u, UNIONFIND_ID v, UNIONFIND_ID *ID);
-void UNIONFIND_unify_set (UNIONFIND_ID u, UNIONFIND_ID v, UNIONFIND_ID *ID, UNIONFIND_ID *set);
 
-void UNIONFIND_init (UNIONFIND_ID **ID, UNIONFIND_ID **set, UNIONFIND_ID end);
+/* permute f so that f[i]=f[p[i]] (inverse perm). p will be destroyed (filled by end). s is temporary variable of type same as f[] */
+//#define   ARY_INVPERMUTE_(f,p,s,end)  do{ FLOOP(common_INT,0,end){ if ( (p)[common_INT]<(end) ){ (s)=(f)[common_INT]; do { common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; (p)[common_INT2]=end; }while ( (p)[common_INT]<(end) ); (f)[common_INT2] = (s);}}}while(0)
+
+/* permute f so that f[i]=f[p[i]] (inverse perm). not destroy p by allocating tmp memory,  s is temporary variable of type same as f[] */
+//#define   ARY_INVPERMUTE(f,p,s,end,x) do{ calloc2(common_pnt,end,x);FLOOP(common_INT,0,end){ if ( common_pnt[common_INT]==0 ){ (s)=(f)[common_INT]; do{ common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; common_pnt[common_INT2]=1; }while( common_pnt[common_INT]==0 ); (f)[common_INT2] = (s); }} free(common_pnt); }while(0)
+
 

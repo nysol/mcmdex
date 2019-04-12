@@ -17,6 +17,7 @@
 #include "queue.hpp"
 
 
+
 /*  structure for graph  */
 class SGRAPH {
 
@@ -34,8 +35,7 @@ class SGRAPH {
 	public:
 	SGRAPH():
 		_fname(NULL),_flag(0),
-		_itemary(NULL),_perm(NULL)
-	{}
+		_itemary(NULL),_perm(NULL) {}
 
 	~SGRAPH(){
 	  mfree (_perm,_itemary);
@@ -95,7 +95,7 @@ class SGRAPH {
 
     mfree (tmp, sperm);
 
-		_perm =NULL;
+		_perm = NULL;
 		
 
 	}
@@ -108,7 +108,16 @@ class SGRAPH {
 		}
 	}
 
+	QUEUE_INT *	skipedge(QUEUE_INT v,QUEUE_INT w){
+		QUEUE_INT * x;
+		for(x = _edge.get_vv(v); *x < w ;x++){;}
+		return x;
+	}
+
 	QUEUE_INT * edge_vv(QUEUE_INT i) { return _edge.get_vv(i); }
+	QUEUE_ID edge_vt(int i){ return _edge.get_vt(i); }
+
+	QUEUE_INT * edgeEnd(int i){ return _edge.end(i); }
 
 	QUEUE_INT edge_Lastvv(QUEUE_INT i) { 
 		return _edge.get_vv(i,_edge.get_vt(i)-1); 
@@ -119,17 +128,12 @@ class SGRAPH {
 	void   edge_sort(){  _edge.sort(); }
 	VEC_ID edge_eles(){ return _edge.get_eles(); }
 
-	QUEUE_ID edge_vt(int i){ return _edge.get_vt(i); }
-
 
 	QUEUE* getp_v(int i){ return _edge.getp_v(i); }
-	QUEUE* getp_v()     { return _edge.getp_v(); }
 
 	// これは再考
 	void edge_union_flag(int flag){ _edge.union_flag(flag);} 
 
-
-	int loadEDGE(char* fname);
 	int loadEDGE(int flag ,char* fname);
 
 	/* remove all selfloops */
@@ -143,21 +147,6 @@ class SGRAPH {
 	}
 	char * initOQ(QUEUE *);
 	
-
-	/// 未使用？
-	/*  make/take/remove edge e as connecting vertices u and v,
-	 and  edge (u,v). 
- 	 do nothing if when make already existing edge, or delete non-existing edge.
- 	 with range check of parameters */
-
-	/*  make an edge between u and v.
-   If they are already connected, it will be a multiple edge */
-	//void edge_mk (QUEUE_INT u, QUEUE_INT v, WEIGHT w){ _edge.vw_mk(u, v, w); }
-
-/* Delete the edge connecting u and v. If edge (u,v) does not exist, nothing will occur. */
-	//void edge_rm (QUEUE_INT u, QUEUE_INT v){ _edge.vw_rm(u, v); }
-
-
 
 } ;
 

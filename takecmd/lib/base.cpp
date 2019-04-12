@@ -32,7 +32,11 @@ void *BASE::get_memory (int i){
   if ( _num >= _block_siz ){  /* if reach to the end of base array */
     _num = i;  /* allocate one more base array, and increment the counter */
     _block_num++;
-    reallocx(_base, _block_end, _block_num, NULL, EXIT0);
+
+    //reallocx(_base, _block_end, _block_num, NULL, EXIT0);
+		_base = reallocx<char *, size_t>(_base, &_block_end, _block_num, NULL);
+
+
     if ( _base[_block_num] == NULL )
         malloc2 (_base[_block_num], _block_siz*_unit, EXIT0);
     return (_base[_block_num]);

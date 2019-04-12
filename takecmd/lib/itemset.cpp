@@ -543,8 +543,12 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE_IN
 }
 
 
+void ITEMSET::output_itemset(int core_id){
+  output_itemset_ ( &_itemset, _frq, _pfrq, _itemtopk_item, _itemtopk_item2, core_id);
+}
 
-void ITEMSET::output_itemset ( QUEUE *occ, int core_id){
+
+void ITEMSET::output_itemset( QUEUE *occ, int core_id){
   output_itemset_ ( &_itemset, _frq, _pfrq, occ, _itemtopk_item, _itemtopk_item2, core_id);
 }
 

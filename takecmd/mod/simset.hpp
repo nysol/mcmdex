@@ -4,6 +4,9 @@
 #include "stdlib2.hpp"
 #define WEIGHT_DOUBLE
 
+// remove a file on the specified directory
+#define MREMOV(dir,...) mremove_(dir, __VA_ARGS__, NULL, NULL)
+
 class SIMSET{
 
 	int   _cmn_argc;

@@ -6,6 +6,30 @@
 #include"kgmedset.hpp"
 #include"problem.hpp"
 
+/* get the ID of belonging group, and flatten the ID tree */
+UNIONFIND_ID UNIONFIND_getID (UNIONFIND_ID v, UNIONFIND_ID *ID){
+  UNIONFIND_ID vv = v, vvv;
+  while (v != ID[v]) v = ID[v];  // trace parents until the root (ID[v] = v, if v is a root)
+  while (vv != ID[vv]){ vvv = vv; vv = ID[vv]; ID[vvv] = v; }
+  return (v);
+}
+
+    // maintain ID and list to representing the sets simultaneously
+void UNIONFIND_unify_set (UNIONFIND_ID u, UNIONFIND_ID v, UNIONFIND_ID *ID, UNIONFIND_ID *set){
+  UNIONFIND_ID z;
+  v = UNIONFIND_getID (v, ID); // compute ID of v 
+  u = UNIONFIND_getID (u, ID); // compute ID of u 
+  if ( u != v ){
+    if ( set[u] == u ){ set[u] = v; ID[v] = u; } // attach u as the head of the list of v
+    else if ( set[v] == v ){ set[v] = u; ID[u] = v; }  // attach v as the head of the list of u
+    else {
+      for (z=v; set[z]!=z ; z=set[z]);  // find the last in the list of v
+      set[z] = set[u]; set[u] = v; // insert the list of v to list of u
+      ID[v] = u; // set ID of (ID of v) to (ID of u)
+    }
+  }
+}
+
 
 
 void KGMEDSET::help(){
@@ -181,8 +205,13 @@ void KGMEDSET::cc_clustering (){
     if ( _fp.read_pair ( &x, &y, NULL, 0) ) continue;
 
     ENMAX (xmax, MAX(x, y)+1);
-    reallocx (mark, end1, xmax, common_size_t, EXIT);
-    reallocx (set, end2, xmax, common_size_t, EXIT);
+
+    //reallocx (mark, end1, xmax, common_size_t, EXIT);
+    mark = reallocx (mark, &end1, xmax);
+
+    //reallocx (set, end2, xmax, common_size_t, EXIT);
+    set = reallocx (set, &end2, xmax);
+
     UNIONFIND_unify_set (x, y, (UNIONFIND_ID *)mark, (UNIONFIND_ID *)set);
 
   } while ( (FILE_err&2)==0 );
@@ -199,7 +228,9 @@ void KGMEDSET::cc_clustering (){
 /* cnt: cluster siz, if v is representative, and #vertices covering v, if v isn't representative */
 void KGMEDSET::ind_clustering (){
 
-  FSTAR_INT *pnt=NULL, flag, end1=0, end2=0, end3=0, xmax=0, *mark=NULL, *set=NULL, *cnt=NULL;
+  FSTAR_INT *pnt=NULL, flag,  xmax=0, *mark=NULL, *set=NULL, *cnt=NULL;
+	size_t end1=0, end2=0, end3=0;
+
   LONG x, y, yy;
 
     // merge the connponents to be connected by using spray tree
@@ -213,9 +244,14 @@ void KGMEDSET::ind_clustering (){
 
       ENMAX (xmax, MAX(x, y)+1);
 
-      reallocx (mark, end1, xmax, common_size_t, EXIT);
-      reallocx (set, end2, xmax, common_size_t, EXIT);
-      reallocx (cnt, end3, xmax, 0, EXIT);
+      //reallocx (mark, end1, xmax, common_size_t, EXIT);
+      mark = reallocx<FSTAR_INT>(mark, &end1, xmax);
+
+      //reallocx (set, end2, xmax, common_size_t, EXIT);
+			set = reallocx<FSTAR_INT>(set, &end2, xmax);
+
+      //reallocx (cnt, end3, xmax, 0, EXIT);
+      cnt = reallocx<FSTAR_INT>(cnt, &end3, xmax, 0);
 
       if ( cnt[x] < cnt[y] ) SWAP_<LONG> (&x, &y);
 

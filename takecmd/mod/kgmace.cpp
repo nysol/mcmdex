@@ -97,7 +97,7 @@ void KGMACE::clq_iter ( QUEUE_INT v, QUEUE *occ){
   QUEUE_INT *x, *xx, *y;
 
  	_II.itemINS(v);
-  _II.output_itemset ((QUEUE*) NULL, 0);
+  _II.output_itemset(0);
 
   if ( _II.get_itemset_t() >= _II.get_ub() ) goto END;  // upper bound of clique
 
@@ -110,6 +110,7 @@ void KGMACE::clq_iter ( QUEUE_INT v, QUEUE *occ){
 
       while ( *x > *xx ) xx++;
       if ( *x == *xx ) _OQ[*y].push_back(*x);
+
     }
 
     _OQ[*y].push_back( _SG.edge_t());
@@ -129,35 +130,45 @@ void KGMACE::clq_iter ( QUEUE_INT v, QUEUE *occ){
 /* bitmap routines   */
 /******************************************************************/
 void KGMACE::VBM_set_vertex (QUEUE_INT v){
+	
   QUEUE_INT *x;
-  VBMINT p;
-  _VV._pos[v] = _VV._dellist.pop_back();
-  p = _VV._set[_VV._pos[v]];
-  MLOOP (x, _SG.edge_vv(v), _SG.edge_t()) _VV._edge[*x] |= p;
+
+  VBMINT p = _VV.set_vertex(v);
+
+	for ( x=_SG.edge_vv(v) ; *x < _SG.edge_t() ; x++){
+		_VV.orEdge(*x,p);
+	}
+
 }
 
 void KGMACE::VBM_reset_vertex (QUEUE_INT v){
-  QUEUE_INT *x;
-  VBMINT p;
-  _VV._dellist.push_back( _VV._pos[v]);
-  p = _VV._reset[_VV._pos[v]];
-  MLOOP (x, _SG.edge_vv(v), _SG.edge_t()) _VV._edge[*x] &= p;
-}
-void KGMACE::VBM_set_diff_vertexes ( QUEUE *K1, QUEUE *K2){
-  QUEUE_INT *x, *y = K2->get_v();
 
-  //MQUE_FLOOP_CLS (*K1, x){
-  for(x =K1->begin(); x < K1->end() ; x++  ){
+	VBMINT p = _VV.reset_vertex(v);
+
+	for ( QUEUE_INT *x = _SG.edge_vv(v) ; *x < _SG.edge_t() ; x++){
+		// &= 実装する？
+		_VV.andEdge(*x,p);
+	}
+
+
+}
+void KGMACE::VBM_set_diff_vertexes ( QUEUE_INT K1, QUEUE_INT K2){
+  QUEUE_INT *x; 
+  QUEUE_INT *y = _OQ[K2].get_v();
+
+  for(x = _OQ[K1].begin(); x < _OQ[K1].end() ; x++  ){
     if ( *x == *y ) y++;
     else VBM_set_vertex (*x);
   }
 }
-void KGMACE::VBM_reset_diff_vertexes (QUEUE *K1, QUEUE *K2){
-  QUEUE_INT *x, *y = K2->get_v();
 
-  //MQUE_FLOOP_CLS (*K1, x){
-  for(x =K1->begin(); x < K1->end() ; x++  ){
-    if ( *x == *y ) y = y-K2->get_v()<K2->get_t()-1? y+1: y; 
+void KGMACE::VBM_reset_diff_vertexes (QUEUE_INT K1, QUEUE_INT K2){
+
+  QUEUE_INT *x;
+  QUEUE_INT *y = _OQ[K2].get_v();
+
+  for(x = _OQ[K1].begin(); x < _OQ[K1].end() ; x++  ){
+    if ( *x == *y ) y = y - _OQ[K2].get_v() < _OQ[K2].get_t() -1 ? y+1: y; 
     else VBM_reset_vertex (*x);
   }
 }
@@ -166,10 +177,12 @@ void KGMACE::VBM_reset_diff_vertexes (QUEUE *K1, QUEUE *K2){
 /******************************************************************/
 /* add a vertex v to clique K */
 /******************************************************************/
-void KGMACE::add_vertex (QUEUE *K, QUEUE_INT v){
-  K->push_back(v);
+
+
+void KGMACE::add_vertex (QUEUE_INT K, QUEUE_INT v){
+  _OQ[K].push_back(v);
   if ( _problem & PROBLEM_CLOSED ){
-    if ( K->get_t() > VBMINT_MAX ) _problem -= PROBLEM_CLOSED;
+    if ( _OQ[K].get_t() > VBMINT_MAX ) _problem -= PROBLEM_CLOSED;
     else VBM_set_vertex (v);
   }
 }
@@ -180,7 +193,6 @@ void KGMACE::add_vertex (QUEUE *K, QUEUE_INT v){
 void KGMACE::scan_vertex_list ( QUEUE_INT v, QUEUE_INT w){
   QUEUE_INT *xx;
 
-  // MQUE_MLOOP_CLS (_SG.edge_vv(v), xx, w){
   for(xx=_SG.edge_vv(v) ; *xx < w ; xx++ ){
     if ( _OQ[*xx].get_t() == 0 ) _itemcand.push_back(*xx);
     _OQ[*xx].push_back(v); 
@@ -189,23 +201,23 @@ void KGMACE::scan_vertex_list ( QUEUE_INT v, QUEUE_INT w){
 
 /* K := lex. muximum maximal clique including K (w.r.t. vertices <w ) */
 /* MACE_occ[v] := N(v) \cap K */
-void KGMACE::extend (QUEUE *K, QUEUE_INT w){
+//QUEUE *K = _OQ[w]
+void KGMACE::extend (QUEUE_INT w){
 
   QUEUE_INT *x, v;
 
-	for(x = K->begin() ; x < K->end() ;x++  ){ 
-		scan_vertex_list (*x, w);
+	for(x = _OQ[w].begin() ; x < _OQ[w].end() ;x++  ){ 
+		scan_vertex_list(*x, w);
 	}
-  v = K->get_v(0);
+  v = _OQ[w].get_v(0);
 
-  //MQUE_MLOOP_CLS(_SG._edge._v[v], x, w);
-	for(x=_SG.edge_vv(v); *x < w ;x++){;}
+	x = _SG.skipedge(v,w);
 
-         // x := position of vertex w in the list Q[v(= head of K)] 
+  // x := position of vertex w in the list Q[v(= head of K)] 
   for (x-- ; x>=_SG.edge_vv(v) ; x--){
-    if ( _OQ[*x].get_t() == K->get_t() ){
-       scan_vertex_list ( *x, *x);
-       add_vertex ( K, *x);
+    if ( _OQ[*x].get_t() == _OQ[w].get_t() ){
+       scan_vertex_list( *x, *x);
+       add_vertex ( w, *x);
     }
   }
 }
@@ -214,32 +226,43 @@ void KGMACE::extend (QUEUE *K, QUEUE_INT w){
 /* check the maximality of K\cap N(w) (=MACE_occ[w]),
    and whether the parent of C(K\cap N(w)) = K or not. */
 /****************************************************************/
-//LONG MACE::parent_check ( QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w){
-//ad => II._add Q =>_OQ
-LONG KGMACE::parent_check ( QUEUE *K, QUEUE_INT w){
+LONG KGMACE::parent_check ( QUEUE_INT K, QUEUE_INT w){
+
+	QUEUE_INT j=0, e, i, flag =1;
+
+  QUEUE_INT  v = _OQ[w].get_v(0);
+
+  QUEUE_INT *x, *Z;
+//  QUEUE_INT *y = _SG.edge_vv(w) + _SG.edge_vt(w)-1;
+  
+  QUEUE_INT *y = _SG.edgeEnd(w) - 1 ;  
+
+  QUEUE_INT *zz= _OQ[w].get_v();
+
+	_II.iadd_set_t(0);
+	
+  _OQ[K].setStopper();  // loop stopper
 
 
-  QUEUE_INT j=0, e, i, flag =1;
-//  QUEUE_INT v=Q[w].get_v(0), *y = _SG._edge._v[w].get_v() + _SG._edge._v[w].get_t()-1, *x, *zz=Q[w].get_v(), *Z;
 
-  QUEUE_INT v=_OQ[w].get_v(0), *y = _SG.edge_vv(w) + _SG.edge_vt(w)-1, *x, *zz=_OQ[w].get_v(), *Z;
-
-	 _II.iadd_set_t(0);
-  //ad->set_t(0);
-  K->set_v(K->get_t(), -1);  // loop stopper
 
   FLOOP (i, 0, _OQ[w].get_t()){
     e = _OQ[w].get_v(i);
      // pointers to the positions of the current processing items in each transaction
-    _shift[i] = _SG.edge_vv(e) + _SG.edge_vt(e)-1;
+    _shift[i] = _SG.edgeEnd(e) - 1;
   }
 
-  for (x=_SG.edge_vv(v) + _SG.edge_vt(v)-1 ; *x>w ; x--){
-    if ( *x <= (e=K->get_v(j)) ){ // skip if *x \in K (or w<*x)
-      if ( zz-_OQ[w].get_v() < _OQ[w].get_t() && *zz == e ) zz++;   // "zz-Q[w].v < Q[w].t &&" is added, 2014/1/10 
+  for (x=_SG.edgeEnd(v)-1 ; *x>w ; x--){
+
+	  // skip if *x \in K (or w<*x)
+    if ( *x <= (e=_OQ[K].get_v(j)) ){ 
+
+			// "zz-Q[w].v < Q[w].t &&" is added, 2014/1/10 
+      if ( zz-_OQ[w].get_v() < _OQ[w].get_t() && *zz == e ){
+      	 zz++;   
+      }
       else {  // insert *x to Queue "ad" if *x is not in K\cap N(w)
-        _shift[_OQ[w].get_t() + _II.iadd_get_t()] = _SG.edge_vv(e) + _SG.edge_vt(e)-1-j;
-        //ad->INS(e);
+        _shift[_OQ[w].get_t() + _II.iadd_get_t()] = _SG.edgeEnd(e) - 1 - j;
         _II.iaddINS(e);
       }
       if ( *x < e ) x++;
@@ -263,7 +286,9 @@ LONG KGMACE::parent_check ( QUEUE *K, QUEUE_INT w){
     NEXT:;
     while (flag){   // check *x is adjacent to all vertices in K_{\le w}. If not, then break the loop
       if ( i== _OQ[w].get_t() + _II.iadd_get_t() ) return (*x); // if *x is adjacent to all, MACE_occ[w] is not a child
+
       Z = _SG.edge_vv( _II.iadd_get_v(i-_OQ[w].get_t()) );
+
       while ( *_shift[i]>*x ){
         _shift[i]--;
         if ( _shift[i] < Z ){ flag = 0; goto LOOP_END; } // reached to the end of the adjacency list of the i-th added vertex, thus no further vertex can be pass this check, and set flag to 0 not to come here again.
@@ -275,39 +300,46 @@ LONG KGMACE::parent_check ( QUEUE *K, QUEUE_INT w){
   }
   return (-1);
 }
-
 /****************************************************************/
 /* check the maximality of K\cap N(w) (=MACE_occ[w]),
    ad whether the parent of C(K\cap N(w)) = K or not. */
 /*  BITMAP version */
 /****************************************************************/
-LONG KGMACE::VBM_parent_check ( QUEUE *K, QUEUE *Q, QUEUE_INT w){
+LONG KGMACE::VBM_parent_check ( QUEUE_INT K , QUEUE_INT w){
 
-  QUEUE_INT v=Q[w].get_v(0);
+  QUEUE_INT v= _OQ[w].get_v(0);
   QUEUE_ID i;
   VBMINT p=0, pp;
 
-  QUEUE_INT *y = _SG.edge_vv(w) + _SG.edge_vt(w)-1, *x, *z=K->get_v();
+  QUEUE_INT *y = _SG.edgeEnd(w)-1;
+  QUEUE_INT *x;
+  QUEUE_INT *z = _OQ[K].get_v();
 
-  K->set_v(K->get_t(), -1);  // loop stopper
+  _OQ[K].set_v(_OQ[K].get_t(), -1);  // loop stopper
 
-  FLOOP (i, 0, Q[w].get_t()) {
-  	p |= _VV._set[_VV._pos[Q[w].get_v(i)]];
-  }
-
+  p = _VV.orByQUE(_OQ[w]);
   pp = p;
 
-  for (x=_SG.edge_vv(v) + _SG.edge_vt(v)-1 ; *x>w ; x--){
+  for (x=_SG.edgeEnd(v)-1 ; *x>w ; x--){
+
     while ( *x < *z ){ 
-    	pp |= _VV._set[_VV._pos[*z]]; 
+    	pp |= _VV.getSetByPos(*z); 
     	z++; 
     }
 
-    if ( *x == *z ){ pp |= _VV._set[_VV._pos[*z]]; z++; continue; }
-    if ( pp==(pp&_VV._edge[*x]) ) return (*x);  // parentness
+    if ( *x == *z ){ 
+    	pp |= _VV.getSetByPos(*z); 
+    	z++; 
+    	continue; 
+    }
+
+	  // parentness
+    if ( _VV.existEdge(*x,pp) ){
+    	return (*x);  
+    }
 
 		// maximality w.r.t P\cap N(w) (=occ[w]) 
-    if ( p == (p & _VV._edge[*x]) ){ 
+    if ( _VV.existEdge(*x,p) ){
 
       if ( y<_SG.edge_vv(w) ) goto NEXT;
 
@@ -323,54 +355,6 @@ LONG KGMACE::VBM_parent_check ( QUEUE *K, QUEUE *Q, QUEUE_INT w){
   }
   return (-1);
 }
-
-/*************************************************************************/
-/*  simple routine for checking the maximality of a clique,
-     and parent-child relation, for debugging */
-/*************************************************************************/
-LONG KGMACE::parent_check_max ( QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w){
-  QUEUE_INT *x;
-	
-	ad->cpy( _SG.getp_v(w) );
-
-	for( x = Q[w].begin() ; x < Q[w].end() ; x++){
-  	 ad->and_(_SG.getp_v(w));
-  }
-
-  if ( ad->get_t()==0 ) return (-1);
-  if ( ad->get_v(ad->get_t()-1) > w ) return (ad->get_v(ad->get_t()-1));
-
-  return (-1);
-
-}
-
-LONG KGMACE::parent_check_parent (QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w){
-
-  QUEUE_INT t=0, *x, i;
-
-  K->set_v(K->get_t(),-1); // loop stopper;
-
-  ad->cpy ( _SG.getp_v(Q[w].get_v(0)) );
-
-	for(x = Q[w].begin(); x < Q[w].end() ; x++){
-  	ad->and_(_SG.getp_v(*x));
-  }
-
-  while ( ad->get_t() > 0 ){
-
-    i = ad->pop_back();
-    if ( i<w ) return (-1);
-
-    while ( i<K->get_v(t) ) t++;
-
-    if ( i > K->get_v(t) ) return (i);
-
-    ad->and_( _SG.getp_v(i) );
-  }
-  return (-1);
-}
-
-
 /*************************************************************************/
 /* MACE main iteration */
 /*************************************************************************/
@@ -379,42 +363,44 @@ void KGMACE::iter (int v){
   LONG ii;
   QUEUE_INT u;
   QUEUE_ID js = _itemcand.get_s();
-  QUEUE *Q = _OQ;
+  //QUEUE *Q = _OQ;
 
 
   _II.inc_iters();
-  _itemcand.set_s(_itemcand.get_t());
 
-  add_vertex( &Q[v], v);
+  //_itemcand.setStartByEnd();
+  _itemcand.set_s(_OQ[v].get_t());
 
-  extend ( &Q[v], v);
+  add_vertex( v , v);
 
-  _II.set_itemset_t(0);
+  extend(v);
 
-  memcpy (_II.item_get_v(), Q[v].get_v(), sizeof(QUEUE_INT)*Q[v].get_t());
+	_II.QueMemCopy(_OQ[v]);
+  _II.output_itemset(0);
 
-  _II.item_set_t(Q[v].get_t());
-  _II.output_itemset ( (QUEUE*)NULL, 0);
+	_itemcand.queSortfromS(-1);
 
-  qsort_<QUEUE_INT>(_itemcand.getp_v(_itemcand.get_s()), _itemcand.get_t()-_itemcand.get_s(), -1);
+  while ( _itemcand.exist() ){
 
-  while ( _itemcand.get_t() > _itemcand.get_s() ){
     u = _itemcand.pop_back();
-    if ( u == Q[v].tail() ){
-      Q[v].dec_t();
+
+    if ( u == _OQ[v].tail() ){
+      _OQ[v].dec_t();
       if ( _problem & PROBLEM_CLOSED ) VBM_reset_vertex (u);
     } 
     else {
-      if ( _problem & PROBLEM_CLOSED ) ii = VBM_parent_check (&Q[v],_OQ, u);
-      else ii = parent_check ( &Q[v], u);
+      //if ( _problem & PROBLEM_CLOSED ) ii = VBM_parent_check (&_OQ[v],_OQ, u);
+      if ( _problem & PROBLEM_CLOSED ) ii = VBM_parent_check (v , u);
+      else ii = parent_check ( v, u);
 
       if ( ii==-1 ){
-        if (_problem & PROBLEM_CLOSED) VBM_reset_diff_vertexes ( &Q[v], &Q[u]);
-        iter(u); // recursive call for a child
-        if (_problem & PROBLEM_CLOSED) VBM_set_diff_vertexes (&Q[v], &Q[u]);
+        if (_problem & PROBLEM_CLOSED) VBM_reset_diff_vertexes (v,u);
+        // recursive call for a child
+        iter(u); 
+        if (_problem & PROBLEM_CLOSED) VBM_set_diff_vertexes (v,u);
       }
     }
-    Q[u].set_t (0);
+    _OQ[u].set_t (0);
   }
   _itemcand.set_s(js);
   if ( _problem & PROBLEM_CLOSED ) VBM_reset_vertex (v);
@@ -431,7 +417,7 @@ void KGMACE::MACECORE (){
     if ( _SG.edge_vt(v)==0 ){
       _II.item_set_t(0);
       _II.itemINS(v);
-      _II.output_itemset((QUEUE*) NULL, 0);
+      _II.output_itemset(0);
     } 
     //else if ( E[v].get_v(E[v].get_t()-1) <= v ){
 		else if ( _SG.edge_Lastvv(v) <= v ){    
@@ -446,7 +432,6 @@ void KGMACE::MACECORE (){
 
 int KGMACE::run (int argc, char *argv[]){
   
-  QUEUE_INT v;
   int flag = 0;
 	
 
@@ -482,15 +467,9 @@ int KGMACE::run (int argc, char *argv[]){
   _SG.rm_selfloop();
 	_SG.edgeSetEnd();
 
-	int i;
-  VBMINT p;
-	
-	
 	_OQ = new QUEUE[_SG.edge_t()+1];
 	char *cmn_pnt = _SG.initOQ( _OQ );
 	
-  if ( _problem & PROBLEM_CLOSED ){ // _VVをクラス化
-  }
 
 	// ここまで prerun
 	if( _ERROR_MES || _SG.edge_eles() <= 0 ){
@@ -500,25 +479,21 @@ int KGMACE::run (int argc, char *argv[]){
 
 
   if ( _problem & PROBLEM_FREQSET ){
+	  QUEUE_INT v;
     FLOOP (v, 0, _SG.edge_t()){
 			clq_iter ( v, _SG.getp_v(v) );
     }
   } 
   else{
-  	_VV.alloc(_SG.edge_t());
+	  // _VVをクラス化
+	  if ( _problem & PROBLEM_CLOSED ){ // おそらく常にtrue
+	  	_VV.alloc(_SG.edge_t());
+  	}
     MACECORE();
   }
   _II.last_output();
-
-
-  if ( flag ){
-    free2 (_VV._edge);
-    free2 (_VV._pos);
-    free2 (_VV._set);
-    free2 (_VV._reset);
-    //_VV._dellist.end();
-  }
-	  return (_ERROR_MES?1:0);
+	
+	return (_ERROR_MES?1:0);
 
 }
 

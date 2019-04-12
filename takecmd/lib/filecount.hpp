@@ -9,6 +9,7 @@
     refer the newest code, and show the link to homepage of 
     Takeaki Uno, to notify the news about the codes for the users. */
 
+#include "stdlib2.hpp"
 #include "file2.hpp"
 #include "queue.hpp"
 
@@ -32,12 +33,13 @@ class FILE_COUNT{
   QUEUE_INT _clms_org;
   VEC_ID    _rows_org;
   size_t    _eles_org;
+
   WEIGHT _total_w_org,_total_pw_org;
   FILE_COUNT_INT _clms , _rows , _eles;
-  FILE_COUNT_INT _clm_end , _row_end;
   FILE_COUNT_INT _row_btm , _clm_btm;
   FILE_COUNT_INT _row_min , _row_max;
   FILE_COUNT_INT _clm_min , _clm_max;  // maximum/minimum size of column
+  FILE_COUNT_INT _clm_end , _row_end;
   VEC_ID _end1; //2nd-trsact position
   // Limit 
   WEIGHT _w_lb , _w_ub ;
@@ -124,24 +126,33 @@ class FILE_COUNT{
       	if ( (FILE_err&4)==0 && jj<TRSACT_MAXNUM && jj>=0 ){
 
        		ENMAX (_clms_org, item+1);  // update #items
-        	reallocx (jump, jump_end, k, 0, goto ERR);
+        	//reallocx (jump, jump_end, k, 0, goto ERR);
+        	jump = reallocx(jump, &jump_end, k, 0);
+
+
       		jump[k] = item;
         	k++;
         	s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
 
           // count/weight-sum for the transpose mode
-        	reallocx (_clmt, _clm_end, item, 0, goto ERR);
+        	//reallocx (_clmt, _clm_end, item, 0, goto ERR);
+        	_clmt = reallocx(_clmt, &_clm_end, item, 0);
+
         	_clmt[item]++;
 	      }
 
   		} while ( (FILE_err&3)==0);
 
        // count/weight-sum for the transpose mode
-			reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
+			//reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
+			_rowt = reallocx (_rowt, &_row_end, _rows_org, 0);
+
     	_rowt[_rows_org] = k;
 
 			// LOAD_TPOSEの時
-			reallocx (_cw, _cw_end, _rows_org, 0, goto ERR);
+			//reallocx (_cw, _cw_end, _rows_org, 0, goto ERR);
+			_cw = reallocx<WEIGHT>(_cw, &_cw_end, _rows_org, 0);
+
       _cw[_rows_org] = s;    // sum up positive weights
 
 			if ( k==0 && FILE_err&2 ) break;
@@ -167,7 +178,9 @@ class FILE_COUNT{
   		return 0; 
   	} 
 		_clm_btm = MIN(kk, _rows_org);
-		reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
+		//reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
+		_rw = reallocx<WEIGHT>(_rw, &kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
+
 		FLOOP (k, 0, _rows_org){
   	  _total_w_org += _rw[k];
     	_total_pw_org += MAX(_rw[k],0);
@@ -206,24 +219,30 @@ class FILE_COUNT{
       	if ( (FILE_err&4)==0 && jj<TRSACT_MAXNUM && jj>=0 ){
 
        		ENMAX (_clms_org, item+1);  // update #items
-        	reallocx (jump, jump_end, k, 0, goto ERR);
+        	// reallocx (jump, jump_end, k, 0, goto ERR);
+        	jump = reallocx(jump, &jump_end, k, 0);
+
       		jump[k] = item;
         	k++;
         	s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
 
           // count/weight-sum for the transpose mode
-        	reallocx (_clmt, _clm_end, item, 0, goto ERR);
+        	//reallocx (_clmt, _clm_end, item, 0, goto ERR);
+        	_clmt = reallocx (_clmt, &_clm_end, item, 0);
         	_clmt[item]++;
 
 					// NOT TPOSE
-          reallocx (_cw, _cw_end, item, 0, goto ERR);
+          //reallocx (_cw, _cw_end, item, 0, goto ERR);
+          _cw = reallocx<WEIGHT>(_cw, &_cw_end, item, 0);
+
           _cw[item] += MAX(w,0);    // sum up positive weights
 	      }
 
   		} while ( (FILE_err&3)==0);
 
        // count/weight-sum for the transpose mode
-			reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
+			//reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
+			_rowt = reallocx (_rowt, &_row_end, _rows_org, 0);
     	_rowt[_rows_org] = k;
 
 			if ( k==0 && FILE_err&2 ) break;
@@ -250,7 +269,9 @@ class FILE_COUNT{
   		return 0; 
   	} 
 		_clm_btm = MIN(kk, _rows_org);
-		reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
+		//reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
+		_rw = reallocx<WEIGHT>(_rw, &kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
+
 		FLOOP (k, 0, _rows_org){
   	  _total_w_org += _rw[k];
     	_total_pw_org += MAX(_rw[k],0);
@@ -480,10 +501,13 @@ class FILE_COUNT{
 	  QUEUE_INT swap_tmp = _clms_org;
 		_clms_org = (QUEUE_INT)_rows_org;
 		_rows_org = (VEC_ID)swap_tmp;
-    SWAP_PNT (_clmt, _rowt);
+		
+		FILE_COUNT_INT * swap_pnt = _clmt;
+		_clmt = _rowt;
+		_rowt = swap_pnt;
+
 	}
-
-
+	
 	int file_count (int flg, FILE2 *fp, FILE2 *fp2, char *wf){
 
 		if(flg){ // TPOSE
@@ -574,28 +598,32 @@ class FILE_COUNT{
 	    if ( y >= _clms ){
   	    _clms = y+1;
     	  if ( fc ) {
-    	  	reallocx (_clmt, _clm_end, _clms, 0, goto END);
+    	  	//reallocx (_clmt, _clm_end, _clms, 0, goto END);
+    	  	_clmt = reallocx(_clmt, &_clm_end, _clms, 0);
     	  }
 			}
 			
 			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && x >= _clms ){
       	_clms = x+1;
 				if ( fc ) { 
-					reallocx (_clmt, _clm_end, _clms, 0, goto END);
+					//reallocx (_clmt, _clm_end, _clms, 0, goto END);
+					_clmt = reallocx (_clmt, &_clm_end, _clms, 0);
 				}
 	    }
  
  			if ( x >= _rows ){
       	_rows = x+1;
 				if ( fr ) { 
-					reallocx (_rowt, _row_end, _rows, 0, goto END);
+					//reallocx (_rowt, _row_end, _rows, 0, goto END);
+					_rowt = reallocx (_rowt, &_row_end, _rows, 0);
 				}
 			}
 		
 			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && y >= _rows ){ // for undirected edge version
       	_rows = y+1;
 	      if ( fr ) { 
-	      	reallocx (_rowt, _row_end, _rows, 0, goto END);
+	      	//reallocx (_rowt, _row_end, _rows, 0, goto END);
+	      	_rowt = reallocx (_rowt, &_row_end, _rows, 0);
 	      }
     }
     
@@ -640,10 +668,12 @@ class FILE_COUNT{
   } while ( (FILE_err&2)==0 );
 
   if ( fc ){ 
-  	reallocx (_clmt, _clm_end, _clms, 0, goto END);
+  	//reallocx (_clmt, _clm_end, _clms, 0, goto END);
+  	_clmt = reallocx (_clmt, &_clm_end, _clms, 0);
   }
   if ( fr ){
-    reallocx (_rowt, _row_end, _rows, 0, goto END);
+    //reallocx (_rowt, _row_end, _rows, 0, goto END);
+    _rowt = reallocx (_rowt, &_row_end, _rows, 0);
     ARY_MAX (_row_max, k, _rowt, 0, _rows);
     ARY_MIN (_row_min, k, _rowt, 0, _rows);
   }

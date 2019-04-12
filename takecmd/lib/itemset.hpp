@@ -481,10 +481,15 @@ class ITEMSET{
 
 	void alloc(char *fname, PERM *perm, QUEUE_INT item_max, size_t item_max_org);
 
-	/* output an itemset to the output file */
-	void output_itemset  ( QUEUE *occ, int core_id);
-	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
+	void QueMemCopy(QUEUE &from){
+		_itemset.MemCopy(from);
+	}
 
+	/* output an itemset to the output file */
+	void output_itemset  (QUEUE *occ, int core_id);
+	void output_itemset  (int core_id);
+
+	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
 
 	// for sspc
 	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);

@@ -313,10 +313,10 @@ void TRSACT::sortELE ( FILE_COUNT *C){
   VEC_ID t, *p;
   int f;
   int flag; //<<=これもうちょっと考える
-  PERM pp;
+  // PERM pp;
   KGLCMSEQ_QUE Q;
   QUEUE_ID i;
-  WEIGHT *ww;
+  // WEIGHT *ww;
 
 	_T.allvvInit();
 
@@ -328,9 +328,12 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 		_T.qsort_perm(C->get_rperm(), flag);
 		_T.any_INVPERMUTE( C->get_rperm());
 		if ( _T.exist_w() ) {
-			ARY_INVPERMUTE (_T.get_w(), C->get_rperm(), ww, _T.get_t(), EXIT); 
+			_T.any_INVPERMUTE_w(C->get_rperm());
+
+			// ARY_INVPERMUTE (_T.get_w(), C->get_rperm(), ww, _T.get_t(), EXIT); 
 		}
-		 ARY_INVPERMUTE_ (_trperm, C->get_rperm(), pp, _T.get_t()); 
+		_T.any_INVPERMUTE_(_trperm, C->get_rperm());
+		
   }
 
   //free2 (C->rperm); free2 (C->cperm);

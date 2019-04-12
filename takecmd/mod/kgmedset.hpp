@@ -12,6 +12,25 @@
 #define MEDSET_ALLNUM 64
 #define MEDSET_BELOW 128
 
+#ifndef UNIONFIND_ID
+ #ifdef UNIONFIND_ID_LONG
+  #define UNIONFIND_ID LONG
+  #define UNIONFIND_ID_END LONGHUGE
+  #define UNIONFIND_IDF LONGF
+ #elif defined(UNIONFIND_ID_QUEUE)
+  #define UNIONFIND_ID QUEUE_ID
+  #define UNIONFIND_ID_END QUEUE_ID_END
+  #define UNIONFIND_IDF QUEUE_IDF
+ #elif defined(UNIONFIND_ID_ALIST)
+  #define UNIONFIND_ID ALIST_ID
+  #define UNIONFIND_ID_END ALIST_ID_END
+  #define UNIONFIND_IDF ALIST_IDF
+ #else
+  #define UNIONFIND_ID int
+  #define UNIONFIND_ID_END INTHUGE
+  #define UNIONFIND_IDF "%d"
+ #endif
+#endif
 
 class KGMEDSET{
 

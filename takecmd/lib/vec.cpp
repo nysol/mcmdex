@@ -29,6 +29,7 @@ void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
 
   _end = rows;
   _clms = clms;
+
   if ( rowt ){
     FLOOP (i, 0, rows){
       _v[i].set_v((QUEUE_INT *)buf);
@@ -51,34 +52,6 @@ void SETFAMILY::alloc_w (){
   calloc2 (_w, _end, EXIT);
 }
 
-/* terminate routine for MAT */
-void SETFAMILY::end (){
-  mfree (_buf, _buf2, _v, _rw, _cw, _wbuf, _w, _rperm, _cperm);
-  // *M = INIT_SETFAMILY;
-	//_type=TYPE_SETFAMILY;
-	_fname=NULL;
-	_wfname=NULL;
-	_flag=0;
-	_v=NULL;
-	_end=0;
-	_t=0;
-	_buf=NULL;
-	_buf2=NULL;
-	_clms=0;
-	_eles=0;
-	_ele_end=0;
-	_cw=NULL;
-	_rw=NULL;
-	_w=NULL;
-	_wbuf=NULL;
-	_unit=sizeof(QUEUE_INT);
-	_cwfname=NULL;
-	_rwfname=NULL;
-	_rperm=NULL;
-	_cperm=NULL;
-
-}
-
 
 /* sort and duplication check */
 void SETFAMILY::sort (){
@@ -98,8 +71,10 @@ void SETFAMILY::sort (){
 
   flag = ((_flag&(LOAD_SIZSORT+LOAD_WSORT))? ((_flag&LOAD_DECROWSORT)? -1: 1): 0);
   if ( flag ){   // sort the rows
-    if ( _flag & LOAD_SIZSORT ) p = qsort_perm_<VEC> ((VEC *)_v, _t, flag*sizeof(QUEUE));
+    //if ( _flag & LOAD_SIZSORT ) p = qsort_perm_<VEC> ((VEC *)_v, _t, flag*sizeof(QUEUE));
+		if ( _flag & LOAD_SIZSORT ) p = qsort_perm_<QUEUE> (_v, _t, flag*sizeof(QUEUE));
     else p = qsort_perm_<WEIGHT> (_rw, _t, flag*sizeof(WEIGHT));
+
 
 		malloc2(_rperm,_t,EXIT);
 		for(size_t st=0; st<_t ;st++){ _rperm[st]=-1; }
@@ -108,9 +83,17 @@ void SETFAMILY::sort (){
 			if(p[i]>=0 && p[i]<_t){ _rperm[p[i]]=i; }
 		}
 
-    if ( _rw ) ARY_INVPERMUTE(_rw, p, w, _t, EXIT);
-    if ( _w ) ARY_INVPERMUTE(_w, p, ww, _t, EXIT);
-    ARY_INVPERMUTE_(_v, p, Q, _t);
+    if ( _rw ){
+			any_INVPERMUTE_rw(p);
+    	//ARY_INVPERMUTE(_rw, p, w, _t, EXIT);
+    }
+    if ( _w ){
+	    any_INVPERMUTE_w(p);
+    	// ARY_INVPERMUTE(_w, p, ww, _t, EXIT);
+    }
+    
+    ary_INVPERMUTE_(p,Q);
+    //ARY_INVPERMUTE_(_v, p, Q, _t);
 
 
     free2 (p);
@@ -122,6 +105,7 @@ void SETFAMILY::sort (){
 		}
   }
 }
+
 void SETFAMILY::SMAT_alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
   VEC_ID i;
   if ( eles == 0 ) ARY_SUM (_ele_end, rowt, 0, rows); else _ele_end = eles;
@@ -143,73 +127,6 @@ void SETFAMILY::SMAT_alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles)
     }
   }
 }
-
-void SETFAMILY::SMAT_flie_load(FILE2 *fp){
-
-  WEIGHT z=0;
-  VEC_ID t;
-  LONG x, y;
-  int fc=0, FILE_err_=0, flag2=_flag;
-  int flag=0;
-
-  int wflag =  ( _wfname || (_flag&LOAD_EDGEW));
-  FILE_COUNT C;
-  FILE2 wfp;
-
-  if ( flag && !_wfname ) flag2 = _flag | LOAD_EDGEW;
-
-  C.count(fp,(_flag&(LOAD_ELE+LOAD_TPOSE+LOAD_RC_SAME+LOAD_EDGE)) | FILE_COUNT_ROWT, 0, 0, 0, (flag2&LOAD_EDGEW)?1:0, 0);
-
-  if ( _clms == 0 ) _clms = C.get_clms();
-  if ( _t == 0 ) _t = C.get_rows();
-  if ( flag ) SMAT_alloc ( _t, C.getp_rowt(), _clms, 0);
-  else {
-    alloc ( _t, C.getp_rowt(), _clms, 0);
-    if ( wflag ) alloc_weight ( C.getp_rowt());
-  }
-
-  //free2 (C.rowt);
-
-  if ( _wfname ) wfp.open ( _wfname, "r");
-  if ( ERROR_MES ) return;
-
-  fp->reset ();
-  if ( _flag&(LOAD_NUM+LOAD_GRAPHNUM) ) fp->read_until_newline ();
-  t=0;
-  do {
-    if ( _flag&LOAD_ELE ){
-      if ( fp->read_pair ( &x, &y, &z, flag2) ) continue;
-    } else {
-      x = t;
-      FILE_err_ = fp->read_item ( _wfname?&wfp:NULL, &x, &y, &z, fc, flag2);
-      if ( FILE_err&4 ) goto LOOP_END;
-    }
-
-    if ( y >= _clms || x >= _t ) continue;
-
-    if ( flag ){
-      _v[x].inc_t();
-    } else {
-      if ( wflag ) _w[x][_v[x].get_t()] = z;
-      _v[x].push_back(y);
-      if ( (_flag&LOAD_EDGE) && x != y ){
-        if ( wflag ) _w[y][_v[y].get_t()] = z;
-        _v[y].push_back(x);
-      }
-    }
-    if ( !(_flag&LOAD_ELE) ){
-      fc = 0;
-      if ( FILE_err&3 ){
-        LOOP_END:;
-        t++; if ( t >= _t ) break;
-        fc = FILE_err_? 0: 1; FILE_err_=0; // even if next weight is not written, it is the rest of the previous line
-      }
-    }
-  } while ( (FILE_err&2)==0 );
-  if ( _wfname ) wfp.close ();
-
-}
-
 
 
 void SETFAMILY::flie_load(FILE2 *fp){
@@ -235,8 +152,6 @@ void SETFAMILY::flie_load(FILE2 *fp){
     alloc ( _t, C.getp_rowt(), _clms, 0);
     if ( wflag ) alloc_weight ( C.getp_rowt());
   }
-
-  //free2 (C.rowt);
 
   if ( _wfname ) wfp.open ( _wfname, "r");
   if ( ERROR_MES ) return;
@@ -311,93 +226,114 @@ void SETFAMILY::load (int flag , char *fname)
 	}
 
   sort(); //これいる？
-}
-
-
-
-/* scan file and load the data from file to SMAT structure */
-void SETFAMILY::load (int flag , char *fname ,char *wfname)
-{
-
-  FILE2 fp;
-  VEC_ID i;
-  _fname = fname;
-  _wfname = wfname;
-  _flag = flag;
-
-  fp.open ( _fname, "r");
-	flie_load(&fp);
-  fp.close ();     
-
-  if(ERROR_MES) EXIT;
-
-  print_mes (this, "setfamily: %s ,#rows %d ,#clms %d ,#eles %zd", _fname, _t, _clms, _eles);
-
-  if (_wfname ) print_mes (this, " ,weightfile %s", _wfname);
-  print_mes (this, "\n");
- 
-  sort ();
-
-	// end mark
-  FLOOP (i, 0, _t) _v[i].set_v(_v[i].get_t(),_clms); 
-
-  _eles = _ele_end;
 
 }
 
+void SETFAMILY::replace_index(PERM *perm, PERM *invperm){
 
+		  if ( _v ){
+		  	for(size_t i=0; i<_t ; i++){
+			  	for( QUEUE_INT *x = _v[i].begin() ; x < _v[i].end() ; x++ ){
+  					*x = perm[*x];
+					}
+    		}
+		    // INVPERMUTE
+				char * cmmp; 
+			  QUEUE Q;
+			  int i1,i2;
+				calloc2(cmmp,_t,EXIT);
+				for( i1 = 0; i1 < _t ; i1++ ){
+					if ( cmmp[i1]==0 ){ 
+						Q = _v[i1]; 
+						do{ 
+							i2 = i1; 
+							i1 = invperm[common_INT]; 
+							_v[i2]=_v[i1]; 
+							cmmp[i2] = 1;
+						} while( cmmp[i1]==0 );
+						_v[i2] = Q; 
+					}
+				}
+				free(cmmp);
+    	}
 
-
-
-/* scan file and load the data from file to SMAT structure */
-void SETFAMILY::load (){
-///* smat と連動
-  FILE2 fp;
-  VEC_ID i;
-
-  //_type = TYPE_SETFAMILY;
-  fp.open ( _fname, "r");
-
-	SMAT_flie_load(&fp);
-
-
-  fp.close ();     
-  if(ERROR_MES) EXIT;
-  print_mes (this, "setfamily: %s ,#rows %d ,#clms %d ,#eles %zd", _fname, _t, _clms, _eles);
-  if (_wfname ) print_mes (this, " ,weightfile %s", _wfname);
-
-  if ( _cwfname ){
-    load_column_weight ();
-    if ( ERROR_MES ){ end (); EXIT; }
-    print_mes (this, " ,column-weightfile %s", _cwfname);
-  }
-  if ( _rwfname ){
-    load_row_weight ();            if ( ERROR_MES ){ end (); EXIT; }
-    print_mes (this, " ,row-weightfile %s", _rwfname);
-  }
-  print_mes (this, "\n");
- 
-  sort ();
-
-	// end mark
-  FLOOP (i, 0, _t) _v[i].set_v(_v[i].get_t(),_clms); 
-
-  _eles = _ele_end;
-
-}
-
-/* load column/row weight from the file */
-void SETFAMILY::load_column_weight (){
-
-  int i = FILE2::ARY_Load(_cw, _cwfname, 1);
-  reallocx (_cw, i, _clms+1, 0, EXIT);
-}
-
-void SETFAMILY::load_row_weight (){
-
-  int i = FILE2::ARY_Load(_rw,_rwfname, 1);
-  reallocx (_rw, i, _t+1, 0, EXIT);
+		  if ( _w ){
+		    // INVPERMUTE
+				char * cmmp; 
+ 				WEIGHT *w;
+ 			  int i1,i2;
+				calloc2(cmmp,_t,EXIT);
+				for( i1 = 0; i1 < _t ; i1++ ){
+					if ( cmmp[i1]==0 ){ 
+						w = _w[i1]; 
+						do{ 
+							i2 = i1; 
+							i1 = invperm[common_INT]; 
+							_w[i2]=_w[i1]; 
+							cmmp[i2] = 1;
+						} while( cmmp[i1]==0 );
+						_w[i2] = w; 
+					}
+				}
+				free(cmmp);
+		  }
 
 }
 
 
+void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag){
+
+			QUEUE Q;	
+			char  *cmm_p;
+			int cmm_i,cmm_i2;
+
+			qsort_perm__( _v, _t, rperm, flag); 
+
+			calloc2(cmm_p,_t,EXIT);
+
+			FLOOP(cmm_i,0,_t){ 
+				if ( cmm_p[cmm_i]==0 ){ 
+					Q = _v[cmm_i]; 
+					do{ 
+						cmm_i2=cmm_i; 
+						cmm_i=rperm[cmm_i]; 
+						_v[cmm_i2]=_v[cmm_i]; 
+						cmm_p[cmm_i2]=1; 
+					}while( cmm_p[cmm_i]==0 ); 
+					_v[cmm_i2] = Q; 
+				}
+			}
+			free(cmm_p); 
+			
+			if(_w){
+				WEIGHT *ww;
+				calloc2(cmm_p,_t,EXIT);
+				FLOOP(cmm_i,0,_t){ 
+					if ( cmm_p[cmm_i]==0 ){ 
+						ww = _w[cmm_i]; 
+						do{ 
+							cmm_i2=cmm_i; 
+							cmm_i=rperm[cmm_i]; 
+							_w[cmm_i2]=_w[cmm_i]; 
+							cmm_p[cmm_i2]=1; 
+						}while( cmm_p[cmm_i]==0 ); 
+						_w[cmm_i2] = (ww); 
+					}
+				}
+				free(cmm_p); 
+			} 
+			
+		  PERM pp;
+			FLOOP(cmm_i,0,_t){ 
+				if ( rperm[cmm_i]< _t ){ 
+					pp = trperm[cmm_i]; 
+					do { 
+						cmm_i2=cmm_i; 
+						cmm_i=rperm[cmm_i]; 
+						rperm[cmm_i2]=trperm[cmm_i]; 
+						rperm[cmm_i2]=_t; 
+					}while ( rperm[cmm_i]< _t ); 
+					rperm[cmm_i2] = pp;
+				}
+			}
+}

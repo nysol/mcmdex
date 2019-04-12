@@ -24,7 +24,7 @@ class BASE {
   int _block_num;  // currently using block
   int _unit;  // size of one unit memory
   int _num;   // current position in a block
-  int _block_end;  // current end of the block
+  size_t _block_end;  // current end of the block
   void *_dellist;
 
 	//void end ();

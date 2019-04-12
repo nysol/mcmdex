@@ -28,7 +28,7 @@
 
 
 class SETFAMILY{
-  //unsigned char _type;  // mark to identify type of the structure
+
   char *_fname, *_wfname;      // input/weight file name
   int _flag;         // flag
   VEC_ID _end;
@@ -41,23 +41,19 @@ class SETFAMILY{
   char *_cwfname, *_rwfname;     // weight file name
   PERM *_rperm, *_cperm;  // row permutation
 
-	void SMAT_flie_load(FILE2 *fp);
+  QUEUE *_v;
+
+
 	void flie_load(FILE2 *fp);
 
 	void SMAT_alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles);
 
-	void end ();
+	//void end ();
 
-	void load_weight ();
-	void load_row_weight ();
-	void load_column_weight ();
 	void print (FILE *fp);
 	void print_weight (FILE *fp);
 
-	void *getvec ( int i){
-		return &_v[i];
-	}
-  QUEUE *_v;
+	void *getvec ( int i){ return &_v[i]; }
 
 	public:
 
@@ -70,13 +66,15 @@ class SETFAMILY{
 		~SETFAMILY(){
 			mfree (_buf, _buf2, _v, _rw, _cw, _wbuf, _w, _rperm, _cperm);
 		}
+
+
 		void alloc_weight (QUEUE_ID *t);
 		void alloc_w(void);
-		void alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles);
+		void alloc(VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles);
 		void sort(void);
-		void load(int flag , char *fname ,char *wfname);
+
 		void load(int flag , char *fname);
-		void load(void);
+
 		void clrMark(int i,char* mark){
 			_v[i].clrMark(mark);
 		}
@@ -111,17 +109,19 @@ class SETFAMILY{
 		}
 
 
+
+		QUEUE_INT * get_vv(int i)      { return _v[i].get_v(); }
+		QUEUE_INT   get_vv(int i,int j){ return _v[i].get_v(j); }
+
+		QUEUE_INT * end(int i) { return _v[i].end(); }
+
 		QUEUE_ID get_vt(int i){ return _v[i].get_t(); }
 
-		QUEUE_INT * get_vv(int i){ return _v[i].get_v(); }
-		QUEUE_INT get_vv(int i,int j){ return _v[i].get_v(j); }
 
 		QUEUE get_v(int i){ return _v[i]; }
 
 		QUEUE* getp_v(int i){ return &_v[i]; }
-		
-		QUEUE* getp_v(){ return _v; }
-		
+				
 
 		void init_v(int i){ _v[i].init(); }
 
@@ -248,62 +248,6 @@ class SETFAMILY{
 		}
 
 
-		void setInvPermute(PERM *rperm,PERM *trperm,int flag){
-
-			QUEUE Q;	
-			char  *cmm_p;
-			int cmm_i,cmm_i2;
-
-			qsort_perm__( _v, _t, rperm, flag); 
-
-			calloc2(cmm_p,_t,EXIT);
-
-			FLOOP(cmm_i,0,_t){ 
-				if ( cmm_p[cmm_i]==0 ){ 
-					Q = _v[cmm_i]; 
-					do{ 
-						cmm_i2=cmm_i; 
-						cmm_i=rperm[cmm_i]; 
-						_v[cmm_i2]=_v[cmm_i]; 
-						cmm_p[cmm_i2]=1; 
-					}while( cmm_p[cmm_i]==0 ); 
-					_v[cmm_i2] = Q; 
-				}
-			}
-			free(cmm_p); 
-			
-			if(_w){
-				WEIGHT *ww;
-				calloc2(cmm_p,_t,EXIT);
-				FLOOP(cmm_i,0,_t){ 
-					if ( cmm_p[cmm_i]==0 ){ 
-						ww = _w[cmm_i]; 
-						do{ 
-							cmm_i2=cmm_i; 
-							cmm_i=rperm[cmm_i]; 
-							_w[cmm_i2]=_w[cmm_i]; 
-							cmm_p[cmm_i2]=1; 
-						}while( cmm_p[cmm_i]==0 ); 
-						_w[cmm_i2] = (ww); 
-					}
-				}
-				free(cmm_p); 
-			} 
-			
-		  PERM pp;
-			FLOOP(cmm_i,0,_t){ 
-				if ( rperm[cmm_i]< _t ){ 
-					pp = trperm[cmm_i]; 
-					do { 
-						cmm_i2=cmm_i; 
-						cmm_i=rperm[cmm_i]; 
-						rperm[cmm_i2]=trperm[cmm_i]; 
-						rperm[cmm_i2]=_t; 
-					}while ( rperm[cmm_i]< _t ); 
-					rperm[cmm_i2] = pp;
-				}
-			}
-		}
 
 		void queueSortALL(int flag){
 			for(size_t t=0 ; t < _t ; t++){
@@ -330,17 +274,144 @@ class SETFAMILY{
 		}
 		
 		void any_INVPERMUTE(PERM * rperm){
-		  QUEUE Q;	
-			ARY_INVPERMUTE (_v, rperm, Q, _t, EXIT);  // sort transactions
+
+		  QUEUE Q;
+			char  * cmm_p;
+			int i1,i2;
+
+			calloc2( cmm_p ,_t,EXIT);
+
+			for(i1=0; i1 < _t ; i1++){
+				if ( cmm_p[i1]==0 ){ 
+					Q = _v[i1]; 
+					do{ 
+						i2 = i1;
+						i1 = rperm[i1];
+						_v[i2] = _v[i1];
+						cmm_p[i2] = 1 ;
+					} while(cmm_p[i1]==0) ;
+					_v[i2] = Q; 
+				}
+			}
+
+			free(cmm_p); 
+
 		}
-		
-		void ary_INVPERMUTE_(PERM *p,QUEUE& Q){
-			ARY_INVPERMUTE_(_v, p, Q, _t);
-		}
-			
 		void ary_INVPERMUTE( PERM *invperm ,QUEUE& Q,VEC_ID num){
-	    ARY_INVPERMUTE (_v, invperm, Q, num, EXIT);
+
+			char  * cmm_p;
+			int i1,i2;
+
+			calloc2(cmm_p,num,EXIT);
+
+			for(i1=0; i1 < num ; i1++){
+
+				if ( cmm_p[i1]==0 ){ 
+					Q = _v[i1]; 
+					do{ 
+						i2 = i1;
+						i1 = invperm[i1];
+						_v[i2] = _v[i1];
+						cmm_p[i2] = 1 ;
+					} while(cmm_p[i1]==0);
+					_v[i2] = Q; 
+				}
+
+			}
+			free(cmm_p); 
 		}
+
+		void any_INVPERMUTE_w(PERM * rperm){
+
+		  WEIGHT * ww;
+
+			char  * cmm_p;
+			int i1,i2;
+
+			calloc2(cmm_p,_t,EXIT);
+			for(i1=0; i1 < _t ; i1++){
+				if ( cmm_p[i1]==0 ){ 
+					ww = _w[i1]; 
+					do{ 
+						i2 = i1;
+						i1 = rperm[i1];
+						_w[i2] = _w[i1];
+						cmm_p[i2] = 1 ;
+					} while(cmm_p[i1]==0) ;
+					_w[i2] = ww; 
+				}
+			}
+			free(cmm_p); 
+		}
+
+		void any_INVPERMUTE_rw(PERM * rperm){
+
+		  WEIGHT w;
+
+			char  * cmm_p;
+			int i1,i2;
+
+			calloc2(cmm_p,_t,EXIT);
+			for(i1=0; i1 < _t ; i1++){
+				if ( cmm_p[i1]==0 ){ 
+					w = _rw[i1]; 
+					do{ 
+						i2 = i1;
+						i1 = rperm[i1];
+						_rw[i2] = _rw[i1];
+						cmm_p[i2] = 1 ;
+					} while(cmm_p[i1]==0) ;
+					_rw[i2] = w; 
+				}
+			}
+			free(cmm_p); 
+		}
+
+
+
+		void ary_INVPERMUTE_(PERM *p,QUEUE& Q){
+
+			int i1 ,i2;
+
+			for( i1=0; i1 < _t ; i1++){
+
+				if ( p[i1] < _t ){ 
+					Q = _v[1];
+
+					do{
+
+						i2 = i1;
+						i1 = p[i1];
+						_v[i2] = _v[i1]; 
+						p[i2] = _t; 
+
+					} while( p[i1] < _t ); 
+
+					_v[i2] = Q;
+				}
+			}
+		}
+
+
+		void any_INVPERMUTE_(PERM * trperm,PERM * rperm){
+			PERM pp;
+			int i1,i2;
+			
+			for( i1=0; i1 < _t ; i1++){
+				if ( rperm[i1] < _t ){ 
+					pp = trperm[i1]; 
+					do { 
+						i2 = i1; 
+						i1 = rperm[i1]; 
+						trperm[i2]=trperm[i1]; 
+						rperm[i2]=_t; 
+					}while ( rperm[i1] < _t ); 
+					trperm[i2] = pp;
+				}
+			}
+		}
+
+
 
   	bool exist_w(){ return _w!=NULL; }
   	bool exist_rw(){ return _rw!=NULL; }
@@ -402,59 +473,9 @@ class SETFAMILY{
 
 
   	void union_flag(int flag){ _flag |= flag;}
-  	void trim_flag(int flag){ BITRM(_flag, flag);}
 
-
-		void replace_index(PERM *perm, PERM *invperm){
-
-		  if ( _v ){
-		  	for(size_t i=0; i<_t ; i++){
-			  	for( QUEUE_INT *x = _v[i].begin() ; x < _v[i].end() ; x++ ){
-  					*x = perm[*x];
-					}
-    		}
-		    // INVPERMUTE
-				char * cmmp; 
-			  QUEUE Q;
-			  int i1,i2;
-				calloc2(cmmp,_t,EXIT);
-				for( i1 = 0; i1 < _t ; i1++ ){
-					if ( cmmp[i1]==0 ){ 
-						Q = _v[i1]; 
-						do{ 
-							i2 = i1; 
-							i1 = invperm[common_INT]; 
-							_v[i2]=_v[i1]; 
-							cmmp[i2] = 1;
-						} while( cmmp[i1]==0 );
-						_v[i2] = Q; 
-					}
-				}
-				free(cmmp);
-    	}
-
-		  if ( _w ){
-		    // INVPERMUTE
-				char * cmmp; 
- 				WEIGHT *w;
- 			  int i1,i2;
-				calloc2(cmmp,_t,EXIT);
-				for( i1 = 0; i1 < _t ; i1++ ){
-					if ( cmmp[i1]==0 ){ 
-						w = _w[i1]; 
-						do{ 
-							i2 = i1; 
-							i1 = invperm[common_INT]; 
-							_w[i2]=_w[i1]; 
-							cmmp[i2] = 1;
-						} while( cmmp[i1]==0 );
-						_w[i2] = w; 
-					}
-				}
-				free(cmmp);
-		  }
-
-	  }
+		void setInvPermute(PERM *rperm,PERM *trperm,int flag);
+		void replace_index(PERM *perm, PERM *invperm);
 
 };
 

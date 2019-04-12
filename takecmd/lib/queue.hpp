@@ -107,6 +107,7 @@ struct KGLCMSEQ_QUE{
 
 } ;
 
+
 class QUEUE {
 
   QUEUE_INT *_v;  // pointer to the array
@@ -187,8 +188,7 @@ class QUEUE {
 	int size()   { return  _t - _s ;}
 
 	// この３つ一緒 pop_back ,pop ,ext_tail_
-	QUEUE_INT pop_back(){return _v[--_t];}
-
+	QUEUE_INT pop_back(){ return _v[--_t]; }
 
 	// insと同じ？ org QUE_INS INs
 	void push_back(QUEUE_INT v){ _v[_t++]=v; }
@@ -213,8 +213,15 @@ class QUEUE {
 
 	void setEndByStart(){ _t = _s; }
 	void setStartByEnd(){ _s = _t; }
+
+	void setStopper(){ _v[_t] = -1; }
+
+
+	bool exist(){ return ( _t > _s ); }
 	
 	void queSort(int flag){ qsort_<QUEUE_INT>( _v, _t , flag); }
+
+	void queSortfromS(int flag){ qsort_<QUEUE_INT>( _v + _s, _t - _s , flag); }
 
 	void rmDup(QUEUE_INT dmy){ 
 		if( _t > 1 ){
@@ -328,6 +335,12 @@ class QUEUE {
 	  QQ._t = _t - _s;
   	return QQ;
 	}
+
+	void MemCopy(QUEUE &Q2){
+		_t=Q2.get_t();
+		memcpy(_v, Q2.get_v(), sizeof(QUEUE_INT) * _t);	
+	}
+
 
 	void cpy(QUEUE *Q2){
   	
