@@ -43,7 +43,9 @@ class SGRAPH {
 
 
 	int itemAlloc(size_t siz){
-		calloc2(_itemary, siz+2, return 1); 
+		//calloc2(_itemary, siz+2, return 1); 
+		_itemary = calloc2(_itemary, siz+2); 
+
 		return 0;
 	}
 
@@ -75,15 +77,22 @@ class SGRAPH {
 		PERM *sperm = NULL;
 		PERM *tmp   = NULL;
 
-    malloc2 (sperm, _edge.get_t(), EXIT);
-    
+    // malloc2 (sperm, _edge.get_t(), EXIT);
+    sperm = malloc2(sperm, _edge.get_t());
+
 		for(size_t i=0 ; i< _edge.get_t(); i++){  sperm[i]=i; }
 		
 		for(size_t i=0 ; i <  MIN(t, _edge.get_t()) ;i++ ){
 			sperm[i] = perm[i];
 		}
 		
-		malloc2(tmp , _edge.get_t() , {free(sperm);EXIT;});
+		//malloc2(tmp , _edge.get_t() , {free(sperm);EXIT;});
+		try{
+			tmp = malloc2(tmp , _edge.get_t() );
+		}catch(...){
+			free(sperm);
+			throw;
+		}
 
 		for(size_t st=0; st < _edge.get_t() ;st++){ tmp[st] = -1; }
 		

@@ -266,7 +266,8 @@ void KGSSPC::output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset,
       else {  
       	// allocate new cell
         b = _buf_end;
-        realloci (_buf, b+30, EXIT);
+        // realloci(_buf, b+30, EXIT);
+        _buf = realloci(_buf, b+30);
         _buf_end += 2;
       }
 
@@ -414,13 +415,16 @@ void KGSSPC::list_comp(){
   if ( _output_fname2 ) fopen2 (fp2, _output_fname2, "w", EXIT);
 
   _II.set_itemset_t(2);
-  calloc2 (w, _TT.get_t(), EXIT);
+
+  //calloc2 (w, _TT.get_t(), EXIT);
+  w = calloc2 (w, _TT.get_t());
 
   if ( (_problem & SSPC_INNERPRODUCT) && !_TT.exist_Tw() ){
    // FLOOP (i, 0, _TT.get_clms())  _TT.w_multipule(i);
 		_TT.multipule_w();
   }
-  FLOOP (i, 0, _TT.get_t()){
+
+  for(i=0; i < _TT.get_t() ;i++ ){
     w[i] = 0;
     if ( (_problem & SSPC_INNERPRODUCT) && _TT.exist_Tw()){
 
@@ -540,11 +544,15 @@ void *KGSSPC::iter (void *p){
   size_t b, bb;
   int f;
 
-  if ( _problem & SSPC_NO_NEIB ) calloc2 (mark, _TT.get_clms(), EXIT);
-  calloc2 (occ_w, _TT.get_clms(), EXIT);
-  calloc2 (OQend, _TT.get_clms(), EXIT);
+  if ( _problem & SSPC_NO_NEIB ){
+  	 //calloc2 (mark, _TT.get_clms(), EXIT);
+  	mark = calloc2 (mark, _TT.get_clms());
+  }
+  //calloc2 (occ_w, _TT.get_clms(), EXIT);
+  occ_w = calloc2 (occ_w, _TT.get_clms());
+  //calloc2 (OQend, _TT.get_clms(), EXIT);
+  OQend = calloc2 (OQend, _TT.get_clms());
 
-  
   while (1){
 
     if ( i == i_ ){
@@ -760,7 +768,8 @@ void KGSSPC::SSPCCORE(){
   if ( _output_fname2 ) fopen2 (fp, _output_fname2, "w", EXIT);
 
   // initialization
-  calloc2 (w, _TT.get_clms()*2, EXIT);
+  //calloc2 (w, _TT.get_clms()*2, EXIT);
+  w = calloc2 (w, _TT.get_clms()*2);
   if ( (_problem&SSPC_INNERPRODUCT) && !_TT.exist_Tw() ) {//ここなに
   	_TT.multipule_w();
   }
@@ -784,7 +793,8 @@ void KGSSPC::SSPCCORE(){
   }
 
   // for multi-core
-  malloc2 (SM, _II.get_multi_core(), EXIT);
+  //malloc2 (SM, _II.get_multi_core(), EXIT);
+  SM = malloc2 (SM, _II.get_multi_core());
 
 	for (i=_II.get_multi_core(); (i--) > 0 ; ){
     SM[i]._o = o;
@@ -868,7 +878,7 @@ int KGSSPC::run (int argc ,char* argv[]){
   _buf_end = 2;
   _position_fname = (char *)_II.get_perm(); _II.set_perm(NULL);
 
-  if ( !ERROR_MES && _TT.get_clms()>1 ){
+  if ( _TT.get_clms()>1 ){
 
 		if ( _table_fname ){
     	list_comp(); 

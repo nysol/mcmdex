@@ -71,7 +71,6 @@ class KGLCM{
 	char *_sgfname;
 	//int _sgFlag;
 
-
 	WEIGHT * _occ_w,*_occ_w2,*_occ_pw,*_occ_pw2;
 
 	QUEUE _itemcand;
@@ -93,10 +92,12 @@ class KGLCM{
 	  PERM *p=NULL;
   	int j;
 
-		calloc2 (_occ_w, siz+2, goto ERR);
+		//calloc2 (_occ_w, siz+2, goto ERR);
+		_occ_w = calloc2 (_occ_w, siz+2);
 
 		if ( _tFlag2 & TRSACT_NEGATIVE){
-			calloc2 (_occ_pw, siz+2, goto ERR);
+			//calloc2 (_occ_pw, siz+2, goto ERR);
+			_occ_pw = calloc2 (_occ_pw, siz+2);
 		}else{
 			_occ_pw = _occ_w;
 		}
@@ -106,9 +107,11 @@ class KGLCM{
 			_occ_pw2 = _occ_pw; 
 		}
 		else{
-  	  calloc2 (_occ_w2, siz+2, goto ERR);
+  	 	_occ_w2 = calloc2 (_occ_w2, siz+2);
+  	  //calloc2 (_occ_w2, siz+2, goto ERR);
     	if ( _tFlag2 & TRSACT_NEGATIVE ){
-    		 calloc2 (_occ_pw2, siz+2, goto ERR);
+    		 //calloc2 (_occ_pw2, siz+2, goto ERR);
+    		 _occ_pw2 = calloc2 (_occ_pw2, siz+2);
     	}
 			else{
 				_occ_pw2 = _occ_w2;
@@ -125,7 +128,10 @@ class KGLCM{
 	  if ( _outperm_fname ){
   	  j = FILE2::ARY_Load (p,  _outperm_fname, 1);
     	if ( perm ){
-				FLOOP (j, 0, siz) perm[j] = p[perm[j]];
+    		for(j=0;j<siz;j++){
+				//FLOOP (j, 0, siz) 
+					perm[j] = p[perm[j]];
+				}
 				free2 (p);
 	    }
   	  else perm = p;
@@ -134,7 +140,9 @@ class KGLCM{
 		_II.alloc(_output_fname, perm, siz, 0);
 
  	 if ( _target < siz && _II.exist_perm() ){
-  	  FLOOP (j, 0, _II.get_item_max()){ 
+  	  //FLOOP (j, 0, _II.get_item_max()){ 
+    	for(j=0;j<_II.get_item_max();j++){
+
     		if ( _II.get_target() == _II.get_perm(j) ){ _II.set_target(j); break; } 
     	}
   	}

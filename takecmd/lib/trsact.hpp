@@ -63,7 +63,8 @@ class TRSACT {
   double _row_lb_, _row_ub_;  
 
   FILE_COUNT _C;
-
+	
+	char * _ERROR_MES; 
 
   SETFAMILY _T;   // transaction
 
@@ -188,7 +189,7 @@ class TRSACT {
   	_clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
   	_w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),
   	_eles_org(0),_total_w(0),_total_pw(0),_str_num(0),
-		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0)
+		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0),_ERROR_MES(NULL)
 		{}
 
 
@@ -296,7 +297,9 @@ class TRSACT {
 
 		// skipping items of large frequencies
 		if ( _flag & LOAD_SIZSORT ){
-			malloc2 (o, _T.get_clms(), exit(1));
+			//malloc2 (o, _T.get_clms(), exit(1));
+			o = malloc2 (o, _T.get_clms());
+
 			for ( QUEUE_ID i =0 ; i < _T.get_clms() ; i++){
 				o[i] = _OQ[i].get_v();
 				_OQ[i].set_v( _OQ[i].get_t(),INTHUGE);// 別メソッドにできる
@@ -461,7 +464,8 @@ class TRSACT {
 
 	void reallocW(void){
 		VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
-	  realloc2 (_w , size ,EXIT);
+	  //realloc2 (_w , size ,EXIT);
+	  _w = realloc2 (_w , size );
 		for(size_t i=0; i<size;i++){ _w[i] = 1;}
 	}
 
@@ -489,7 +493,10 @@ class TRSACT {
 	}
 
 	void calloc_sc(VEC_ID sise){
-		calloc2 (_sc, sise, return);
+		//calloc2 (_sc, sise, return);
+		_sc = calloc2 (_sc, sise);
+
+
 	}
 	void delivery( WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
 	void deliv( QUEUE *occ, QUEUE_INT m);
@@ -525,32 +532,6 @@ class TRSACT {
     reduce_occ(occ);
 	}
 
-	// _occ_unit使わない
-	/*
-	void Mque_alloc(VEC_ID *p){
-		size_t cmn_size_t = 0;
-
-		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
-			cmn_size_t += p[cmm_vecid];
-		}
-		_OQ = new QUEUE[_T.get_clms()+1];
-
-		char *cmn_pnt;
-		malloc2 (cmn_pnt,
-		(cmn_size_t+(_T.get_clms())+2)*(sizeof(QUEUE_INT)), 
-			{delete(_OQ); EXIT;}
-		); 
-
-		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
-			_OQ[cmm_vecid].set_end(p[cmm_vecid]);
-			_OQ[cmm_vecid].set_v((QUEUE_ID *)cmn_pnt);
-			cmn_pnt +=  sizeof(QUEUE_INT) * (p[cmm_vecid]+(1));
-		}
-	}
-	*/
-
-
-
 
 	// _OQ クラス化した方がいい?
 	void OccAlloc(){
@@ -571,10 +552,18 @@ class TRSACT {
 
 		QUEUE_INT *cmn_pnt;
 		size_t pos=0;
-		malloc2 (cmn_pnt, 
-			(cmmsize+_T.get_clms()+2), 
-			{delete(_OQ); EXIT;}
-		); 
+		//malloc2 (cmn_pnt, 
+		//	(cmmsize+_T.get_clms()+2), 
+		//	{delete(_OQ); EXIT;}
+		//); 
+		// err処理 delete(_OQ)
+		try{
+			cmn_pnt = malloc2 (cmn_pnt, (cmmsize+_T.get_clms()+2) );
+		}catch(...){
+			delete[] _OQ;
+			throw;
+		}
+
 		for(VEC_ID cmmv =0; cmmv < _T.get_clms() ; cmmv++){
 
 			_OQ[cmmv].alloc( p[cmmv],cmn_pnt+pos );
@@ -611,10 +600,19 @@ class TRSACT {
 		_OQELE = new KGLCMSEQ_QUE[_T.get_clms()+1];
 
 		char *cmn_pnt;
-		malloc2 (cmn_pnt,
-		(cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)), 
-			{delete(_OQELE); EXIT;}
-		); 
+
+		//malloc2 (cmn_pnt,
+		//(cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)), 
+		//	{delete(_OQELE); EXIT;}
+		//);
+		try{ 
+			cmn_pnt = malloc2(cmn_pnt, (cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)) );
+		}catch(...){
+			delete[] _OQELE;
+			throw;
+		}
+		
+
 
 		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
 			_OQELE[cmm_vecid].set_end(p[cmm_vecid]);

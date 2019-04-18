@@ -4,6 +4,21 @@
 #include "stdlib2.hpp"
 #define WEIGHT_DOUBLE
 
+
+/* remove many files */
+void mremove_ (char *x, ...){
+  va_list argp;
+  char *a;
+	char common_comm[1024];
+  va_start (argp, x);
+  while((a = va_arg(argp, char *))){
+    sprintf (common_comm, "%s%s", x, a);
+    remove (common_comm);
+  }
+  va_end (argp);
+}
+
+
 // remove a file on the specified directory
 #define MREMOV(dir,...) mremove_(dir, __VA_ARGS__, NULL, NULL)
 

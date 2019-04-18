@@ -100,25 +100,31 @@ class KGSSPC{
 		QUEUE_ID siz2 = _TT.get_t();
 	 	PERM *perm    = _TT.get_perm();
 	  PERM *p;
-		
 
-		calloc2(_occ_w, siz+2, goto ERR);
-		calloc2(_vecchr, siz2+2, goto ERR);
+		//calloc2(_occ_w, siz+2, goto ERR);
+		_occ_w = calloc2(_occ_w, siz+2);
+		//calloc2(_vecchr, siz2+2, goto ERR);
+		_vecchr = calloc2(_vecchr, siz2+2);
 
-		if(_problem&SSPC_POLISH2) calloc2(_itemary, siz+2, goto ERR);
+		if(_problem&SSPC_POLISH2) {
+			_itemary = calloc2(_itemary, siz+2);
+		}
 
     // set outperm
 	  if ( _outperm_fname ){
-	  
+
 			int j = FILE2::ARY_Load(p,_outperm_fname,1);
+
 	  	if ( perm ){
-      	FLOOP (j, 0, siz) perm[j] = p[perm[j]];
-      	free2 (p);
-    	}
-    	else {
+      	for(int j =0 ;j < siz ; j++){
+      		perm[j] = p[perm[j]];
+      	}
+	      free2 (p);
+      }
+	    else {
     		perm = p;
     	}
-	  }
+		}
 
 	  _II.alloc(_output_fname, perm, siz, 0);
 

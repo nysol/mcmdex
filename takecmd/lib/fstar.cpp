@@ -6,34 +6,6 @@
 #include"filecount.hpp"
 
 
-void FSTAR::print (FILE *fp){
-
-  FSTAR_INT i, x=0, y, flag;
-
-  FLOOP (i, 0, _edge_num+1){
-    while ( i == _fstar[x+1]){
-      flag = 0;
-      if ( _out_deg && (_out_node_num ==0 || x < _out_node_num) ) flag += _out_deg[x];
-      if ( _in_deg && (_in_node_num ==0 || x < _in_node_num) ) flag += _in_deg[x];
-      if ( (!_out_deg && !_in_deg) && (_flag&LOAD_EDGE) ) flag = _fstar[x+1] - _fstar[x];
-      if ( !_table || flag ) fprintf (fp, "\n");
-      if ( ++x == _out_node_num ) goto END;
-    }
-
-    y = _edge[i];
-
-    if ( !(_flag&(LOAD_BIPARTITE+LOAD_EDGE)) && _edge_dir==0 && x>y ) continue;
-    if ( _table && !(_flag&LOAD_BIPARTITE) ){
-      if ( (y=_table[y]) == _out_node_num ) continue;
-    }
-    if ( _flag & LOAD_ID1 ) y++;
-    fprintf (fp, FSTAR_INTF"%c", y, _sep);
-    if ( _edge_w ) fprintf (fp, WEIGHTF "%c", _edge_w[i], _sep);
-  }
-  fprintf (fp, "\n");
-  END:;
-}
-
 
 /* increment degrees */
 void FSTAR::inc_deg (FSTAR_INT x, FSTAR_INT y){
@@ -48,28 +20,39 @@ void FSTAR::sort_adjacent_node (int flag){
 
   FSTAR_INT x, d=0, y, s = sizeof(FSTAR_INT)+sizeof(WEIGHT);
   //char *p; //なぜchar*
-  FSTAR_INT *p;
+  FSTAR_INT *p; 
   
   if ( _edge_w ){
        // sort with weight; make array of (ID,weight) and sort it
-    FLOOP (x, 0, _out_node_num) ENMAX (d, _fstar[x+1]-_fstar[x]);
-    malloc2 (p, d * (sizeof(FSTAR_INT)+sizeof(WEIGHT)), EXIT);
+    //FLOOP (x, 0, _out_node_num) {
+		for(x=0;x<_out_node_num;x++){
+    	ENMAX (d, _fstar[x+1]-_fstar[x]);
+    }
 
-    FLOOP (x, 0, _out_node_num){
-      FLOOP (y, 0, _fstar[x+1]-_fstar[x]){
+   // malloc2 (p, d * (sizeof(FSTAR_INT)+sizeof(WEIGHT)), EXIT);
+    p = malloc2 (p, d * (sizeof(FSTAR_INT)+sizeof(WEIGHT))); //ここサイズおかしくなるはず
+
+    //FLOOP (x, 0, _out_node_num){
+    //  FLOOP (y, 0, _fstar[x+1]-_fstar[x]){
+		for(x=0;x<_out_node_num;x++){
+			for(y=0;y<_fstar[x+1]-_fstar[x];y++){
         *((FSTAR_INT *)(&p[y*s])) = _edge[y+_fstar[x]];
         *((WEIGHT *)(&p[y*s+sizeof(FSTAR_INT)])) = _edge_w[y+_fstar[x]];
       }
       qsort_<FSTAR_INT> (p, _fstar[x+1]-_fstar[x], flag*s); //ここだいじょうぶ？
-      FLOOP (y, 0, _fstar[x+1]-_fstar[x]){
+      //FLOOP (y, 0, _fstar[x+1]-_fstar[x]){
+			for(y=0;y<_fstar[x+1]-_fstar[x];y++){
+
         _edge[y+_fstar[x]] = *((FSTAR_INT *)(&p[y*s]));
         _edge_w[y+_fstar[x]] = *((WEIGHT *)(&p[y*s+sizeof(FSTAR_INT)]));
       }
     }
     free2 (p);
   } else {
-    FLOOP (x, 0, _out_node_num)
+    //FLOOP (x, 0, _out_node_num)
+		for(x=0;x<_out_node_num;x++){
         qsort_<FSTAR_INT> (&_edge[_fstar[x]], _fstar[x+1]-_fstar[x], flag);
+    }
   }
 }
 
@@ -84,17 +67,24 @@ LONG FSTAR::alloc_deg (){
   _node_num = MAX (_out_node_num, _in_node_num);
   
   if ( _edge_dir == 0 ) _in_node_num = _out_node_num = _node_num;
-  calloc2 (_fstar, _out_node_num+2, EXIT);
+  //calloc2 (_fstar, _out_node_num+2, EXIT);
+  _fstar = calloc2 (_fstar, _out_node_num+2);
 
   if ( _flag & LOAD_EDGE ) return (j);
 
   if ( _flag & FSTAR_CNT_IN ){
     if ( _flag & FSTAR_CNT_DEG_ONLY ){
-        calloc2 (_in_deg, _node_num+2, EXIT);
-    } else calloc2 (_in_deg, _in_node_num+2, EXIT);
+      //calloc2 (_in_deg, _node_num+2, EXIT);
+      _in_deg = calloc2 (_in_deg, _node_num+2);
+    } else {
+    	//calloc2 (_in_deg, _in_node_num+2, EXIT);
+    	_in_deg = calloc2 (_in_deg, _in_node_num+2);
+    }
   }
-  if ( _flag & FSTAR_CNT_OUT )
-      calloc2 (_out_deg, _out_node_num+2, EXIT);
+  if ( _flag & FSTAR_CNT_OUT ){
+    //calloc2 (_out_deg, _out_node_num+2, EXIT);
+    _out_deg = calloc2 (_out_deg, _out_node_num+2);
+  }
 
   return (j);
 
@@ -105,7 +95,8 @@ void FSTAR::calc_fstar (){
 
   FSTAR_INT i, j=0, jj;
 
-  FLOOP (i, 0, _out_node_num){
+  //FLOOP (i, 0, _out_node_num){
+  for(i=0;i<_out_node_num;i++){
     jj = j + _fstar[i];
     _fstar[i] = j;
     j = jj;
@@ -113,12 +104,19 @@ void FSTAR::calc_fstar (){
   _fstar[i] = _edge_num = j;
 
 
-  malloc2 (_edge, _edge_num +2, EXIT);
+  //malloc2 (_edge, _edge_num +2, EXIT);
+  _edge = malloc2 (_edge, _edge_num +2);
+
   // ARY_FILL (_edge, 0, _edge_num +2, _node_num+1);
 	for(size_t i =0 ;i<_edge_num +2 ;i++){ _edge[i] = _node_num+1; }
 
 
-  if ( (_flag&LOAD_EDGEW) || _wfname ) malloc2 (_edge_w, _edge_num +2, EXIT); // weight array
+  if ( (_flag&LOAD_EDGEW) || _wfname ) {
+  	//malloc2 (_edge_w, _edge_num +2, EXIT); // weight array
+  	_edge_w = malloc2 (_edge_w, _edge_num +2);
+  	
+  }
+
 }
 
 /* return 1 if edge (x,y) is valid */
@@ -192,11 +190,13 @@ void FSTAR::scan_file (FILE2 *fp){
   
 
   j = alloc_deg ();
-  FLOOP (i, 0, j){
+  //FLOOP (i, 0, j){
+  for(i=0;i<j;i++){
     _fstar[i] = C.get_rowt(i);
     if ( _out_deg ) _out_deg[i] = C.get_rowt(i);
   }
-  FLOOP (i, 0, C.get_clms()){
+  //FLOOP (i, 0, C.get_clms()){
+  for(i=0;i<C.get_clms();i++){
   	if ( _in_deg ) _in_deg[i] = C.get_clmt(i);
   }
  // mfree (C.rowt, C.clmt);
@@ -259,7 +259,11 @@ void FSTAR::read_file (FILE2 *fp, FILE2 *wfp){
 //    phase++;
   }
   _fstar[_out_node_num+1] = 0;
-  BLOOP (i, _out_node_num, 0) _fstar[i+1] = _fstar[i];
+
+  //BLOOP (i, _out_node_num, 0) {
+  for(i=_out_node_num;(i--)>0;){
+  	_fstar[i+1] = _fstar[i];
+  }
   _fstar[0] = 0;
 }
 
@@ -283,7 +287,10 @@ void FSTAR::extract_subgraph (){
 				for(size_t i =0 ;i< _out_node_num ;i++){ _out_deg[i]= 0; }
 
       }
-      x=0; FLOOP (i, 0, _edge_num){
+      x=0; 
+      //FLOOP (i, 0, _edge_num){
+    	for(i=0;i<_edge_num;i++){
+
         while ( i == _fstar[x+1] ) x++;
         if ( _edge[i] < _node_num ) inc_deg (x, _edge[i]);
       }
@@ -291,7 +298,8 @@ void FSTAR::extract_subgraph (){
     
       // re-remove out-bounded degree vertices
     ii=x=0; 
-    FLOOP (i, 0, _edge_num){
+    //FLOOP (i, 0, _edge_num){
+    for(i=0;i<_edge_num;i++){
 
       while ( i == _fstar[x+1] ){ 
       	_fstar[x+1] = ii; 
@@ -354,7 +362,7 @@ int FSTAR::load (){
   fp.close ();
   if ( _wfname ) wfp.close ();
 
-  if (ERROR_MES) EXIT;
+  if (_ERROR_MES) EXIT;
 
   print_mes (this, "file read end: %s\n", _fname);
 
@@ -367,30 +375,6 @@ int FSTAR::load (){
   print_mes(this, "forwardstar graph: %s ,#nodes "FSTAR_INTF"("FSTAR_INTF","FSTAR_INTF") ,#edges "FSTAR_INTF"\n", _fname, _node_num, _in_node_num, _out_node_num, _edge_num);
 
 	return 0;
-}
-
-/* make vertex permutation table and write to table-file */
-void FSTAR::write_table_file (char *fname){
-
-  FSTAR_INT i, flag;
-  FILE *fp;
-  if ( !fname ) return;
-
-  fopen2 (fp, fname, "w", EXIT);
-  calloc2 (_table, _node_num, {fclose(fp);EXIT;});
-
-  _reduced_node_num = 0;
-  FLOOP (i, 0, _out_node_num){
-    flag = 0;
-    if ( _out_deg ) flag += _out_deg[i];
-    if ( _in_deg && (_in_node_num==0 || i < _in_node_num) ) flag += _in_deg[i];
-    if ( flag ){
-      fprintf (fp, FSTAR_INTF"\n", (_flag&LOAD_ID1)?i+1:i);
-      _table[i] = _reduced_node_num;
-      _reduced_node_num++;
-    } else _table[i] = _out_node_num;
-  }
-  fclose2 (fp);
 }
 
 FILE * FSTAR::open_write_file ( char *fname){
@@ -567,23 +551,36 @@ LONG FSTAR::write_graph_operation (FSTAR *F1, FSTAR *F2, char *fname, char *fnam
 }
 
 
+/* make vertex permutation table and write to table-file */
+void FSTAR::write_table_file (char *fname){
 
-/* initialization */
-/*
-void FSTAR::init2 (){
-  if ( _in_lb >0 || _in_ub <FSTAR_INTHUGE ) _flag |= (FSTAR_IN_CHK+FSTAR_CNT_IN);
-  if ( _out_lb >0 || _out_ub <FSTAR_INTHUGE ) _flag |= (FSTAR_OUT_CHK+FSTAR_CNT_OUT);
-  if ( _deg_lb >0 || _deg_ub <FSTAR_INTHUGE ){
-    _flag |= FSTAR_DEG_CHK+FSTAR_CNT_IN;
-    if ( (_flag&(FSTAR_OUT_CHK+FSTAR_IN_CHK)) ==0 ) _flag |= FSTAR_CNT_DEG_ONLY;
-    else _flag |= FSTAR_CNT_OUT;
+	FSTAR_INT i, flag;
+	FSTAR_INT *table=NULL;
+  FILE *fp;
+  
+  table = calloc2(table, _node_num);
+
+  fopen2 (fp, fname, "w", EXIT);
+
+  _reduced_node_num = 0;
+
+  for(i=0;i<_out_node_num;i++){
+
+    flag = 0;
+    if ( _out_deg ) flag += _out_deg[i];
+    if ( _in_deg && (_in_node_num==0 || i < _in_node_num) ) flag += _in_deg[i];
+    if ( flag ){
+      fprintf (fp, FSTAR_INTF"\n", (_flag&LOAD_ID1)?i+1:i);
+      _table[i] = _reduced_node_num;
+      _reduced_node_num++;
+    }
+    else{
+    	 _table[i] = _out_node_num;
+    }
   }
+  fclose2 (fp);
+  free2(table);
 }
-*/
-/* termination */
-/*
-void FSTAR::end (){
-  mfree (_edge, _edge_w, _in_deg, _out_deg, _fstar, _table, _rev_table);
-}
-*/
+
+
 

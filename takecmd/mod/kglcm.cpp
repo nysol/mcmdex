@@ -582,13 +582,13 @@ int KGLCM::run (int argc, char *argv[]){
 		_topk_k,_max_solutions,_separator,_digits
 	);
  
-  if ( !ERROR_MES && _TT.get_clms()>0 ){
+  if ( !_ERROR_MES && _TT.get_clms()>0 ){
     _init();
-    if ( !ERROR_MES ) LCMCORE(_TT.get_clms(), &_oo, _TT.get_total_w_org(), _TT.get_total_pw_org());
+    if ( !_ERROR_MES ) LCMCORE(_TT.get_clms(), &_oo, _TT.get_total_w_org(), _TT.get_total_pw_org());
     _II.last_output();
   }
 
-  return (ERROR_MES?1:0);
+  return (_ERROR_MES?1:0);
 }
 
 

@@ -71,7 +71,9 @@ class AHEAP {
 
 		AHEAP(AHEAP_ID num){
 
-			if ( num>0 ) malloc2 (_v, num*2, EXIT);
+			if ( num>0 ) {
+				_v = malloc2 (_v, num*2);
+			}
 
   		_end = num;
 			for(size_t i =0 ;i<num*2;i++){ 
@@ -111,7 +113,10 @@ class AHEAP {
 		
 		void alloc (AHEAP_ID num){
   		AHEAP_ID i;
-  		if ( num>0 ) malloc2 (_v, num*2, EXIT);
+  		if ( num>0 ){
+				_v = malloc2 (_v, num*2);
+			}
+
   		_end = num;
 
 			for(size_t i =0 ;i<num*2;i++){ 
@@ -132,7 +137,10 @@ class AHEAP {
 		void alloc(AHEAP_ID siz,AHEAP_KEY val){
 			LONG i;
 			alloc(siz);
-      FLOOP (i, 0, siz) chg( (AHEAP_ID)i, val);
+      //FLOOP (i, 0, siz){
+			for(int i = 0 ; i<siz ; i++){
+      	chg( (AHEAP_ID)i, val);
+      }
 		
 		}
 
@@ -140,7 +148,10 @@ class AHEAP {
 		void print (){
 		  AHEAP_ID i, j=1;
   		while ( j<=_end*2-1 ){
-    		FLOOP (i, j-1, MIN(j, _end)*2-1) printf (AHEAP_KEYF ",", _v[i] );
+    		//FLOOP (i, j-1, MIN(j, _end)*2-1) {
+				for(i = j-1 ; i <  MIN(j, _end)*2-1 ; i++){
+    			printf (AHEAP_KEYF ",", _v[i] );
+    		}
     		printf ("\n");
     		j = j*2;
   		}
@@ -200,8 +211,10 @@ class IHEAP{
 	IHEAP_ID ins ( IHEAP_ID j);
 
 	void vFill(int s,int e){
-		int i;
-		FLOOP (i, s, e)  _v[i]=i;	
+		//FLOOP (i, s, e) 
+		for(int i=s ; i<e; i++){
+			_v[i]=i;	
+		}
 	}
 	
 	//アクセッサ
@@ -213,7 +226,9 @@ class IHEAP{
 	void x(int i,IHEAP_KEY x){ _x[i]=x; }
 
 	// enlarge the frequency pool
-	void xEnlarge(){  realloc2 ( _x , _end+1, EXIT); }
+	void xEnlarge(){  
+		_x = realloc2 ( _x , _end+1);
+	}
 
 	// synchronize the keys for max/min heaps
 	void xSync(IHEAP& src){ _x = src._x; }

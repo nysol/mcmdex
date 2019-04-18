@@ -51,10 +51,16 @@ class MACEVBM {
 
   void alloc(size_t size){
 
-    malloc2 (_edge,  size, goto ERR);
-    malloc2 (_pos,   size, goto ERR);
-    malloc2 (_set,   VBMINT_MAX, goto ERR);
-    malloc2 (_reset, VBMINT_MAX, goto ERR);
+    //malloc2 (_edge,  size, goto ERR);
+    //malloc2 (_pos,   size, goto ERR);
+    //malloc2 (_set,   VBMINT_MAX, goto ERR);
+    //malloc2 (_reset, VBMINT_MAX, goto ERR);
+    _edge  = malloc2 (_edge,  size);
+    _pos   = malloc2 (_pos,   size);
+    _set   = malloc2 (_set,   VBMINT_MAX);
+    _reset = malloc2 (_reset, VBMINT_MAX);
+
+
     _dellist.alloc(VBMINT_MAX+2,VBMINT_MAX);
 
 		for(size_t i =0; i<size ; i++){ _edge[i] = 0; }
@@ -185,7 +191,8 @@ class KGMACE{
 
 	 // PROBLEM_ITEMJUMP + PROBLEM_ITEMCAND + PROBLEM_SHIFT + PROBLEM_OCC_T
 		
-		calloc2 (_shift, siz, goto ERR);
+		//calloc2 (_shift, siz, goto ERR);
+		_shift = calloc2 (_shift, siz);
 
 		_itemcand.alloc(siz);
 

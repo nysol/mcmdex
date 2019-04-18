@@ -88,7 +88,8 @@ struct KGLCMSEQ_QUE{
 	/* initialization, not fill the memory by 0 */
 	void alloc (QUEUE_ID siz){
 		_end =  siz+1;
-		malloc2(_v, siz+1, EXIT);
+		//malloc2(_v, siz+1, EXIT);
+		_v = malloc2(_v, siz+1);
 	}
 
 
@@ -142,10 +143,12 @@ class QUEUE {
 	QUEUE(void):_v(NULL),_end(0),_t(0),_s(0){}
 
 	QUEUE(QUEUE_ID siz ,QUEUE_ID t):_end(siz+1),_t(t),_s(0){
-		malloc2(_v, siz+1, EXIT);
+		//malloc2(_v, siz+1, EXIT);
+		_v = malloc2(_v, siz+1);
 	}
 	QUEUE(QUEUE_ID siz):_end(siz+1),_t(0),_s(0){
-		malloc2(_v, siz+1, EXIT);
+		//malloc2(_v, siz+1, EXIT);
+		_v = malloc2(_v, siz+1);
 	}
 
 	~QUEUE(void){
@@ -296,10 +299,12 @@ class QUEUE {
 	/* initialization, not fill the memory by 0 */
 	void alloc (QUEUE_ID siz){
 		_end =  siz+1;
-		malloc2(_v, siz+1, EXIT);
+		//malloc2(_v, siz+1, EXIT);
+		_v = malloc2(_v, siz+1);
 	}
 	void alloc (QUEUE_ID siz , QUEUE_ID end){
-		malloc2(_v, siz+1, EXIT);
+		//malloc2(_v, siz+1, EXIT);
+		_v = malloc2(_v, siz+1);
 		_end =  end;
 	}
 
@@ -311,7 +316,8 @@ class QUEUE {
 	void allocBySequence(QUEUE_ID siz){
 
 		_end =  siz+1;
-		malloc2(_v, siz+1, EXIT);
+		//malloc2(_v, siz+1, EXIT);
+		_v = malloc2(_v, siz+1);
 		for(size_t i=0 ; i< siz; i++){ _v[i] = i; }
 		_t = siz;
 

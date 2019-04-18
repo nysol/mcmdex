@@ -42,7 +42,7 @@ class SETFAMILY{
   PERM *_rperm, *_cperm;  // row permutation
 
   QUEUE *_v;
-
+	char *_ERROR_MES;
 
 	void flie_load(FILE2 *fp);
 
@@ -61,7 +61,7 @@ class SETFAMILY{
 			_fname(NULL),_wfname(NULL), _flag(0),_v(NULL),
 			_end(0),_t(0),_buf(NULL),_buf2(NULL),_clms(0),_eles(0),_ele_end(0),
  		 	_cw(NULL),_rw(NULL),_w(NULL),_wbuf(NULL),_unit(sizeof(QUEUE_INT)),
-  		_cwfname(NULL),_rwfname(NULL),_rperm(NULL),_cperm(NULL){}
+  		_cwfname(NULL),_rwfname(NULL),_rperm(NULL),_cperm(NULL),_ERROR_MES(NULL){}
 
 		~SETFAMILY(){
 			mfree (_buf, _buf2, _v, _rw, _cw, _wbuf, _w, _rperm, _cperm);
@@ -97,7 +97,9 @@ class SETFAMILY{
 		VEC_ID * counting(){
 
 			VEC_ID * p ;
-  	  calloc2 (p, _clms, {exit(1);});
+  	  // calloc2 (p, _clms, {exit(1);});
+  	  p = calloc2 (p, _clms);
+
 			for (VEC_ID iv=0 ; iv< _t ; iv++){
 
 				for (QUEUE_INT *x=_v[iv].begin() ; *x < _clms ; x++){
@@ -227,21 +229,27 @@ class SETFAMILY{
 		// 要確認
 		void alloc_v(){
 		  //malloc2 (_v, _end, EXIT0);		
-		  malloc2 (_v, _end,  exit(1) );		
+		  //malloc2 (_v, _end,  exit(1) );
+		  _v = malloc2(_v, _end);
+		  
 		}
 		void alloc_buf(){
 			char *buf;
 		  //malloc2 (buf,(_eles+_end+1)*_unit, EXIT0);
-		  malloc2 (buf,(_eles+_end+1)*_unit, exit(1));
+		  //malloc2 (buf,(_eles+_end+1)*_unit, exit(1));
+		  buf = malloc2 (buf,(_eles+_end+1)*_unit);
 		  _buf = (QUEUE_INT *)buf;
 
 		}
 		
 		void allocBuffer(){
-			malloc2 (_v, _end,  exit(1) );
+			//malloc2 (_v, _end,  exit(1) );
+			_v = malloc2 (_v, _end );
 			// _unit sizeof(QUEUE_INT)
 			char *buf;
-		  malloc2( buf,(_eles+_end+1) * _unit, exit(1));
+		  //malloc2( buf,(_eles+_end+1) * _unit, exit(1));
+		  buf = malloc2( buf,(_eles+_end+1) * _unit);
+
 		  _buf = (QUEUE_INT *)buf;
 		  return ;
 
@@ -279,7 +287,8 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			calloc2( cmm_p ,_t,EXIT);
+			//calloc2( cmm_p ,_t,EXIT);
+			cmm_p = calloc2( cmm_p ,_t);
 
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 
@@ -302,7 +311,8 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			calloc2(cmm_p,num,EXIT);
+			//calloc2(cmm_p,num,EXIT);
+			cmm_p = calloc2(cmm_p,num);
 
 			for(i1=0; i1 < num ; i1++){
 
@@ -328,7 +338,9 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			calloc2(cmm_p,_t,EXIT);
+			//calloc2(cmm_p,_t,EXIT);
+			cmm_p = calloc2(cmm_p,_t);
+
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 
 					ww = _w[i1]; 
@@ -351,7 +363,9 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			calloc2(cmm_p,_t,EXIT);
+			//calloc2(cmm_p,_t,EXIT);
+			cmm_p = calloc2(cmm_p,_t);
+
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 
 					w = _rw[i1]; 

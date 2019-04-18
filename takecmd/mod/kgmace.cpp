@@ -243,10 +243,8 @@ LONG KGMACE::parent_check ( QUEUE_INT K, QUEUE_INT w){
 	
   _OQ[K].setStopper();  // loop stopper
 
-
-
-
-  FLOOP (i, 0, _OQ[w].get_t()){
+ 	//FLOOP (i, 0, _OQ[w].get_t()){
+  for(i=0;i<_OQ[w].get_t();i++){
     e = _OQ[w].get_v(i);
      // pointers to the positions of the current processing items in each transaction
     _shift[i] = _SG.edgeEnd(e) - 1;
@@ -480,7 +478,8 @@ int KGMACE::run (int argc, char *argv[]){
 
   if ( _problem & PROBLEM_FREQSET ){
 	  QUEUE_INT v;
-    FLOOP (v, 0, _SG.edge_t()){
+    //FLOOP (v, 0, _SG.edge_t()){
+	  for(v=0;v< _SG.edge_t();v++){
 			clq_iter ( v, _SG.getp_v(v) );
     }
   } 

@@ -38,8 +38,10 @@ class BASE {
 		_dellist(NULL){}
 
 	~BASE(void){
-		int i;
-	  FLOOP (i, 0, _block_end) free2(_base[i]);
+
+	  for(int i = 0 ; i < _block_end;i++){ 
+		  free2(_base[i]);
+		}
   	free2 (_base);
 	}
 

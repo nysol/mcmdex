@@ -20,33 +20,33 @@
    t: if occ=NULL, Q[0] to Q[t-1] will be transposed, M: maximum column ID to be transposed */
 //
 void QUEUE::delivery( QUEUE *OQ, VEC_ID *c, QUEUE *jump, QUEUE *Q, QUEUE *occ, VEC_ID t, QUEUE_INT M){  
-	VEC_ID i, e;
+	VEC_ID  e;
   QUEUE_INT *x;
 
-  FLOOP(i, 0, occ? occ->_t: _t){
-
+  //FLOOP(i, 0, occ? occ->_t: _t){
+	for(VEC_ID i =0 ; i < (occ? occ->_t: _t) ;i++){
     e = occ? occ->_v[i]: i;
 
     if ( c ){
       if ( jump ){ 
-      	MLOOP (x, Q[e]._v, M){ 
+				for (x = Q[e]._v ; *x < M ; x++){
       		if ( c[*x]==0 ) jump->push_back(*x); 
       		c[*x]++; 
       	}
       } 
       else { 
-      	MLOOP (x, Q[e]._v, M) c[*x]++; 
+				for (x = Q[e]._v ; *x < M ; x++){  c[*x]++; }
       }
     }
     else {
       if ( jump ){ 
-      	MLOOP (x, Q[e]._v, M){ 
+				for (x = Q[e]._v ; *x < M ; x++){
       		if ( OQ[*x]._t==0 ) jump->push_back(*x); 
       		OQ[*x].push_back(e); 
       	}
       }
       else{
-      	 MLOOP (x, Q[e]._v, M){ OQ[*x].push_back(e); }
+      		for (x = Q[e]._v ; *x < M ; x++){ OQ[*x].push_back(e); }
       }
     }
   }
@@ -56,14 +56,15 @@ void QUEUE::delivery( QUEUE *OQ, VEC_ID *c, QUEUE *jump, QUEUE *Q, QUEUE *occ, V
 /* sort a QUEUE with WEIGHT, with already allocated memory */
 void QUEUE::perm_WEIGHT (WEIGHT *w, PERM *invperm, int flag){
   WEIGHT y;
-  int cmn_i,cmn_i2;
+  int cmn_i2;
   if ( w ){
     // ARY_INIT_PERM (invperm, _t);
 		for(size_t i=0 ; i<_t; i++){ invperm[i]=i; }
 
     qsort_perm__<QUEUE_INT> (_v, _t, invperm, flag);
 
-		FLOOP(cmn_i,0,_t){ 
+		//FLOOP(cmn_i,0,_t){ 
+		for(int cmn_i=0; cmn_i< _t; cmn_i++ ){
 			if ( invperm[cmn_i]<_t ){ 
 				y=w[cmn_i]; 
 				do { 
@@ -86,7 +87,8 @@ void QUEUE::perm_WEIGHT (WEIGHT *w, PERM *invperm, int flag){
 void QUEUE::rm_dup_WEIGHT (WEIGHT *w){
   VEC_ID j, jj=0;
   if ( w ){
-    FLOOP (j, 1, _t){
+    //FLOOP (j, 1, _t){
+		for(j=1;j<_t;j++){
       if ( _v[j-1] != _v[j] ){
         _v[++jj] = _v[j];
         w[jj] = w[j];
@@ -94,7 +96,8 @@ void QUEUE::rm_dup_WEIGHT (WEIGHT *w){
     }
   }
   else{
-  	 FLOOP (j, 1, _t){
+  	//FLOOP (j, 1, _t){
+		for(j=1;j<_t;j++){
     	if ( _v[j-1] != _v[j] ) _v[++jj] = _v[j];
 	  }
 	}
@@ -122,7 +125,8 @@ void QUEUE::occ_dup ( QUEUE **QQ, QUEUE *Q, WEIGHT **ww, WEIGHT *w, WEIGHT **ppw
 	for(x=_v; x < _v+_t ; x++) cnt += Q[*x]._t;
   if ( cnt == 0 ){ *QQ=NULL; return; }
 
-  malloc2 (buf, l*unit + (cnt+l)*u, EXIT);
+  //malloc2 (buf, l*unit + (cnt+l)*u, EXIT);
+  buf = malloc2 (buf, l*unit + (cnt+l)*u);
 
   *QQ = (QUEUE*)buf; buf += sizeof(*Q) *l;
   if ( w ){ *ww = (WEIGHT *)buf; buf += sizeof(*w)*l; }
@@ -157,7 +161,9 @@ void QUEUE::occ_dupELE ( KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, WEIGHT **ww, WEIGHT
 	for(x=_v; x < _v+_t ; x++) cnt += Q[*x]._t;
   if ( cnt == 0 ){ *QQ=NULL; return; }
 
-  malloc2 (buf, l*unit + (cnt+l)*u, EXIT);
+  //malloc2 (buf, l*unit + (cnt+l)*u, EXIT);
+  buf = malloc2 (buf, l*unit + (cnt+l)*u);
+
 
   *QQ = (KGLCMSEQ_QUE*)buf; buf += sizeof(*Q) *l;
   if ( w ){ *ww = (WEIGHT *)buf; buf += sizeof(*w)*l; }

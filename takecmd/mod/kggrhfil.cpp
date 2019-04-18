@@ -220,6 +220,56 @@ int KGGRHFIL::setArgs(int argc, char *argv[]){
 	return 0;
 }
 
+// non-transform mode
+// _fname , _output_fname, _table_fname
+int KGGRHFIL::replaceDATA()
+{
+	char i;
+	LONG l,x;
+	FILE2 ifp, ofp;
+	WEIGHT w;
+	FSTAR_INT *table=NULL;
+	
+	if(_table_fname){
+		FILE2::ARY_Load( table,_table_fname,1);
+	}
+	
+	ifp.open( _fname , "r");
+  ofp.open(_output_fname, "w");
+		
+	do{
+		i=0; x=0;
+		do {
+			l = ifp.read_int ();
+
+			if ( (FILE_err&4)==0 ){
+
+				ofp.print_int( table ? table[l]: l , i);
+				i = _sep;
+
+				if ( (_fsFlag&LOAD_EDGEW) && (((_fsFlag&LOAD_ELE)&&x==1) || !(_fsFlag&LOAD_ELE)) ){
+					w = ifp.read_double();
+					ofp.print_int ( w, i);
+				}
+				ofp.flush ();
+			}
+
+			x++;
+
+		} while ( (FILE_err&3)==0 );
+
+		ofp.puts ( "\n");
+
+	} while ( (FILE_err&2)==0 );
+
+	ifp.close ();
+	ofp.closew ();
+			
+	return 0;
+			
+}
+
+
 /* main routine */
 int KGGRHFIL::run (int argc ,char* argv[]){
 
@@ -231,55 +281,41 @@ int KGGRHFIL::run (int argc ,char* argv[]){
 
 	if ( setArgs(argc, argv) ){ return 1; }
 
-
-  _FS.setParams(
-  	_fsFlag,_fname,_edge_dir,_wfname,
-		_deg_lb,_deg_ub,_in_lb,_in_ub,
-		_out_lb,_out_ub,_w_lb,_w_ub,
-		_sep,_rows
-	);
-
-  _FS2.setParams(_fsFlag2,_fname2,_edge_dir2);
-
-
 	//ARY_LOAD (_FS.get_table(), int, l, _table_fname, 1, EXIT);
   // no transformation (just replace the numbers and separators)
   //これ別のほうがいい？
-
   if ( _dir ) {
-		
-		return _FS.repNumAndSeparator(_output_fname, _table_fname);
-	 	
+		replaceDATA();
   }
+  else{
 
+	  _FS.setParams(
+  		_fsFlag,_fname,_edge_dir,_wfname,
+			_deg_lb,_deg_ub,_in_lb,_in_ub,
+			_out_lb,_out_ub,_w_lb,_w_ub,
+			_sep,_rows
+		);
 
+	  _FS2.setParams(_fsFlag2,_fname2,_edge_dir2);
 
-  //PROBLEM_load (&PP);
-  // _PP.load();
+		if( _FS.load() ) return 1;
+		if( _fname2 ){ if( _FS2.load() ) return 1; }
+		_FS.adjust_edgeW(_ratio,_th,_th2,_problem2 & GRHFIL_NORMALIZE,_problem2 & GRHFIL_DISCRETIZE);	
+		_FS.set_flag(_problem); // +(FS->flag&LOAD_EDGE); //なぜここで
 
-	if( _FS.load() ) return 1;
+		if ( _table_fname ) _FS.write_table_file (_table_fname); 
 
-	if( _fname2 ){
-		if( _FS2.load() ) return 1;
-	}
-
-	
-	_FS.adjust_edgeW(_ratio,_th,_th2,_problem2 & GRHFIL_NORMALIZE,_problem2 & GRHFIL_DISCRETIZE);
-
-  _FS.set_flag(_problem); // +(FS->flag&LOAD_EDGE); //なぜここで
-
-  if ( !_dir ) _FS.write_table_file (_table_fname); 
-
-  if ( _root ){
-  	 _ip_l1 = FSTAR::write_graph_operation (
+	  if ( _root ){
+			_ip_l1 = FSTAR::write_graph_operation (
   		 	&_FS, &_FS2, 
 	  	 	_output_fname, _weight_fname,
   		 	_root, _th2
-  	 );
-  }
-  else{
-  	 _ip_l1 = _FS.write_graph ( _output_fname, _weight_fname );
-  }
+  	 	);
+	  }
+  	else{
+  		 _ip_l1 = _FS.write_graph ( _output_fname, _weight_fname );
+	  }
+	}
 
   return 0;
 }

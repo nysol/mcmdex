@@ -22,8 +22,6 @@ class KGGRHFIL{
 
 	 LONG _ip_l1;
 
-  // PROBLEM _PP; //problemは使わない
-
   // problem項目
   ITEMSET _II;
   int _problem,_problem2;
@@ -41,7 +39,6 @@ class KGGRHFIL{
   FSTAR _FS2;
 
 	// _FS  
-	// fs
 	int _fsFlag;
 	int _edge_dir;
 	char *_fname;
@@ -57,13 +54,13 @@ class KGGRHFIL{
 	char *_fname2;
 	int _edge_dir2;
 
- 
   char *_ERROR_MES ;
 
 	void help(void);
 
 	int setArgs_iter (char *a, int *ff);
 	int setArgs(int argc, char *argv[]);
+	int replaceDATA();
 
 	public:
 

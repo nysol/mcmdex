@@ -48,7 +48,8 @@ char * SGRAPH::initOQ(QUEUE * OQ){
 	QUEUE_INT *x;
 	VEC_ID    *occ_t;
 
-	calloc2 ( occ_t, _edge.get_t()+2, EXIT);
+	// calloc2 ( occ_t, _edge.get_t()+2, EXIT);
+	occ_t = calloc2 ( occ_t, _edge.get_t()+2);
 
 	for (VEC_ID iv=0 ; iv< _edge.get_t(); iv++){
 		for ( x= _edge.get_vv(iv) ; *x < _edge.get_t() ; x++){ occ_t[*x]++; }
@@ -58,7 +59,8 @@ char * SGRAPH::initOQ(QUEUE * OQ){
 	for(VEC_ID i=0; i < _edge.get_t() ; i++){ OQMemSize += occ_t[i]; }
 
 	char *OQp ;
-	malloc2 (OQp,(OQMemSize + (_edge.get_t()*2)+2)*(sizeof(QUEUE_INT)),  EXIT ); 
+	// malloc2 (OQp,(OQMemSize + (_edge.get_t()*2)+2)*(sizeof(QUEUE_INT)),  EXIT ); 
+	OQp =  malloc2 (OQp,(OQMemSize + (_edge.get_t()*2)+2)*(sizeof(QUEUE_INT)) ); 
 
 	char *cmn_pnt = OQp;
 

@@ -78,12 +78,14 @@ class FILE_COUNT{
 		#endif
 
 	  kk += _rows_org;
-	  realloc2 (_rw, kk+1, exit(1));
+	  //realloc2 (_rw, kk+1, exit(1));
+	  _rw = realloc2(_rw, kk+1);
+
 		wfp.reset();
 	  wfp.ARY_Read(_rw, kk);
-	  size_t i;
 
-		ARY_MIN (w, i, _rw, 0, kk);
+		// ARY_MIN (w, i, _rw, 0, kk);
+		w = ARY_MIN ( _rw, 0, kk);
 		
 //		if ( w<0 ) _flag2 |= TRSACT_NEGATIVE;どこかでセットする
 		if ( w<0 ) { _negaFLG = true;}
@@ -165,7 +167,9 @@ class FILE_COUNT{
 
 			// LOAD_TPOSEの時はこの条件
 	    if ( !RANGE( _w_lb, s, _w_ub) || !RANGE (_clm_lb, k, _clm_ub)  ){
-      	FLOOP (i, 0, k) _clmt[jump[i]]--; 
+				for(int i0 = 0 ; i0 < k ; i0++){
+					_clmt[jump[i0]]--; 
+				}
       }
 
 
@@ -181,9 +185,9 @@ class FILE_COUNT{
 		//reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
 		_rw = reallocx<WEIGHT>(_rw, &kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
 
-		FLOOP (k, 0, _rows_org){
-  	  _total_w_org += _rw[k];
-    	_total_pw_org += MAX(_rw[k],0);
+		for(int i0 = 0 ; i0 < _rows_org ; i0++){
+  	  _total_w_org  += _rw[i0];
+    	_total_pw_org += MAX(_rw[i0],0);
 	  }
 	  return 0;
   
@@ -255,10 +259,10 @@ class FILE_COUNT{
 
 			// NOT LOAD_TPOSEの時はこの条件
 	    if( !RANGE (_row_lb, k, _row_ub) ){
-      	FLOOP (i, 0, k) _clmt[jump[i]]--; 
+	    	for(int i0=0 ; i0 < k ; i0++ ){
+      		_clmt[jump[i0]]--; 
+      	}
       }
-
-
 		} while ( (FILE_err&2)==0);
 
 		free2 (jump);
@@ -272,12 +276,10 @@ class FILE_COUNT{
 		//reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
 		_rw = reallocx<WEIGHT>(_rw, &kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
 
-		FLOOP (k, 0, _rows_org){
-  	  _total_w_org += _rw[k];
-    	_total_pw_org += MAX(_rw[k],0);
+	  for(int i0=0 ; i0 < _rows_org ; i0++ ){
+  	  _total_w_org += _rw[i0];
+    	_total_pw_org += MAX(_rw[i0],0);
 	  }
-
-
 	  return 0;
   
 	  ERR:;
@@ -408,21 +410,14 @@ class FILE_COUNT{
     	return sep;
     }
 
-/*
-		void cpermFILL(){
-
-			malloc2 (_cperm, _clms_org+1, exit(1));
-			for(size_t i =0 ;i<_clms_org;i++){ 
-				_cperm[i] = _clms_org+1; 
-			}
-		}
-*/
 		void initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag){
 
 			_c_eles=0;
 			_c_clms=0;
 
-			malloc2 (_cperm, _clms_org+1, exit(1));
+			// malloc2 (_cperm, _clms_org+1, exit(1));
+			_cperm = malloc2 (_cperm, _clms_org+1);
+			
 			for(size_t i =0 ;i<_clms_org;i++){ 
 				_cperm[i] = _clms_org+1; 
 			}
@@ -442,22 +437,14 @@ class FILE_COUNT{
 		  return ;
 		}
 
-		/*
-		void rpermFILL(){
-
-			malloc2 (_rperm, _rows_org, exit(1));
-			//for(size_t i =0 ;i<_clms_org;i++){ 
-			//	_rperm[i] = _clms_org+1; 
-			//}
-		}
-		*/
 		
 		void initRperm(PERM *p , size_t base_clm, size_t base_ele){
 
 			_r_eles = base_ele;
 			_r_clms = base_clm;
 
-			malloc2 (_rperm, _rows_org, exit(1));
+			//malloc2 (_rperm, _rows_org, exit(1));
+			_rperm = malloc2(_rperm, _rows_org);
 		  // compute #elements according to rowt, and set rperm
 			VEC_ID tt=0;
 			for( VEC_ID t=0 ; t<_rows_org ; t++){
@@ -544,8 +531,9 @@ class FILE_COUNT{
 	  int fe = flag&LOAD_ELE, ft = flag&LOAD_TPOSE;  
 
   	//_flag = flag;
-
-	  FLOOP (j, 0, skip_rows) rfp->read_until_newline ();
+		for(int i0=0 ; i0 <skip_rows ; i0++){
+	  	 rfp->read_until_newline ();
+	  }
 
 	  if ( flag & (FILE_COUNT_NUM+FILE_COUNT_GRAPHNUM) ){
 
@@ -560,7 +548,7 @@ class FILE_COUNT{
 	  do {
 	    if ( fe ){
 			
-				FLOOP (j, 0, skip_clms){ 
+				for(int i0=0 ; i0 <skip_clms ; i0++){
 					rfp->read_double (); 
 					if ( FILE_err&3 ) goto ROW_END; 
 				}
@@ -576,7 +564,7 @@ class FILE_COUNT{
     	else 
     	{
       	if ( k==0 ) {
-      		FLOOP (j, 0, skip_clms){ 
+					for(int i0=0 ; i0 <skip_clms ; i0++){
       			rfp->read_double (); 
       			if (FILE_err&3) goto ROW_END; 
       		}
@@ -584,7 +572,8 @@ class FILE_COUNT{
 				x = t;
       	y = (FILE_COUNT_INT)rfp->read_int (); 
       	if (FILE_err&4 ) goto ROW_END;
-      	FLOOP (j, 0, int_clms){ 
+
+				for(int i0=0 ; i0 <int_clms ; i0++){
       		rfp->read_double (); 
       		if (FILE_err&3 ) break; 
       	}
@@ -656,7 +645,7 @@ class FILE_COUNT{
       ENMAX (_clm_max, k);
       ENMIN (_clm_min, k);
 
-      FLOOP (j, 0, int_rows){
+			for(int i0=0 ; i0 <int_rows ; i0++){
       	rfp->read_until_newline ();
       }
       if ( row_limit>0 && t>=row_limit ) { break; }
@@ -674,12 +663,19 @@ class FILE_COUNT{
   if ( fr ){
     //reallocx (_rowt, _row_end, _rows, 0, goto END);
     _rowt = reallocx (_rowt, &_row_end, _rows, 0);
-    ARY_MAX (_row_max, k, _rowt, 0, _rows);
-    ARY_MIN (_row_min, k, _rowt, 0, _rows);
+
+    //ARY_MAX (_row_max, k, _rowt, 0, _rows);
+    //ARY_MIN (_row_min, k, _rowt, 0, _rows);
+    // 一緒にする？
+    _row_max = ARY_MAX(_rowt, 0, _rows);
+		_row_min = ARY_MIN(_rowt, 0, _rows);
   }
   if ( fe && _clmt ){
-    ARY_MAX (_clm_max, k, _clmt, 0, _clms);
-    ARY_MIN (_clm_min, k, _clmt, 0, _clms);
+    //ARY_MAX (_clm_max, k, _clmt, 0, _clms);
+    // ARY_MIN (_clm_min, k, _clmt, 0, _clms);
+    // 一緒にする？
+    _clm_max = ARY_MAX( _clmt, 0, _clms);
+    _clm_min = ARY_MIN( _clmt, 0, _clms);
   }
   END:;
   // if ( ERROR_MES ) mfree (C.rowt, C.clmt);

@@ -119,9 +119,12 @@ int TRSACT::alloc(){
 
   //if ( TRSACT_NEGATIVE ) malloc2 (_pw, _T.get_end(), EXIT0);
   //else _pw = NULL;
-  malloc2 (_w, _T.get_end(), EXIT0);
+  // malloc2 (_w, _T.get_end(), EXIT0);
+  _w = malloc2 (_w, _T.get_end());
+
   if ( _flag2&TRSACT_NEGATIVE ) { 	// たぶんこう？
-  	malloc2 (_pw, _T.get_end(), EXIT0);
+  	//malloc2 (_pw, _T.get_end(), EXIT0);
+  	_pw = malloc2 (_pw, _T.get_end());
   }
   else{
   	_pw = NULL;
@@ -129,7 +132,8 @@ int TRSACT::alloc(){
 
 	_T.allocBuffer(); 
 
-  calloc2 (_perm, _T.get_clms()+1, EXIT0);
+  //calloc2 (_perm, _T.get_clms()+1, EXIT0);
+  _perm = calloc2 (_perm, _T.get_clms()+1);
 
   _jump.alloc(_T.get_clms()+1);
 
@@ -139,9 +143,12 @@ int TRSACT::alloc(){
   _wbuf.alloc( sizeof(WEIGHT), bufSize);
 
   if ( _flag2&TRSACT_SHRINK ){
-    malloc2 (_mark, _T.get_end(), EXIT0);
-    malloc2 (_shift, _T.get_end(), EXIT0);
-    calloc2 (_sc, _T.get_clms(), EXIT0);
+    //malloc2 (_mark, _T.get_end(), EXIT0);
+    _mark = malloc2 (_mark, _T.get_end());
+    //malloc2 (_shift, _T.get_end(), EXIT0);
+    _shift = malloc2 (_shift, _T.get_end());
+    //calloc2 (_sc, _T.get_clms(), EXIT0);
+    _sc = calloc2 (_sc, _T.get_clms());
   }
   if ( !_T.exist_w() && (_flag2&TRSACT_UNION)) {
 		_T.alloc_w();
@@ -149,7 +156,8 @@ int TRSACT::alloc(){
 	if ( !_T.exist_w() && _item_wfname ){
 		_T.alloc_weight ( _C.getp_rowt());
 	}
-  malloc2 (_trperm, _T.get_t(), EXIT0);
+  //malloc2 (_trperm, _T.get_t(), EXIT0);
+  _trperm = malloc2 (_trperm, _T.get_t());
 
 
   // set variables w.r.t rows
@@ -184,7 +192,6 @@ int TRSACT::alloc(){
 
 	_sep = _C.adjust_sep(_sep,_end1,_flag&LOAD_TPOSE);
   _new_t = _T.get_t();
-
   return ( flag );
 }
 
@@ -354,7 +361,8 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 
   if ( _flag2&(TRSACT_ALLOC_OCC+TRSACT_SHRINK) ){
 
-    calloc2 (p, _T.get_clms(), EXIT);
+    //calloc2 (p, _T.get_clms(), EXIT);
+    p = calloc2 (p, _T.get_clms());
     
     // QUEUE_delivery (NULL, p, NULL, _T._v, NULL, _T._t, _T._clms);
 		//===================
@@ -362,10 +370,12 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 	  QUEUE_INT *x;
 		for (iv=0 ; iv<_T.get_t() ; iv++){
     	ev =  iv;
-    	MLOOP (x, _T.get_vv(ev), _T.get_clms()) p[*x]++;
+    	// MLOOP (x, _T.get_vv(ev), _T.get_clms()) p[*x]++;
+    	for(x=_T.get_vv(ev); *x < _T.get_clms() ;x++){ p[*x]++; }
 		}
 		//===================
-    ARY_MAX (_clm_max, i, p, 0, _T.get_clms());
+
+    _clm_max = ARY_MAX( p, 0 , _T.get_clms());
 
     Mque_allocELE(p);
 
@@ -373,7 +383,10 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 		_OQELE[_T.get_clms()].alloc( MAX(_T.get_t(), _clm_max));
 
 		// end is illegally set to 0, for the use in "TRSACT_find_same" 
-    FLOOP (i, 0, _T.get_clms()+1) _OQELE[i].set_end(0);   
+    //FLOOP (i, 0, _T.get_clms()+1) 
+    for(i=0;i<_T.get_clms()+1 ;i++){
+	    _OQELE[i].set_end(0);   
+  	}
 
     // initial occurrence := all transactions
     // ARY_INIT_PERM (_OQ[_T.get_clms()].get_v(), _T.get_t());   
@@ -404,7 +417,8 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 
     _OQELE[_T.get_clms()].set_t(0);
 
-    FLOOP (t, 0, _T.get_t()) {
+   // FLOOP (t, 0, _T.get_t()) {
+    for(t=0;t<_T.get_t();t++){
     	if ( _mark[t]>0 ) _OQELE[_T.get_clms()].push_backt(t);  // make resulted occ
     }
   }
@@ -486,7 +500,7 @@ int TRSACT::loadMain(bool elef){
   fp2.close ();
 
 
-  if (ERROR_MES) end(); 
+  if (_ERROR_MES) end(); 
   else prop_print();
   return 0;
 
@@ -727,14 +741,14 @@ void TRSACT::copy ( VEC_ID tt, VEC_ID t, QUEUE_INT end){
 
   buf = (QUEUE_INT *)_buf.get_memory ( _T.get_vt(t)+1);
 
-	if ( ERROR_MES ) return;
+	if ( _ERROR_MES ) return;
   if ( wflag ){
 
   	wbuf = (WEIGHT *)_wbuf.get_memory ( _T.get_vt(t)+1);
   	_T.set_w(tt,wbuf);
   }
 
-	if ( ERROR_MES ){ _buf.set_num(bnum); _buf.set_block_num(bblock); return; }
+	if ( _ERROR_MES ){ _buf.set_num(bnum); _buf.set_block_num(bblock); return; }
   _T.set_vv(tt, buf);
   _w[tt] = _w[t];
   if ( _flag2&TRSACT_NEGATIVE ) _pw[tt] = _pw[t];
@@ -800,13 +814,13 @@ void TRSACT::itemweight_union (VEC_ID tt, VEC_ID t){
     // if sufficiently large memory can not be taken from the current memory block, use the next block
   if ( xx_end >= (QUEUE_INT *)_buf.get_base(_buf.get_block_num()) + _buf.get_block_siz() ){
     xx_end = xx = ((QUEUE_INT*) _buf.get_memory ( _buf.get_block_siz())) +siz;
-		if (ERROR_MES) return;
+		if (_ERROR_MES) return;
     ww = ((WEIGHT *)_wbuf.get_memory (_wbuf.get_block_siz())) +siz;
-		if ( ERROR_MES ){ _buf.set_num(bnum); _buf.set_block_num(bblock); return; }
+		if ( _ERROR_MES ){ _buf.set_num(bnum); _buf.set_block_num(bblock); return; }
     flag =1;
   }
 
-  if ( ERROR_MES ) return;
+  if ( _ERROR_MES ) return;
 
     // take union and store it in the allocated memory
   while ( x >= _T.get_vv(tt) && y >= _T.get_vv(t) ){
@@ -913,7 +927,7 @@ void TRSACT::merge_trsact (QUEUE_INT end){
       }
       if ( _flag2 & TRSACT_UNION ){
         itemweight_union (tt, *x);
-        if ( ERROR_MES ) _mark[*x] = *x+2; // do not merge if not enough memory
+        if ( _ERROR_MES ) _mark[*x] = *x+2; // do not merge if not enough memory
       }
     }
 
@@ -928,7 +942,7 @@ void TRSACT::merge_trsact (QUEUE_INT end){
 
         copy ( tt, *x, (_flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
 
-        if( ERROR_MES ){ _new_t--; tt = *x; }
+        if( _ERROR_MES ){ _new_t--; tt = *x; }
         else { for (_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++);}
 
       } 
@@ -983,7 +997,7 @@ void TRSACT::merge_trsact( KGLCMSEQ_QUE *o, QUEUE_INT end){
       }
       if ( _flag2 & TRSACT_UNION ){
         itemweight_union (tt, x);
-        if ( ERROR_MES ) _mark[x] = x+2; // do not merge if not enough memory
+        if ( _ERROR_MES ) _mark[x] = x+2; // do not merge if not enough memory
       }
     }
 
@@ -998,7 +1012,7 @@ void TRSACT::merge_trsact( KGLCMSEQ_QUE *o, QUEUE_INT end){
 
         copy ( tt, x, (_flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
 
-        if( ERROR_MES ){ _new_t--; tt = x; }
+        if( _ERROR_MES ){ _new_t--; tt = x; }
         else { for (_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++);}
 
       } 
@@ -1041,7 +1055,8 @@ void TRSACT::print ( QUEUE *occ, PERM *p){
   VEC_ID i, t;
   QUEUE_ID j;
   QUEUE_INT e;
-  FLOOP (i, 0, occ? occ->get_t(): _T.get_t()){
+	//FLOOP (i, 0, occ? occ->get_t(): _T.get_t()){
+  for(i=0; i< ( occ? occ->get_t(): _T.get_t());i++){
     t = occ? *((QUEUE_INT *)occ->getp_v(i)): i;
     if ( occ ) printf (QUEUE_INTF "::: ", t);
     for (j=0; j<_T.get_vt(t) ; j++){

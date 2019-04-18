@@ -125,6 +125,8 @@ class ITEMSET{
 	QUEUE _itemset;   // current operating itemset
   QUEUE _add;       // for equisupport (hypercube decomposition)
 
+
+	char *_ERROR_MES;
 #ifdef MULTI_CORE
   pthread_spinlock_t _lock_counter;   // couneter locker for jump counter
   pthread_spinlock_t _lock_sc;   // couneter locker for score counter
@@ -196,7 +198,7 @@ class ITEMSET{
 		_multi_iters(NULL),_multi_iters2(NULL),_multi_iters3(NULL),
 		_multi_solutions(NULL),_multi_solutions2(NULL),_multi_fp(NULL),
 		_multi_core(0),_itemtopk(NULL),
-		_rows_org(0),_trperm(NULL)
+		_rows_org(0),_trperm(NULL),_ERROR_MES(NULL)
 		{}
 	
 		// SSPC
@@ -515,11 +517,13 @@ class ITEMSET{
 	void check_all_rule (WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT total, int core_id);
 
 	void close(){
-		int i;
+
 	  if ( _multi_fp )
-      FLOOP (i, 0, MAX(_multi_core,1)) _multi_fp[i].closew();
-	
-	}
+	    // FLOOP (i, 0, MAX(_multi_core,1))
+	  	for( int i = 0 ; i <  MAX(_multi_core,1) ; i++){
+			 _multi_fp[i].closew();
+			}
+		}
 
 };
 

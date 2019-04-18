@@ -8,7 +8,12 @@
    If one wants to re-distribute this code, please 
     refer the newest code, and show the link to homepage of 
     Takeaki Uno, to notify the news about the codes for the users. */
+
 #pragma once
+
+#if defined(__cplusplus) && defined(__GNUC__)
+ #define _cplusplus_
+#endif
 
 #define WEIGHT_DOUBLE
 
@@ -23,16 +28,6 @@
  #include<emmintrin.h>   // use MMX-SSE2;
 #endif
 
-
-#if defined(__cplusplus) && defined(__GNUC__)
- #define _cplusplus_
-#endif
-
-// for visual C++  (use typeid insead of typeof)
-#ifdef _MSC_VER
- #define typeof(a)  typeid(a).name()
-#endif
-
 #ifdef MULTI_CORE
 #include <sys/types.h>
 #include <pthread.h>
@@ -40,13 +35,8 @@
 
 #define CORE_MAX 16
 
-
-/* comment out the following line if no error check is needed */
-//#define ERROR_CHECK
-/* comment out the following if exit is not needed after each error routine */
-//#define ERROR_RET
-
-#ifdef ERROR_RET   // definition of the process for errors
+// definition of the process for errors
+#ifdef ERROR_RET  
   #define EXIT return
   #define EXIT0 return(0)
 #else 
@@ -61,21 +51,6 @@
 #ifndef NULL
   #define NULL 0
 #endif
-
-#ifdef MTWISTER
- #define RANDOM ((long)(dsfmt_gv_genrand_close_open()*2147483648LL))
- #define RAND1 dsfmt_gv_genrand_close_open()
- #define RAND_INIT dsfmt_gv_init_gen_rand(514346237)
-#elif defined(__GNUC__)
- #define RANDOM xor128()
- #define RAND1 ((double)xor128())/4294967296.0
- #define RAND_INIT xor128()
-#else
- #define RANDOM rand()
- #define RAND1 ((double)rand())/2147483648.0
- #define RAND_INIT srand(0)
-#endif
-
 
 // 64bit integer
 #ifdef LONG_32
@@ -139,15 +114,9 @@
  #endif
 #endif
 
-
-
 extern INT common_INT;
 extern char *common_pnt;
-extern char *ERROR_MES;
 extern int FILE_err;
-
-extern char common_comm[], common_comm2[], *common_argv[];
-
 
 /* lock&unlock for multi-core mode */
 #ifdef MULTI_CORE
@@ -162,7 +131,6 @@ extern char common_comm[], common_comm2[], *common_argv[];
 /*  equal/inequal with allowing numerical error for double  */
 #define ISEQUAL(a,b)	((a)-(b)<ISEQUAL_VALUE&&(b)-(a)<ISEQUAL_VALUE)
 #define RANGE(a,b,c)  (((a)<=(b))&&((b)<=(c)))
-#define BITRM(a,b)    ((a)-=((a)&(b)));
 
 /*  macro for getting maximum/minimum of two values  */
 #define MAX(a,b)      (((a)>(b))?(a):(b))
@@ -173,59 +141,27 @@ extern char common_comm[], common_comm2[], *common_argv[];
 /*  error routine  */
 #define print_err(...)      fprintf(stderr,__VA_ARGS__)
 #define print_mesf(S,...)  do{if(((S)->get_flag())&1)fprintf(stderr,__VA_ARGS__);}while(0)
-#define error(mes,x)        do{ERROR_MES=mes;fprintf(stderr,"%s\n",mes);x;}while(0)
-#define error_num(mes,n,x)  do{ERROR_MES=mes;fprintf(stderr,"%s: %g\n",mes,(double)(n));x;}while(0)
+#define error(mes,x)        do{fprintf(stderr,"%s\n",mes);x;}while(0)
+#define error_num(mes,n,x)  do{fprintf(stderr,"%s: %g\n",mes,(double)(n));x;}while(0)
+
+
 #define print_mes(S,...)  do{if(((S)->_flag)&1)fprintf(stderr,__VA_ARGS__);}while(0)
-
 #define print_fname(s,fname,...)  do{if(fname)fprintf(stderr,s,fname);}while(0)
+
 #define mfree(...)          mfree_(NULL, __VA_ARGS__, (void *)1)
-#define mfree2(...)          mfree2_(NULL, __VA_ARGS__, (void *)1)
 
-  
-/* basic array operations and loops */
-// #define   ARY_FILL(f,start,end,c) do{for(common_size_t=(size_t)(start);common_size_t<(size_t)(end);common_size_t++)(f)[common_size_t]=(c);}while(0)
-#define   FLOOP(i,x,y)  for ((i)=(x) ; (i)<(y) ; (i)++)
-#define   BLOOP(i,x,y)  for ((i)=(x) ; ((i)--)>(y) ; )
-#define   MLOOP(z,x,M)  for ((z)=(x) ; *(z)<(M) ; (z)++)
-
-
-/* allocate memory, and exit with error message if fault */
-#ifdef _cplusplus_
-#define   malloc2(f,b,x)     do{if(!((f)=(typeof(f))malloc(((size_t)sizeof((f)[0]))*(b)))){fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
-#define   calloc2(f,b,x)     do{if(!((f)=(typeof(f))calloc(sizeof((f)[0]),b))){fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
-#define   realloc2(f,b,x)    do{if(!(f=(typeof(f))realloc(f,((size_t)sizeof((f)[0]))*(b)))){fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
-#else
-#define   malloc2(f,b,x)     do{if(!((f)=malloc(((size_t)sizeof((f)[0]))*(b)))){fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
-#define   calloc2(f,b,x)     do{if(!((f)=calloc(sizeof((f)[0]),b))){fprintf(stderr,"memory allocation error: line %d: " #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
-#define   realloc2(f,b,x)    do{if(!(f=realloc(f,((size_t)sizeof((f)[0]))*(b)))){fprintf(stderr,"memory allocation error: line %d: " #f " (" LONGF " byte)\n",__LINE__, (LONG)((LONG)sizeof((f)[0])*(b)));ERROR_MES="out of memory";x;}}while(0)
-#endif
-
-/* reallocate memory and expand the memory size */
-#define   realloci(f,i,x)  do{if(!((i)&((i)-1)))realloc2(f,(i)*2+1,x);}while(0)
-
-//#define   reallocx_(f,end,end2,e,x)  do{realloc2(f,end2,x);FLOOP(common_size_t,(size_t)end,(size_t)end2)(f)[common_size_t]=(e);}while(0)
-//#define   reallocx(f,end,i,e,x)  do{if((size_t)(i)>=(size_t)(end)){reallocx_(f,end,MAX((end)*2+16,(i)+1),e,x);end=MAX((end)*2,(i)+1);}}while(0)
-
-
-/* basic array operations */
-#define   ARY_MAX(m,i,f,x,y)   do{(m)=(f)[x];(i)=(x);FLOOP(common_INT,(x)+1,(y))if((m)<(f)[common_INT]){(i)=common_INT;(m)=(f)[i];}}while(0)
-#define   ARY_MIN(m,i,f,x,y)   do{(m)=(f)[x];(i)=(x);FLOOP(common_INT,(x)+1,y)if((m)>(f)[common_INT]){(i)=common_INT;(m)=(f)[i];}}while(0)
-#define   ARY_SUM(f,v,x,y)       do{(f)=0;FLOOP(common_INT,x,y)(f)+=(v)[common_INT];}while(0)
 
 /* macros for allocating memory with exiting if an error occurs */
 #define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
-#define free2d(a)  do{if(a){free2((a)[0]);free(a);(a)=NULL;}}while(0)
 
 /* a macro for open files with exiting if an error occurs */
 #ifdef _MSC_
  #define   fopen2(f,a,b,x)     do{fopen_s(&f,a,b);if(!f){ERROR_MES="file open error";fprintf(stderr,"file open error: file name %s, open mode %s\n",a,b);x;}}while(0)
 #else
- #define   fopen2(f,a,b,x)     do{if(!((f)=fopen(a,b))){ERROR_MES="file open error";fprintf(stderr,"file open error: file name %s, open mode %s\n",a,b);x;}}while(0)
+ #define   fopen2(f,a,b,x)     do{if(!((f)=fopen(a,b))){fprintf(stderr,"file open error: file name %s, open mode %s\n",a,b);x;}}while(0)
 #endif
 
 #define fclose2(a) do{if(a){fclose(a);(a)=NULL;}}while(0)
-
-
 
 
 #ifndef VEC_ID
@@ -273,34 +209,94 @@ extern char common_comm[], common_comm2[], *common_argv[];
 #define LOAD_COMP 33554432   // read as a complement  
 #define LOAD_RC_SAME 67108864     // set #rows and #columns to the maximum of them
 
-
-/* free many pointers*/
-void mfree_(void *x, ...);
-void mfree2_(void *x, ...);
-
-/* remove many files */
-void mremove_ (char *x, ...);
-
-/* print a real number in a good style */
-void fprint_real (FILE *fp, double f);
-void print_real (double f);
-void fprint_WEIGHT (FILE *fp, WEIGHT f);
-void print_WEIGHT (WEIGHT f);
-
-
 #define FILE_COUNT_ROWT 32   // count size of each row
 #define FILE_COUNT_CLMT 64   // count size of each column
 #define FILE_COUNT_NUM LOAD_NUM   // read #columns, #rows and #elements
 #define FILE_COUNT_GRAPHNUM LOAD_GRAPHNUM   // read #vertices and #edges
 #define FILE2_BUFSIZ 16384
-
 #define FILE_COUNT_INT VEC_ID
 #define FILE_COUNT_INTF VEC_IDF
 
 
+/* free many pointers*/
+void mfree_(void *x, ...);
+void mfree2_(void *x, ...);
+
+/* print a real number in a good style */
+void fprint_real(FILE *fp, double f);
+void fprint_WEIGHT(FILE *fp, WEIGHT f);
+
+
+template<typename T,typename Tz>
+T ARY_MAX( T *f,Tz x, Tz y){
+
+	T m = f[x];
+	for(Tz i0 = x+1 ; i0 < y ; i0++){
+		if( m < f[i0]) { 
+			m = f[i0];
+		}
+	}
+	return m;
+}
+
+template<typename T,typename Tz>
+T ARY_MIN( T *f , Tz x, Tz y){
+
+	T m = f[x];
+	for(Tz i0 = x+1 ; i0 < y ; i0++){
+		if( m > f[i0] ){
+			m = f[i0];
+		}
+	}
+	return m;
+}
+
+template<typename T,typename Tz>
+T ARY_SUM( T *v , Tz x,Tz y)       
+{
+	T f = 0;
+	for(Tz i = x ; i < y ; i++){
+		f += v[i];
+	}
+	return f;
+}
+
+template<typename T,typename Tz>
+T* realloc2(T* f ,Tz b){
+
+	if(!( f = (T*)realloc( f, sizeof(T)*(b) ))) {
+		throw("memory allocation error : realloc2");
+	}
+	return f;
+}
+
+template<typename T,typename Tz>
+T* realloci(T* f,Tz i){
+	if( !( i & (i-1) )){
+		f = realloc2( f, i*2+1 );
+	}
+	return f;
+}
+	
+
+template<typename T,typename Tz>
+T* malloc2(T* f ,Tz b){
+	if(!( f = (T*)malloc(sizeof(T)*b))){
+		throw("memory allocation error : malloc2");
+	}
+	return f;
+}
+
+template<typename T,typename Tz>
+T* calloc2(T* f ,Tz b){
+	if(!( f = (T*)calloc(sizeof(T),b))){
+		throw("memory allocation error : calloc2");
+	}
+	return f;
+}
+
 /* quick sort macros // templateにする?*/ //common_INT common_pntどうにかする
 #define QQSORT_ELE(a,x)  ((a *)(&(common_pnt[(*((PERM *)(x)))*common_INT])))
-
 
 template<typename T>
 int qsort_cmp_(const void *x,const void *y){
@@ -351,14 +347,14 @@ template<typename T>
 PERM *qsort_perm_ (T *v, size_t siz, int unit){
 
 	PERM *perm; 
-	malloc2(perm, siz, EXIT0);
+	perm = malloc2(perm, siz);
 	for(size_t i=0 ; i<siz; i++){ perm[i]=i; }
 	qsort_perm__<T>(v, siz, perm, unit); 
 	return (perm);
 }
 
 template<typename T>
-size_t bin_search_ (T *v, T u, size_t siz, int unit){ 
+size_t bin_search_(T *v, T u, size_t siz, int unit){ 
  size_t s=0, t;
  T n;
  if ( unit == 1 ) unit *= sizeof (T); 
@@ -386,8 +382,7 @@ T* reallocx(T *f, TI *end ,size_t i,T e){
 		size_t end2 = MAX((*end)*2+16,i+1);
 
 		if(!( f = (T *) realloc( f , sizeof(T) * end2 ) ) ){
-
-			//fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof(T)*(b)));
+			fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
 		}
 		for(TI j= *end ; j< end2  ; j++ ){
 			f[j]=e;
@@ -406,8 +401,7 @@ T* reallocx(T* f, TI *end ,size_t i){
 		size_t end2 = MAX((*end)*2+16,i+1);
 
 		if(!( f= (T *)realloc( f ,sizeof(T)*end2 ) ) ){
-			//printf("x2 %d\n",end2);
-			//fprintf(stderr,"memory allocation error: line %d" #f " (" LONGF " byte)\n",__LINE__,(LONG)((LONG)sizeof(T)*(b)));
+			fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
 		}
 		for(TI j= *end ; j<end2 ; j++ ){
 			f[j]=j;
@@ -417,8 +411,6 @@ T* reallocx(T* f, TI *end ,size_t i){
 	return f;
 
 }
-
-
 
 // vectorでいいようなきもするが一応つくる？
 template<class T>
@@ -435,8 +427,6 @@ class VECARY{
 };
 
 
-
-
 /* permute f so that f[i]=f[p[i]] (inverse perm). p will be destroyed (filled by end). s is temporary variable of type same as f[] */
 //#define   ARY_INVPERMUTE_(f,p,s,end)  do{ FLOOP(common_INT,0,end){ if ( (p)[common_INT]<(end) ){ (s)=(f)[common_INT]; do { common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; (p)[common_INT2]=end; }while ( (p)[common_INT]<(end) ); (f)[common_INT2] = (s);}}}while(0)
 
@@ -444,3 +434,5 @@ class VECARY{
 //#define   ARY_INVPERMUTE(f,p,s,end,x) do{ calloc2(common_pnt,end,x);FLOOP(common_INT,0,end){ if ( common_pnt[common_INT]==0 ){ (s)=(f)[common_INT]; do{ common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; common_pnt[common_INT2]=1; }while( common_pnt[common_INT]==0 ); (f)[common_INT2] = (s); }} free(common_pnt); }while(0)
 
 
+//#define error(mes,x)        do{ERROR_MES=mes;fprintf(stderr,"%s\n",mes);x;}while(0)
+//#define error_num(mes,n,x)  do{ERROR_MES=mes;fprintf(stderr,"%s: %g\n",mes,(double)(n));x;}while(0)

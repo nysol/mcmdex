@@ -39,7 +39,9 @@ void IHEAP::print (FILE *fp){
 void IHEAP::alloc (IHEAP_ID num, int mode, IHEAP_KEY *x){
 
   if (num == 0) num = 16;
-  malloc2 (_v, num, EXIT);
+  //malloc2 (_v, num, EXIT);
+  _v = malloc2 (_v, num);
+
   _end = num;
   _mode = mode;
   _x = x;
@@ -105,7 +107,9 @@ IHEAP_ID IHEAP::ins ( IHEAP_ID j){
   _siz++;
   if (_siz >= _end){ 
   	_end = MAX(_end*2, _siz+1); 
-  	realloc2 (_v, _end, exit(1));
+  	
+  	//realloc2 (_v, _end, exit(1));
+  	_v = realloc2(_v, _end);
   }
   return dec(_siz-1, j);
 }

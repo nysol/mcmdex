@@ -197,8 +197,16 @@ static void STR_print_real (char **s, double n, int len, char c){
   else {
     while ( n > (1LL<<60) ){ d++; n /= (1000000000000000000LL);}
     nn = n; STR_print_int (s, nn, 0);
-    BLOOP (d, d, 0) FLOOP (dd, 0, 18){ **s = '0'; (*s)++; }
+    //BLOOP (d, d, 0){
+    	//FLOOP (dd, 0, 18){ 
+		for(d=d;(d--)>0;){
+			for(dd=0 ;dd < 18 ;dd++){
+    		**s = '0'; (*s)++; 
+    	}
+    }
     n -= nn;
+
+
   }
   if ( len == 0 ) return;  // no decimal digits
   **s = '.'; (*s)++;
@@ -290,6 +298,35 @@ void FILE2::closew (){
   free2 (_buf_org);
   _buf = _buf_end = 0;
 }
+
+template <>
+void FILE2::ARY_Read<double>(double *f,size_t num) {
+
+	for (size_t i=0 ; i < num  ; i++){
+		do{
+			f[i]=read_double();
+		}while((FILE_err&6)==4);
+
+	 	if(FILE_err&2)break;
+ 	}
+}
+
+
+int FILE2::ARY_Load(double *f,char* fname,int d){
+
+		FILE2 cmn;
+		int num;
+
+		cmn.open(fname,"r");
+		num = cmn.ARY_Scan_DBL(d);
+		f = malloc2(f,(num)+1);
+		cmn.reset();
+		cmn.ARY_Read(f,num);
+		cmn.close();
+		return num;
+}
+
+
 
 /********************  file I/O routines  ********************************/
 

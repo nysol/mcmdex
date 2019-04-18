@@ -21,7 +21,10 @@ void BASE::alloc (int unit, int block_siz){
   _block_siz = block_siz;
   _num = block_siz;
   _block_num = -1;
-  calloc2 (_base, 20, EXIT);
+
+  //calloc2 (_base, 20, EXIT);
+  _base = calloc2 (_base, 20);
+
   _block_end = 20;
 }
 
@@ -37,8 +40,10 @@ void *BASE::get_memory (int i){
 		_base = reallocx<char *, size_t>(_base, &_block_end, _block_num, NULL);
 
 
-    if ( _base[_block_num] == NULL )
-        malloc2 (_base[_block_num], _block_siz*_unit, EXIT0);
+    if ( _base[_block_num] == NULL ){
+      //malloc2 (_base[_block_num], _block_siz*_unit, EXIT0);
+    	_base[_block_num] = malloc2(_base[_block_num],  _block_siz*_unit);
+    }
     return (_base[_block_num]);
   }
   return (_base[_block_num] + (_num-i)*_unit);

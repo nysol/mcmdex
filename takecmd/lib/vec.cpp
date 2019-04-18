@@ -15,13 +15,26 @@ void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
 
   VEC_ID i;
   char *buf;
-  if ( eles == 0 ) ARY_SUM (_ele_end, rowt, 0, rows);
-  else _ele_end = eles;
+  if ( eles == 0 ) { _ele_end = ARY_SUM( rowt, 0, rows); }
+  else { _ele_end = eles; }
 
-  calloc2 (buf, (_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)*_unit, EXIT);
+  //calloc2 (buf, (_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)*_unit, EXIT);
+
+  buf = calloc2 (
+  	buf, 
+  	(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)*_unit
+  );
+
   _buf = (QUEUE_INT *)buf;
   
-  malloc2 (_v, rows+1, {free(_buf);EXIT;});
+  //malloc2 (_v, rows+1, {free(_buf);EXIT;});
+  try {
+	 _v = malloc2 (_v, rows+1 );
+	} catch(...){
+		free(_buf);
+		throw;
+	}
+
 
 	for(size_t i =0 ;i<rows;i++){ 
 		_v[i] = QUEUE(); 
@@ -31,7 +44,8 @@ void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
   _clms = clms;
 
   if ( rowt ){
-    FLOOP (i, 0, rows){
+  	for(i=0;i<rows;i++){
+    //FLOOP (i, 0, rows){
       _v[i].set_v((QUEUE_INT *)buf);
       buf += (rowt[i] +1)*_unit;
       _v[i].set_end(rowt[i]+1);
@@ -43,13 +57,25 @@ void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
 /* if eles == 0, compute eles from rowt and rows */
 void SETFAMILY::alloc_weight ( QUEUE_ID *t){
   VEC_ID i;
-  calloc2 (_w, _end +1, EXIT);
-  calloc2 (_wbuf, _ele_end*((_flag&LOAD_DBLBUF)?2:1)+1, {free(_w);EXIT;});
-  _w[0] = _wbuf; FLOOP (i, 1, _t) _w[i] = _w[i-1] + (t?t[i-1]:_v[i-1].get_t());
+  //calloc2 (_w, _end +1, EXIT);
+  _w = calloc2 (_w, _end +1);
+  //calloc2 (_wbuf, _ele_end*((_flag&LOAD_DBLBUF)?2:1)+1, {free(_w);EXIT;});
+	try{
+	  _wbuf = calloc2 (_wbuf, _ele_end*((_flag&LOAD_DBLBUF)?2:1)+1 );
+	}catch(...){
+		free(_w);
+		throw;
+	}
+  _w[0] = _wbuf; 
+  //FLOOP (i, 1, _t){
+  for(i=1;i<_t;i++){
+  	_w[i] = _w[i-1] + (t?t[i-1]:_v[i-1].get_t());
+  }
 }
 
 void SETFAMILY::alloc_w (){
-  calloc2 (_w, _end, EXIT);
+  //calloc2 (_w, _end, EXIT);
+  _w = calloc2 (_w, _end);
 }
 
 
@@ -63,9 +89,13 @@ void SETFAMILY::sort (){
   int flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0);
   // sort items in each row
   if ( flag ){   
-    malloc2 (p, _clms, EXIT);
-    FLOOP (i, 0, _t)
+    //malloc2 (p, _clms, EXIT);
+    p = malloc2 (p, _clms);
+
+    //FLOOP (i, 0, _t){
+    for(i=0;i<_t;i++){
       _v[i].perm_WEIGHT( _w?_w[i]:NULL, p, flag);
+    }
     free (p);
   }
 
@@ -76,7 +106,9 @@ void SETFAMILY::sort (){
     else p = qsort_perm_<WEIGHT> (_rw, _t, flag*sizeof(WEIGHT));
 
 
-		malloc2(_rperm,_t,EXIT);
+		_rperm = malloc2(_rperm,_t);
+
+
 		for(size_t st=0; st<_t ;st++){ _rperm[st]=-1; }
 
 		for(int i=0;i<_t;i++){
@@ -100,7 +132,8 @@ void SETFAMILY::sort (){
   }
 
   if (_flag&LOAD_RM_DUP){  // unify the duplicated edges
-    FLOOP (i, 0, _t){
+    //FLOOP (i, 0, _t){
+    for(i=0;i<_t;i++){
 			_v[i].rm_dup_WEIGHT( _w?_w[i]:NULL);
 		}
   }
@@ -108,9 +141,18 @@ void SETFAMILY::sort (){
 
 void SETFAMILY::SMAT_alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
   VEC_ID i;
-  if ( eles == 0 ) ARY_SUM (_ele_end, rowt, 0, rows); else _ele_end = eles;
-  calloc2 (_buf, _ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2, EXIT);
-  malloc2 (_v, rows+1, {free(_buf);EXIT;});
+  if ( eles == 0 ) { _ele_end = ARY_SUM( rowt, 0, rows); }
+  else {  _ele_end = eles; } 
+
+  //calloc2 (_buf, _ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2, EXIT);
+  _buf = calloc2 (_buf, _ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2);
+
+	try{
+	  _v = malloc2 (_v, rows+1);
+	}catch(...){
+		free(_buf);
+		throw;
+	}
   //ARY_FILL (_v, 0, rows, SVEC() );
 
 	for(size_t _common_size_t =0;_common_size_t<rows;_common_size_t++){
@@ -121,7 +163,8 @@ void SETFAMILY::SMAT_alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles)
   _end = rows;
   _clms = clms;
   if ( rowt ){
-    FLOOP (i, 0, rows){
+    //FLOOP (i, 0, rows){
+    for(i=0;i<rows;i++){
       _v[i].set_v( i? _v[i-1].get_v() + rowt[i-1] +1: _buf);
       _v[i].set_end( rowt[i]);
     }
@@ -154,7 +197,7 @@ void SETFAMILY::flie_load(FILE2 *fp){
   }
 
   if ( _wfname ) wfp.open ( _wfname, "r");
-  if ( ERROR_MES ) return;
+  if ( _ERROR_MES ) return;
 
   fp->reset ();
   if ( _flag&(LOAD_NUM+LOAD_GRAPHNUM) ) fp->read_until_newline ();
@@ -207,7 +250,7 @@ void SETFAMILY::load (int flag , char *fname)
 	flie_load(&fp);
   fp.close ();     
 
-  if(ERROR_MES) EXIT;
+  if(_ERROR_MES) EXIT;
 
   print_mes (this, "setfamily: %s ,#rows %d ,#clms %d ,#eles %zd", _fname, _t, _clms, _eles);
 
@@ -217,7 +260,10 @@ void SETFAMILY::load (int flag , char *fname)
   sort ();
 
 	// end mark これいる？
-  FLOOP (i, 0, _t) _v[i].set_v(_v[i].get_t(),_clms); 
+	for(i=0;i<_t;i++){
+  //FLOOP (i, 0, _t) 
+	  _v[i].set_v(_v[i].get_t(),_clms); 
+	}
 
   _eles = _ele_end;
 
@@ -238,10 +284,11 @@ void SETFAMILY::replace_index(PERM *perm, PERM *invperm){
 					}
     		}
 		    // INVPERMUTE
-				char * cmmp; 
+				char * cmmp=NULL; 
 			  QUEUE Q;
 			  int i1,i2;
-				calloc2(cmmp,_t,EXIT);
+				// calloc2(cmmp,_t,EXIT);
+				cmmp = calloc2(cmmp,_t);
 				for( i1 = 0; i1 < _t ; i1++ ){
 					if ( cmmp[i1]==0 ){ 
 						Q = _v[i1]; 
@@ -259,10 +306,11 @@ void SETFAMILY::replace_index(PERM *perm, PERM *invperm){
 
 		  if ( _w ){
 		    // INVPERMUTE
-				char * cmmp; 
+				char * cmmp=NULL; 
  				WEIGHT *w;
  			  int i1,i2;
-				calloc2(cmmp,_t,EXIT);
+				//calloc2(cmmp,_t,EXIT);
+				cmmp = calloc2(cmmp,_t);
 				for( i1 = 0; i1 < _t ; i1++ ){
 					if ( cmmp[i1]==0 ){ 
 						w = _w[i1]; 
@@ -284,14 +332,16 @@ void SETFAMILY::replace_index(PERM *perm, PERM *invperm){
 void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag){
 
 			QUEUE Q;	
-			char  *cmm_p;
+			char  *cmm_p=NULL;
 			int cmm_i,cmm_i2;
 
 			qsort_perm__( _v, _t, rperm, flag); 
 
-			calloc2(cmm_p,_t,EXIT);
+			//calloc2(cmm_p,_t,EXIT);
+			cmm_p = calloc2(cmm_p,_t);
 
-			FLOOP(cmm_i,0,_t){ 
+			//FLOOP(cmm_i,0,_t){ 
+			for(cmm_i=0;cmm_i<_t;cmm_i++){
 				if ( cmm_p[cmm_i]==0 ){ 
 					Q = _v[cmm_i]; 
 					do{ 
@@ -307,8 +357,11 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag){
 			
 			if(_w){
 				WEIGHT *ww;
-				calloc2(cmm_p,_t,EXIT);
-				FLOOP(cmm_i,0,_t){ 
+				char  *cmm_p=NULL;
+				//calloc2(cmm_p,_t,EXIT);
+				cmm_p = calloc2(cmm_p,_t);
+				for(cmm_i=0;cmm_i<_t;cmm_i++){
+				//FLOOP(cmm_i,0,_t){ 
 					if ( cmm_p[cmm_i]==0 ){ 
 						ww = _w[cmm_i]; 
 						do{ 
@@ -324,7 +377,8 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag){
 			} 
 			
 		  PERM pp;
-			FLOOP(cmm_i,0,_t){ 
+			//FLOOP(cmm_i,0,_t){ 
+			for(cmm_i=0;cmm_i<_t;cmm_i++){
 				if ( rperm[cmm_i]< _t ){ 
 					pp = trperm[cmm_i]; 
 					do { 
