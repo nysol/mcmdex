@@ -21,24 +21,111 @@
 #include"stdlib2.hpp"
 //#include"filecount.hpp"
 
-class FILE2 {   // structure for fast file reader routines
+class OFILE2 {   
+	FILE *_fp;
+	char *_fname;
 
-  FILE *_fp;
-  char *_buf_org, *_buf, *_buf_end;   // head/current/tail of buffer
-  char _bit;
+	public:
+	OFILE2():_fname(NULL),_fp(NULL){}
+
+	OFILE2(char* fname):_fname(fname),_fp(NULL){
+		
+		if(_fname){
+			if(!(_fp=fopen(_fname,"w"))){
+				throw("file open error");
+			}
+		}
+	}
+	OFILE2(FILE *fp):_fname(NULL),_fp(fp){}
+
+	~OFILE2(){
+		if(_fp){ fclose(_fp);}
+	}
+	void open(char* fname){
+		_fname = fname;
+		if(fname){
+			if(!(_fp=fopen(_fname,"w"))){
+				throw("file open error");
+			}
+		}
+		else{
+			printf("filenotfound \n");
+		}
+	}
+
+	bool exist(){ return (_fp != NULL);}
+
+	void print(char *frm ,...){
+		va_list ap;
+		va_start(ap,frm);
+		vfprintf(_fp,frm,ap);	
+		va_end(ap);
+	}
+
+	void putc(char c){ fputc(c, _fp); }
+
+	void print(double f){
+		char s[200];
+		size_t i;
+		i = sprintf (s, "%f", f);
+		while ( s[i-1] == '0' ) i--;
+		if ( s[i-1] == '.' ) i--;
+		s[i] = 0;
+		//fprintf(_fp, s); //warning
+		fprintf(_fp, "%s" , s);
+	}
+
+	void print(int f){
+		fprintf(_fp,"%d",f);
+	}
+
+
+};
+
+class FILE2 {   
+
+	FILE *_fp;
+	char *_buf_org, *_buf, *_buf_end;   // head/current/tail of buffer
+	char _bit;
+	int _FILE_err;
+
+	/*  
+		signals  
+		0: for normal termination
+		1: read a number, then encountered a newline,
+		2: read a number, then encountered the end-of-file
+		5: read no number, and encountered a newline
+		6: read no number, and encountered the end-of-file
+	*/
+
 
 	void _fopen2(char *filename ,char *mode){
 		if(!(_fp=fopen(filename,mode))){
 			throw("file open error\n");
 		}
 	}
+	void _fclose2(){
+		if(_fp){
+			fclose(_fp);
+			_fp=NULL;
+		}
+		
+	}
 
 
 	public :
 
+	bool readOK(void){ return (_FILE_err&4)==0 ; } 
+	bool remain(void){ return (_FILE_err&3)==0 ; }
+	bool eof   (void){ return (_FILE_err&2)==0 ; } //<=noteof
+
+	bool getOK1(void){ return (_FILE_err&1); }
+	bool getOK(void) { return (_FILE_err&3); }
+	bool readNG(void){ return (_FILE_err&4); }
+
 	FILE2():
 		_fp(NULL),_buf_org(NULL),_buf(NULL)
-		,_buf_end(NULL),_bit(0){}
+		,_buf_end(NULL),_bit(0),_FILE_err(0){}
 		
 	void open(char *fname,char *rw) 
 	{
@@ -59,11 +146,11 @@ class FILE2 {   // structure for fast file reader routines
 		_bit=0;
 		*_buf=0;
 	}
-	
-	
 
 
 	bool exist_buf(){ return _buf!=NULL; }
+	bool exist(){ return _fp!=NULL; }
+
 	void flush_last (void);
 	void flush_ (void);
 	void clear(void){ free2 (_buf_org);}
@@ -71,10 +158,10 @@ class FILE2 {   // structure for fast file reader routines
 	bool needFlush(void){ return ( _buf-_buf_org ) > FILE2_BUFSIZ/2 ; }
 	
 	
-	static FILE2 * makeMultiFp(int size,FILE *a){
+	static FILE2 * makeMultiFp(int size,FILE2 &a){
 		FILE2 *mfp = new FILE2[size];
 		for(int i=0;i<size;i++){
-			mfp[i].open(a);
+			mfp[i].open(a._fp);
 		}
 		return mfp;
 	}
@@ -128,17 +215,14 @@ class FILE2 {   // structure for fast file reader routines
 
 	static void ARY_Write(char* fname, int *p ,size_t size){
 
-  	FILE *fp;
+  	OFILE2 fp(fname);
 		
-		fopen2(fp ,fname,"w",EXIT);
 		for( size_t i=0 ; i< size ;i++){
-			fprintf(fp, "%d " ,p[i]);
+			fp.print( "%d " ,p[i]);
 		}
-		fputc('\n',fp);
-		fclose(fp);
-
+		fp.putc('\n');
 	}
-	
+	/*
 	static void copy(char *f1, char *f2){
 
 		FILE *fp, *fp2;
@@ -155,7 +239,7 @@ class FILE2 {   // structure for fast file reader routines
 
 		fclose (fp);
 		fclose (fp2);
-	}
+	}*/
 
 	size_t ARY_Scan_INT(int d){
 
@@ -163,13 +247,13 @@ class FILE2 {   // structure for fast file reader routines
 
 		do{
 
-			do{ read_int(); } while((FILE_err&((d)*5))==5);
+			do{ read_int(); } while((_FILE_err&((d)*5))==5);
 	
-			if(RANGE(5+(int)(d),FILE_err,6))break;
+			if(RANGE(5+(int)(d),_FILE_err,6))break;
 	
 			(num)++;
 
-		}while((FILE_err&(3-(int)(d)))==0);
+		}while((_FILE_err&(3-(int)(d)))==0);
 	
 		return num;
 	}
@@ -180,13 +264,13 @@ class FILE2 {   // structure for fast file reader routines
 
 		do{
 
-			do{ read_double(); } while((FILE_err&((d)*5))==5);
+			do{ read_double(); } while((_FILE_err&((d)*5))==5);
 	
-			if(RANGE(5+(int)(d),FILE_err,6))break;
+			if(RANGE(5+(int)(d),_FILE_err,6))break;
 	
 			(num)++;
 
-		}while((FILE_err&(3-(int)(d)))==0);
+		}while((_FILE_err&(3-(int)(d)))==0);
 	
 		return num;
 	}
@@ -204,14 +288,14 @@ class FILE2 {   // structure for fast file reader routines
 
  			do{
  				f[i]= read_int();
-	 		}while((FILE_err&6)==4);
+	 		}while((_FILE_err&6)==4);
 
- 			if(FILE_err&2)break;
+ 			if(_FILE_err&2)break;
 	 	}
 	}
 
 	void close (){
-  	fclose2 (_fp);
+  	_fclose2();
  		free2 (_buf_org);
 	  _buf = _buf_end = 0;
 	}

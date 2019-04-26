@@ -193,7 +193,28 @@ int KGGRHFIL::setArgs(int argc, char *argv[]){
   _fname = argv[c];
   _output_fname = argv[c+1];
 
+	_FS.printMes("input-file %s, output-file %s\n", _fname, _output_fname);
+	_FS.printMes("degree threshold: ");
 
+  if ( _deg_lb>0 ) _FS.printMes(FSTAR_INTF" <", _deg_lb);
+  if ( _deg_lb>0 || _deg_ub < FSTAR_INTHUGE) _FS.printMes(" degree ");
+  if ( _deg_ub < FSTAR_INTHUGE ) _FS.printMes("< "FSTAR_INTF"  ", _deg_ub);
+
+  if ( _in_lb > 0 ) _FS.printMes( FSTAR_INTF" <", _in_lb);
+  if ( _in_lb > 0 || _in_ub <FSTAR_INTHUGE) _FS.printMes( " in-degree ");
+  if ( _in_ub < FSTAR_INTHUGE ) _FS.printMes("< "FSTAR_INTF"  ", _in_ub);
+  
+  if ( _out_lb > 0 ) _FS.printMes( FSTAR_INTF" <", _out_lb);
+  if ( _out_lb > 0 || _out_ub < FSTAR_INTHUGE)_FS.printMes(" out-degree ");
+  if ( _out_ub < FSTAR_INTHUGE ) _FS.printMes( "< "FSTAR_INTF"  ", _out_ub);
+
+  _FS.printMes("\n");
+  
+  if ( _table_fname )_FS.printMes("permutation-table-file %s\n", _table_fname);
+
+
+
+/*
   print_mesf (&_FS, "input-file %s, output-file %s\n", _fname, _output_fname);
   print_mesf (&_FS, "degree threshold: ");
 
@@ -212,7 +233,7 @@ int KGGRHFIL::setArgs(int argc, char *argv[]){
   print_mesf (&_FS, "\n");
   
   if ( _table_fname ) print_mesf (&_FS, "permutation-table-file %s\n", _table_fname);
-
+*/
 	if ( _root > 0 ){ 
 	  _fsFlag |= LOAD_INCSORT ;
 	  _fsFlag2|= LOAD_INCSORT ;
@@ -242,7 +263,9 @@ int KGGRHFIL::replaceDATA()
 		do {
 			l = ifp.read_int ();
 
-			if ( (FILE_err&4)==0 ){
+			//if ( (FILE_err&4)==0 ){
+			
+			if ( ifp.readOK() ){
 
 				ofp.print_int( table ? table[l]: l , i);
 				i = _sep;
@@ -256,11 +279,13 @@ int KGGRHFIL::replaceDATA()
 
 			x++;
 
-		} while ( (FILE_err&3)==0 );
+		//} while ( (FILE_err&3)==0 );
+		} while ( ifp.remain());
 
 		ofp.puts ( "\n");
 
-	} while ( (FILE_err&2)==0 );
+	//} while ( (FILE_err&2)==0 );
+	} while ( ifp.eof());
 
 	ifp.close ();
 	ofp.closew ();

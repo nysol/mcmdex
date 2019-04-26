@@ -78,16 +78,13 @@ class FILE_COUNT{
 		#endif
 
 	  kk += _rows_org;
-	  //realloc2 (_rw, kk+1, exit(1));
 	  _rw = realloc2(_rw, kk+1);
 
 		wfp.reset();
 	  wfp.ARY_Read(_rw, kk);
 
-		// ARY_MIN (w, i, _rw, 0, kk);
 		w = ARY_MIN ( _rw, 0, kk);
 		
-//		if ( w<0 ) _flag2 |= TRSACT_NEGATIVE;どこかでセットする
 		if ( w<0 ) { _negaFLG = true;}
 		wfp.close();
 		return kk;
@@ -125,8 +122,8 @@ class FILE_COUNT{
       	jj = fp->read_int();
       	item = (QUEUE_INT)jj;
 
-      	if ( (FILE_err&4)==0 && jj<TRSACT_MAXNUM && jj>=0 ){
-
+      	//if ( (FILE_err&4)==0 && jj<TRSACT_MAXNUM && jj>=0 ){
+				if ( fp->readOK() && jj<TRSACT_MAXNUM && jj>=0 ){
        		ENMAX (_clms_org, item+1);  // update #items
         	//reallocx (jump, jump_end, k, 0, goto ERR);
         	jump = reallocx(jump, &jump_end, k, 0);
@@ -143,7 +140,7 @@ class FILE_COUNT{
         	_clmt[item]++;
 	      }
 
-  		} while ( (FILE_err&3)==0);
+  		} while ( fp->remain() );
 
        // count/weight-sum for the transpose mode
 			//reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
@@ -157,7 +154,7 @@ class FILE_COUNT{
 
       _cw[_rows_org] = s;    // sum up positive weights
 
-			if ( k==0 && FILE_err&2 ) break;
+			if ( k==0 && fp->eof() ) break;
 			_rows_org++;  // increase #transaction
 
     	
@@ -173,7 +170,7 @@ class FILE_COUNT{
       }
 
 
-		} while ( (FILE_err&2)==0);
+		} while ( fp->eof() );
 
 		free2 (jump);
     // swap the variables in transpose mode
@@ -220,7 +217,7 @@ class FILE_COUNT{
       	jj = fp->read_int();
       	item = (QUEUE_INT)jj;
 
-      	if ( (FILE_err&4)==0 && jj<TRSACT_MAXNUM && jj>=0 ){
+      	if ( fp->readOK() && jj<TRSACT_MAXNUM && jj>=0 ){
 
        		ENMAX (_clms_org, item+1);  // update #items
         	// reallocx (jump, jump_end, k, 0, goto ERR);
@@ -242,14 +239,14 @@ class FILE_COUNT{
           _cw[item] += MAX(w,0);    // sum up positive weights
 	      }
 
-  		} while ( (FILE_err&3)==0);
+  		} while ( fp->remain());
 
        // count/weight-sum for the transpose mode
 			//reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
 			_rowt = reallocx (_rowt, &_row_end, _rows_org, 0);
     	_rowt[_rows_org] = k;
 
-			if ( k==0 && FILE_err&2 ) break;
+			if ( k==0 && fp->eof() ) break;
 
 			_rows_org++;  // increase #transaction
     
@@ -263,7 +260,7 @@ class FILE_COUNT{
       		_clmt[jump[i0]]--; 
       	}
       }
-		} while ( (FILE_err&2)==0);
+		} while ( fp->eof() );
 
 		free2 (jump);
 		
@@ -550,14 +547,18 @@ class FILE_COUNT{
 			
 				for(int i0=0 ; i0 <skip_clms ; i0++){
 					rfp->read_double (); 
-					if ( FILE_err&3 ) goto ROW_END; 
+					//if ( FILE_err&3 ) goto ROW_END;  // ここあってる？
+					if ( rfp->getOK()) goto ROW_END;  // ここあってる？
+
 				}
 			
 				x = (FILE_COUNT_INT) rfp->read_int (); //printf ("%d\n", FILE_err);
-				if ( FILE_err&3 ) goto ROW_END;
+				//if ( FILE_err&3 ) goto ROW_END; // ここあってる？
+				if ( rfp->getOK() ) goto ROW_END; // ここあってる？
 			
       	y = (FILE_COUNT_INT) rfp->read_int (); 
-      	if ( FILE_err&4 ) goto ROW_END;
+      	//if ( FILE_err&4 ) goto ROW_END; // ここあってる？
+				if ( rfp->readNG() ) goto ROW_END; // ここあってる？
 
       	rfp->read_until_newline ();
     	}
@@ -566,16 +567,19 @@ class FILE_COUNT{
       	if ( k==0 ) {
 					for(int i0=0 ; i0 <skip_clms ; i0++){
       			rfp->read_double (); 
-      			if (FILE_err&3) goto ROW_END; 
+      			//if (FILE_err&3) goto ROW_END; 
+      			if (rfp->getOK()) goto ROW_END; 
       		}
       	}
 				x = t;
       	y = (FILE_COUNT_INT)rfp->read_int (); 
-      	if (FILE_err&4 ) goto ROW_END;
+      	//if (FILE_err&4 ) goto ROW_END;
+				if ( rfp->readNG() ) goto ROW_END; // ここあってる？
 
 				for(int i0=0 ; i0 <int_clms ; i0++){
       		rfp->read_double (); 
-      		if (FILE_err&3 ) break; 
+      		//if (FILE_err&3 ) break; 
+      		if ( rfp->getOK() ) break; 
       	}
 				k++;
     	}
@@ -587,7 +591,6 @@ class FILE_COUNT{
 	    if ( y >= _clms ){
   	    _clms = y+1;
     	  if ( fc ) {
-    	  	//reallocx (_clmt, _clm_end, _clms, 0, goto END);
     	  	_clmt = reallocx(_clmt, &_clm_end, _clms, 0);
     	  }
 			}
@@ -595,7 +598,6 @@ class FILE_COUNT{
 			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && x >= _clms ){
       	_clms = x+1;
 				if ( fc ) { 
-					//reallocx (_clmt, _clm_end, _clms, 0, goto END);
 					_clmt = reallocx (_clmt, &_clm_end, _clms, 0);
 				}
 	    }
@@ -603,7 +605,6 @@ class FILE_COUNT{
  			if ( x >= _rows ){
       	_rows = x+1;
 				if ( fr ) { 
-					//reallocx (_rowt, _row_end, _rows, 0, goto END);
 					_rowt = reallocx (_rowt, &_row_end, _rows, 0);
 				}
 			}
@@ -611,7 +612,6 @@ class FILE_COUNT{
 			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && y >= _rows ){ // for undirected edge version
       	_rows = y+1;
 	      if ( fr ) { 
-	      	//reallocx (_rowt, _row_end, _rows, 0, goto END);
 	      	_rowt = reallocx (_rowt, &_row_end, _rows, 0);
 	      }
     }
@@ -628,8 +628,8 @@ class FILE_COUNT{
 
     ROW_END:;
 
-    if ( !fe && (FILE_err&1) ){
-
+    //if ( !fe && (FILE_err&1) ){
+    if ( !fe && rfp->getOK1() ){
       t++;
 
       if ( flag&(LOAD_RC_SAME+LOAD_EDGE) ){
@@ -654,7 +654,7 @@ class FILE_COUNT{
     	break;
     }
 
-  } while ( (FILE_err&2)==0 );
+  } while ( rfp->eof());
 
   if ( fc ){ 
   	//reallocx (_clmt, _clm_end, _clms, 0, goto END);

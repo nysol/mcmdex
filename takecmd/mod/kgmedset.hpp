@@ -87,7 +87,8 @@ class kgClusterForCC{
 
 			_unify_set(x, y);
 
-		} while ( (FILE_err&2)==0 );
+		//} while ( (FILE_err&2)==0 );
+		} while ( fp->eof());
 		
 	}
 
@@ -144,7 +145,8 @@ class kgClusterForCC{
   	    if ( _mark[x] == x ){ _cnt[y]++; }
 				else if ( _mark[y] == y ){ _cnt[x]++; }
 
-	    } while ( (FILE_err&2)==0 );
+	    //} while ( (FILE_err&2)==0 );
+			} while ( fp->eof());
 
 		} while (flag);	
 
@@ -152,7 +154,7 @@ class kgClusterForCC{
 	}
 
 	/* output clusters to the output file */
-	void print(FILE *ofp, int num)
+	void print(OFILE2 &ofp, int num)
 	{
 
   	FSTAR_INT x, c;
@@ -178,12 +180,12 @@ class kgClusterForCC{
 
   	  while (1){
 
-    	  fprintf (ofp, ""FSTAR_INTF" ", x);
+    	  ofp.print(""FSTAR_INTF" ", x);
 				if ( _set[x] == x ) break;
 				x = _set[x];
 
 			}
-			fputs ("\n", ofp);
+			ofp.putc('\n');
 		}
 		return;
 	}
@@ -194,7 +196,7 @@ class kgClusterForCC{
 class KGMEDSET{
 
   FILE2 _fp;
-	FILE *_ofp; // org II._fp
+	OFILE2 _ofp; // org II._fp
 
 	int _problem;
 
@@ -234,7 +236,7 @@ class KGMEDSET{
 
 	KGMEDSET():
 		_problem(0),_fsFlag(0),_input_fname(NULL),_dir(0),_num(0),_th(0),
-		_output_fname(NULL),_ofp(NULL),_set_fname(NULL),_ERROR_MES(NULL){}
+		_output_fname(NULL),_set_fname(NULL),_ERROR_MES(NULL){}
 		
 	int run (int argc, char *argv[]);
 	static int mrun(int argc, char *argv[]);

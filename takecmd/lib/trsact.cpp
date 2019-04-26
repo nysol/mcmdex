@@ -219,7 +219,8 @@ void TRSACT::file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwf
     x = *t;
     FILE_err_ = fp->read_item (iwfname?&wfp:NULL, &x, &y, &w, fc, _flag);
 
-    if ( FILE_err&4 ) goto LOOP_END;
+    //if ( FILE_err&4 ) goto LOOP_END;
+    if ( fp->readNG() ) goto LOOP_END;
 
     if ( C->get_rperm(x)<=C->rows() && C->get_cperm(y)<=_clms_end ){
 
@@ -230,13 +231,16 @@ void TRSACT::file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwf
 
     }
 
-    if ( FILE_err&3 ){
+    //if ( FILE_err&3 ){
+    if ( fp->getOK() ){
+
       LOOP_END:;
       (*t)++;
       // even if next weight is not written, it is the rest of the previous line
       fc = FILE_err_? 0: 1; FILE_err_=0; 
     }
-  } while ( (FILE_err&2)==0 );
+  //} while ( (FILE_err&2)==0 );
+	} while ( fp->eof() );
 
 	_T.allvvInit();
 

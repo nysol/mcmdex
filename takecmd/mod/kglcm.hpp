@@ -177,7 +177,7 @@ class KGLCM{
 
 	  _TT.resizeOQ(_TT.get_clms(),0);
 
-		print_mesf (&_TT, "separated at %d\n", _TT.get_sep());
+		_TT.printMes( "separated at %d\n", _TT.get_sep());
 
 		if ( !(_TT.exist_sc()) ) _TT.calloc_sc( _TT.get_clms()+2);
 		
@@ -191,7 +191,7 @@ class KGLCM{
 
 		  if ( _SG.edge_t() < _TT.get_clms() ){
     		// dmyセットすべき？
-      	print_mesf (&_TT, "#nodes in constraint graph is smaller than #items\n");
+      	_TT.printMes( "#nodes in constraint graph is smaller than #items\n");
 	    }
 
   	  if ( _TT.exist_perm() ){

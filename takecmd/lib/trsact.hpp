@@ -621,6 +621,15 @@ class TRSACT {
 		}
 	}
 
+		void printMes(char *frm ,...){
+
+			if( _flag&1 ){
+				va_list ap;
+				va_start(ap,frm);
+				fprintf(stderr,frm,ap);
+				va_end(ap);
+			}
+		}
 	
 	
 } ;

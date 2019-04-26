@@ -88,7 +88,7 @@ class KGSSPC{
 	void *iter (void *p);
 
 	WEIGHT comp ( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq);
-	void comp2 (QUEUE_ID i, QUEUE_ID x, WEIGHT c, WEIGHT wi, WEIGHT wx, double sq, QUEUE_INT *cnt, FILE *fp, QUEUE *itemset, int core_id);
+	void comp2 (QUEUE_ID i, QUEUE_ID x, WEIGHT c, WEIGHT wi, WEIGHT wx, double sq, QUEUE_INT *cnt, OFILE2 *fp, QUEUE *itemset, int core_id);
 
 	void SSPCCORE();
 	void list_comp();

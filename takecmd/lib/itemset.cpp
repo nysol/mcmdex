@@ -109,12 +109,13 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
   _item_max_org = (QUEUE_INT)item_max_org;
 
   if ( fname ){
-    if ( strcmp (fname, "-") == 0 ) _fp = stdout;
-    else fopen2 (_fp, fname, (_flag&ITEMSET_APPEND)?"a":"w", goto ERR);
+  	// バッファ確保しないほうがいい？
+    if ( strcmp (fname, "-") == 0 ) _fp.open(stdout);
+    else{
+    	if(_flag&ITEMSET_APPEND){ _fp.open(fname,"a");}
+    	else                    { _fp.open(fname,"w");}
+    }
   } 
-  else {	
-  	_fp = 0;
-  }
 
   if ( _flag&ITEMSET_ITEMFRQ ){
 	  _item_frq = malloc2(_item_frq, item_max+2);
@@ -191,7 +192,6 @@ void ITEMSET::end (){
   }
   delete [] _itemtopk; 
 
-  fclose2 (_fp);
   mfree (_sc, _sc2, _item_frq, _itemflag, _perm, _set_weight, _set_occ, _itemtopk_ary);
   
   if ( _multi_fp ){
@@ -262,11 +262,18 @@ void ITEMSET::last_output (){
   }
 
   if ( _topk_k > 0 ){  // output value of the kth-best solution
+
+		OFILE2 ofp(stdout);
     if ( _topk.end() ){
       i = _topk.findmin_head();
-      fprint_WEIGHT (stdout, _topk.H(i)*_topk_sign);
-    } else fprintf (stdout, LONGF, _topk_frq);
-    printf ("\n");
+      //fprint_WEIGHT (stdout, _topk.H(i)*_topk_sign);
+      ofp.print(_topk.H(i)*_topk_sign);
+      ofp.print("\n");
+    }
+    else{
+    	ofp.print(LONGF, _topk_frq);
+    	ofp.print("\n");
+    }
 
     goto END;
   }
@@ -423,10 +430,10 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *o
     return;
   }
   
-  if ( _fp ){
+  if ( fp ){
     if ( _flag&ITEMSET_PRE_FREQ ) output_frequency ( frq, pfrq, core_id);
     if ( (_flag & ITEMSET_NOT_ITEMSET) == 0 ){
-      //FLOOP (i, 0, itemset->get_t()){
+
 			for(i=0;i<itemset->get_t();i++){
         e = itemset->get_v(i);
         fp->print_int ( _perm? _perm[e]: e, i==0? 0: _separator);
@@ -534,7 +541,7 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE_IN
     return;
   }
   
-  if ( _fp ){
+  if ( fp ){
     if ( _flag&ITEMSET_PRE_FREQ ) output_frequency ( frq, pfrq, core_id);
     if ( (_flag & ITEMSET_NOT_ITEMSET) == 0 ){
       //FLOOP (i, 0, itemset->get_t()){
@@ -603,7 +610,7 @@ void ITEMSET::solution (QUEUE *occ, int core_id){
 
   if ( _itemset.get_t() > _ub ) return;
   if ( _flag & ITEMSET_ALL ){
-    if ( _fp || _topk.end() ){
+    if ( _fp.exist() || _topk.end() ){
     	solution_iter ( occ, core_id);
     }
     else {
@@ -697,7 +704,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
     //FLOOP (i, 0, _itemset.get_t()-1){
 	  for(i=0;i< _itemset.get_t()-1;i++){
 
-      if ( _frq/_set_weight[i] >= _setrule_lb && _fp ){
+      if ( _frq/_set_weight[i] >= _setrule_lb && _fp.exist() ){
         _sc[i]++;
         if ( _flag  & ITEMSET_SC2)     _sc2[(QUEUE_INT)_frq]++;  // histogram for LAMP
 
@@ -778,7 +785,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
       }
     } 
     else {  // usual mining (not rule mining)
-      if ( _fp && (_flag&(ITEMSET_RFRQ+ITEMSET_RINFRQ))){
+      if ( _fp.exist() && (_flag&(ITEMSET_RFRQ+ITEMSET_RINFRQ))){
         _multi_fp[core_id].print_real ( d, _digits, '[');
         _multi_fp[core_id].print_real ( _prob, _digits, ',');
         _multi_fp[core_id].putc ( ']');
@@ -911,12 +918,12 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ
     return;
   }
   
-  if ( _fp ){
+  if ( fp ){
 
     if ( _flag&ITEMSET_PRE_FREQ ) output_frequency ( frq, pfrq, core_id);
 
     if ( (_flag & ITEMSET_NOT_ITEMSET) == 0 ){
-      //FLOOP (i, 0, itemset->get_t()){
+
       for(i=0;i<itemset->get_t();i++){
         e = itemset->get_v(i);
         fp->print_int ( _perm? _perm[e]: e, i==0? 0: _separator);
@@ -977,7 +984,7 @@ void ITEMSET::solution (KGLCMSEQ_QUE *occ, int core_id){
 
   if ( _itemset.get_t() > _ub ) return;
   if ( _flag & ITEMSET_ALL ){
-    if ( _fp || _topk.end() ) solution_iter ( occ, core_id);
+    if ( _fp.exist() || _topk.end() ) solution_iter ( occ, core_id);
     else {
       s=1; 
       //FLOOP (i, 0, _add.get_t()+1){
@@ -1077,14 +1084,14 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
   if ( !(_flag&ITEMSET_IGNORE_BOUND) && (_pfrq < _posi_lb || _pfrq > _posi_ub || (_frq - _pfrq) > _nega_ub || (_frq - _pfrq) < _nega_lb) ) return;
 
   if ( _flag&ITEMSET_SET_RULE ){  // itemset->itemset rule for sequence mining
-    //FLOOP (i, 0, _itemset.get_t()-1){
+
     for(i=0;i<_itemset.get_t()-1;i++) {
 
-      if ( _frq/_set_weight[i] >= _setrule_lb && _fp ){
+      if ( _frq/_set_weight[i] >= _setrule_lb && _fp.exist() ){
         _sc[i]++;
         if ( _flag  & ITEMSET_SC2)     _sc2[(QUEUE_INT)_frq]++;  // histogram for LAMP
         if ( _flag  & ITEMSET_PRE_FREQ ) output_frequency ( _frq, _pfrq, core_id);
-        //FLOOP (t, 0, _itemset.get_t()){
+
 		    for(t=0;t<_itemset.get_t();t++) {
 
           _multi_fp[core_id].print_int ( _itemset.get_v(t), t?_separator:0);
@@ -1165,7 +1172,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
         }
       }
     } else {  // usual mining (not rule mining)
-      if ( _fp && (_flag&(ITEMSET_RFRQ+ITEMSET_RINFRQ))){
+      if ( _fp.exist() && (_flag&(ITEMSET_RFRQ+ITEMSET_RINFRQ))){
         _multi_fp[core_id].print_real ( d, _digits, '[');
         _multi_fp[core_id].print_real ( _prob, _digits, ',');
         _multi_fp[core_id].putc ( ']');

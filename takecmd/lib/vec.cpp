@@ -208,7 +208,9 @@ void SETFAMILY::flie_load(FILE2 *fp){
     } else {
       x = t;
       FILE_err_ = fp->read_item ( _wfname?&wfp:NULL, &x, &y, &z, fc, flag2);
-      if ( FILE_err&4 ) goto LOOP_END;
+      //if ( FILE_err&4 ) goto LOOP_END;
+      if ( fp->readNG() ) goto LOOP_END;
+
     }
 
     if ( y >= _clms || x >= _t ) continue;
@@ -225,13 +227,15 @@ void SETFAMILY::flie_load(FILE2 *fp){
     }
     if ( !(_flag&LOAD_ELE) ){
       fc = 0;
-      if ( FILE_err&3 ){
+      //if ( FILE_err&3 ){
+      if ( fp->getOK() ){
         LOOP_END:;
         t++; if ( t >= _t ) break;
         fc = FILE_err_? 0: 1; FILE_err_=0; // even if next weight is not written, it is the rest of the previous line
       }
     }
-  } while ( (FILE_err&2)==0 );
+//  } while ( (FILE_err&2)==0 );
+  } while ( fp->eof());
   if ( _wfname ) wfp.close ();
 
 }
@@ -252,10 +256,10 @@ void SETFAMILY::load (int flag , char *fname)
 
   if(_ERROR_MES) EXIT;
 
-  print_mes (this, "setfamily: %s ,#rows %d ,#clms %d ,#eles %zd", _fname, _t, _clms, _eles);
+  printMes("setfamily: %s ,#rows %d ,#clms %d ,#eles %zd", _fname, _t, _clms, _eles);
 
-  if (_wfname ) print_mes (this, " ,weightfile %s", _wfname);
-  print_mes (this, "\n");
+  if (_wfname ) printMes(" ,weightfile %s", _wfname);
+  printMes("\n");
  
   sort ();
 

@@ -104,7 +104,7 @@ class ITEMSET{
   WEIGHT *_item_frq;    // frequency of each item
   LONG *_sc, *_sc2;    // #itemsets classified by the sizes / frequencies
   // void *_X;  // pointer to the original data
-  FILE *_fp;    // file pointer to the output file
+  FILE2 _fp;    // file pointer to the output file
   QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
   WEIGHT *_set_weight;  // the frequency of each prefix of current itemset
   QUEUE **_set_occ;    // the occurrence of each prefix of current itemset
@@ -191,7 +191,7 @@ class ITEMSET{
 		_separator(' '),_digits(4),
 		_topk_sign(1) ,_itemtopk_sign(1),  // initialization ; max topk
 		_itemflag(NULL),_perm(NULL),_item_frq(NULL),
-		_sc(NULL),_sc2(NULL),_fp(NULL),
+		_sc(NULL),_sc2(NULL),
 		_itemtopk_ary(NULL),
   	_set_weight(NULL),_set_occ(NULL),_patn(NULL),
 		_multi_outputs(NULL),_multi_outputs2(NULL),

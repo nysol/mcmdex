@@ -82,10 +82,11 @@ void KGMEDSET::read_file(){
     do {   
       x = (FSTAR_INT)_fp.read_int();
 
-      if ( FILE_err&4 ) break;
+      //if ( FILE_err&4 ) break;
+      if ( _fp.readNG() ) break;
 
       if ( x<0 || x >= _FS.get_out_node_num() ){
-        print_err ("set ID out of bound "FSTAR_INTF">"FSTAR_INTF"\n", x, _FS.get_out_node_num());
+        print_err("set ID out of bound "FSTAR_INTF">"FSTAR_INTF"\n", x, _FS.get_out_node_num());
         exit(0);
       }
 
@@ -97,16 +98,16 @@ void KGMEDSET::read_file(){
         }
       }
       s++;
-    } while ( (FILE_err&3)==0 );
+    //} while ( (FILE_err&3)==0 );
+    } while ( _fp.remain());
 
     if ( _problem & MEDSET_ALLNUM ){
 
 			for(i=0;i< _FS.get_in_node_num();i++){
-
-        fprintf (_ofp, "%.2f ", ((double)cnt[i])/(double)s);
+        _ofp.print("%.2f ", ((double)cnt[i])/(double)s);
         cnt[i] = 0;
       }
-      fprintf (_ofp, "\n");
+      _ofp.print("\n");
       continue;
 
     }
@@ -125,14 +126,15 @@ void KGMEDSET::read_file(){
         } 
         else if ( ((double)que[i*2])/(double)s < _th ) break;
 
-        if ( _problem & MEDSET_NO_HIST ) fprintf (_ofp, ""FSTAR_INTF" ", que[i*2+1]);
-        else if ( _problem & MEDSET_RATIO ) fprintf (_ofp, "("FSTAR_INTF":%.2f) ", que[i*2+1], ((double)que[i*2])/(double)s);
-        else fprintf (_ofp, ""FSTAR_INTF" ", que[i*2+1]);
+        if ( _problem & MEDSET_NO_HIST )    _ofp.print( ""FSTAR_INTF" ", que[i*2+1]);
+        else if ( _problem & MEDSET_RATIO ) _ofp.print( "("FSTAR_INTF":%.2f) ", que[i*2+1], ((double)que[i*2])/(double)s);
+        else _ofp.print(""FSTAR_INTF" ", que[i*2+1]);
       }
     }
-    fprintf (_ofp, "\n");
+    _ofp.print("\n");
 
-  } while ( (FILE_err&2)==0 );
+	// } while ( (FILE_err&2)==0 );
+  } while ( _fp.eof());
 
   END:;
   mfree (cnt, que);
@@ -142,12 +144,13 @@ void KGMEDSET::read_file(){
 
 /*******************************************************************/
 int KGMEDSET::run (int argc, char *argv[]){
-
+	
   if( setArgs ( argc, argv) ) return 1;
 
+	try{
   _fp.open( _input_fname, "r");
-  fopen2(_ofp, _output_fname, "w", goto END);
-
+  //fopen2(_ofp, _output_fname, "w", goto END);
+	_ofp.open(_output_fname);
 
 	// うえ２つは別にしたほうが
   if ( _problem & MEDSET_CC ){
@@ -165,14 +168,22 @@ int KGMEDSET::run (int argc, char *argv[]){
 		_fsFlag |= LOAD_BIPARTITE;
   	_FS.setParams(_fsFlag,_set_fname,1);
   	if ( _FS.load() ) return 1;
-		print_mesf (&_FS, "medset: cluster-file= %s set-file= %s threshold= %f output-file= %s\n", _input_fname, _set_fname, _th, _output_fname);
+
+		_FS.printMes("medset: cluster-file= %s set-file= %s threshold= %f output-file= %s\n", _input_fname, _set_fname, _th, _output_fname);
+
   	read_file();
   }
 
   END:;
 
   _fp.close();
-  fclose2 (_ofp);
+	}catch(const char *mm){
+		printf("%s\n",mm);
+	}catch(...){
+		printf("unknown\n");
+		
+	}  
+
 
   return (_ERROR_MES?1:0);
 }

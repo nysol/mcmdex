@@ -78,10 +78,10 @@ class FSTAR{
 	int  eval_edge ( FSTAR_INT x, FSTAR_INT y, WEIGHT w);
 
 
-	FILE *  open_write_file ( char *fname);//privateでOK?
+	//FILE *  open_write_file ( char *fname);//privateでOK?
 		
-	void write_graph_ID (FILE *fp, FILE *fp2, FSTAR_INT ID);//privateでOK?
-	int  write_graph_item (FSTAR_INT x, FSTAR_INT y, WEIGHT w, FILE *fp, FILE *fp2, int *row, FSTAR_INT *prv);//privateでOK?
+	void write_graph_ID (OFILE2 &fp, OFILE2 &fp2, FSTAR_INT ID);//privateでOK?
+	int  write_graph_item (FSTAR_INT x, FSTAR_INT y, WEIGHT w, OFILE2 &fp, OFILE2 &fp2, int *row, FSTAR_INT *prv);//privateでOK?
 
 		
 	void edge_w_pow(LONG l,double ratio){
@@ -101,7 +101,15 @@ class FSTAR{
 		return _edge_w[l]* _edge_w[l]; 
 	}
 
+	double eWeight(LONG l){ 
+		if(_edge_w){
+			return _edge_w[l];
+		}
+		return 0;
+	}
 
+
+	void writeHeadInfo(OFILE2 &fp);
 
 
 	public:
@@ -205,18 +213,19 @@ class FSTAR{
 
 		  if ( discret ){
   		  xx = 0;
-    		//FLOOP (l, 0, _out_node_num){
+
 		    for(l=0;l<_out_node_num;l++){
 	      	ll = _fstar[l]; 
   	    	_fstar[l] =  xx;
 
-			    //FLOOP (x, ll, _fstar[l+1] ){
 			    for(x=ll;x<_fstar[l+1];x++){
+
     			  if ( _edge_w[x] >= th2 ){
     			  	_edge[xx] = _edge[x];
     			  	_edge_w[xx] = _edge_w[x];
 							xx++;
     		  	}
+
       		}
 		  	}
     		_fstar[l] = xx;
@@ -225,14 +234,36 @@ class FSTAR{
 		}
 
 		int load();
-		int  get_flag(void){ return _flag;}
+		//int  get_flag(void){ return _flag;}
 		void set_flag(int flag){ _flag=flag;}
+
+
+		void printMes(char *frm ,...){
+
+			if( _flag&1 ){
+				va_list ap;
+				va_start(ap,frm);
+				fprintf(stderr,frm,ap);
+				va_end(ap);
+			}
+		}
+
+
 
 		void write_table_file (char *fname);
 
 		static LONG write_graph_operation (FSTAR *F1, FSTAR *F2, char *fname, char *fname2, int op, double th);
-
 		LONG write_graph (char *fname, char *fname2);
+
+
+		static FSTAR_INT maxNodeNum(FSTAR *F1, FSTAR *F2){
+			FSTAR_INT mv = F1->_out_node_num;
+			if(mv < F1->_in_node_num) { mv = F1->_in_node_num; }
+			if(mv < F2->_out_node_num){ mv = F2->_out_node_num;}
+			if(mv < F2->_in_node_num) { mv = F2->_in_node_num; }
+			return mv;
+		}
+		
 		FSTAR_INT get_in_node_num(void){return _in_node_num;}
 		FSTAR_INT get_out_node_num(void){return _out_node_num;}
 		FSTAR_INT get_fstar(LONG l){ return _fstar[l];}

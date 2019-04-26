@@ -38,7 +38,7 @@ int SGRAPH::loadEDGE(int flag ,char* fname){
   _perm = _edge.get_rperm(); 
   _edge.set_rperm(NULL);
 
-  print_mes (this, "sgraph: %s ,#nodes %d ,#edges %zd ,#arcs %zd\n", _fname, _edge.get_t(), _edge.get_eles()/2,  _edge.get_eles());
+  printMes("sgraph: %s ,#nodes %d ,#edges %zd ,#arcs %zd\n", _fname, _edge.get_t(), _edge.get_eles()/2,  _edge.get_eles());
 
 	return 0;
 }

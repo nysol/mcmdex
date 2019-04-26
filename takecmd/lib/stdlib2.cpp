@@ -30,23 +30,4 @@ void mfree_(void *x, ...){
   va_end (argp);
 }
 
-// print a real number in a good style 
-// file2へもっていく
-void fprint_real (FILE *fp, double f){
-  char s[200];
-  size_t i;
-  i = sprintf (s, "%f", f);
-  while ( s[i-1] == '0' ) i--;
-  if ( s[i-1] == '.' ) i--;
-  s[i] = 0;
-  fprintf (fp, s);
-}
-
-void fprint_WEIGHT (FILE *fp, WEIGHT f){
-#ifdef WEIGHT_DOUBLE
-  fprint_real (fp, f);
-#else
-  fprintf(fp,"%d",f);
-#endif
-}
 

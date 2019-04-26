@@ -223,7 +223,7 @@ typedef struct {
   //PROBLEM *_PP;
   QUEUE_INT **_o;
   WEIGHT *_w;
-  FILE *_fp;
+  OFILE2 *_fp;
   int _core_id;
   int *_lock_i;
 } SSPC_MULTI_CORE;
@@ -312,7 +312,7 @@ void KGSSPC::output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset,
 /* output a pair if it is in the similarity */
 void KGSSPC::comp2 (
 	QUEUE_ID i, QUEUE_ID x, WEIGHT c, WEIGHT wi, WEIGHT wx, 
-	double sq, QUEUE_INT *cnt, FILE *fp, QUEUE *itemset, 
+	double sq, QUEUE_INT *cnt, OFILE2 *fp, QUEUE *itemset, 
 	int core_id)
 {
 
@@ -345,7 +345,7 @@ void KGSSPC::comp2 (
     if ( _output_fname2 && frq >= _th2 ){
 
       SPIN_LOCK(_II._multi_core, _II._lock_output);
-      fprintf (fp, "%d %d\n", x_, i_);
+      fp->print("%d %d\n", x_, i_);
       SPIN_UNLOCK(_II._multi_core, _II._lock_output);
 
     }
@@ -377,7 +377,7 @@ void KGSSPC::comp2 (
       if ( _output_fname2 ){
         if ( c >= f2_ ){
           SPIN_LOCK(_II.get_multi_core(), _II.get_lock_output());
-          fprintf (fp, "%d %d\n", x_, i_);
+          fp->print("%d %d\n", x_, i_);
           SPIN_UNLOCK(_II.get_multi_core(), _II.get_lock_output());
         }
         f_ = (c >= f1_);
@@ -391,7 +391,7 @@ void KGSSPC::comp2 (
 
     if ( _output_fname2 && f_ ){
       SPIN_LOCK(_II.get_multi_core(), _II.get_lock_output());
-      fprintf (fp, "%d %d\n", i_, x_);
+      fp->print("%d %d\n", i_, x_);
       SPIN_UNLOCK(_II.get_multi_core(), _II.get_lock_output());
     }
 
@@ -407,12 +407,13 @@ void KGSSPC::list_comp(){
   QUEUE_INT *x, *y, *yy;
   WEIGHT *xw=0, *yw=0, c, *w, wx, wi;
   FILE2 fp;
-  FILE *fp2 = NULL;
+  OFILE2 fp2;
+  
   int cnt=0;
   PERM *p = _II.get_perm();
 
   _II.set_perm(NULL); // for outputting usual numbers in ITEMSET_output_itemset, that are not items (o.w., will be permuted by II->perm)
-  if ( _output_fname2 ) fopen2 (fp2, _output_fname2, "w", EXIT);
+  if ( _output_fname2 ) fp2.open(_output_fname2);
 
   _II.set_itemset_t(2);
 
@@ -508,11 +509,10 @@ void KGSSPC::list_comp(){
       xw++;
       END:;
     }
-    comp2( i, j, c, wi, wx, sqrt(w[i]), &cnt, fp2, _II.getp_itemset(), 0);
+    comp2( i, j, c, wi, wx, sqrt(w[i]), &cnt, &fp2, _II.getp_itemset(), 0);
 
-  } while ( (FILE_err&2)==0 );
-  fp.close();
-  fclose2 (fp2);
+  } while ( fp.eof() );
+
   _II.set_perm(p);
 
 }
@@ -524,7 +524,7 @@ void *KGSSPC::iter (void *p){
   int core_id   = SM->_core_id;
   QUEUE_INT **o = SM->_o;
   WEIGHT *w     = SM->_w;
-  FILE *fp      = SM->_fp;
+  OFILE2 *fp      = SM->_fp;
 
   char *mark = NULL;
 
@@ -757,7 +757,7 @@ void KGSSPC::SSPCCORE(){
 	#endif
 		
   SSPC_MULTI_CORE *SM = NULL;
-  FILE *fp = NULL;  // file pointer for the second output file
+  OFILE2 fp;  // file pointer for the second output file
 
   QUEUE_ID i; 
   QUEUE_ID begin = (_problem&(SSPC_POLISH+SSPC_POLISH2))?0:(_dir>0?_TT.get_sep():0);
@@ -765,7 +765,7 @@ void KGSSPC::SSPCCORE(){
   WEIGHT *w;
   int cnt;
 
-  if ( _output_fname2 ) fopen2 (fp, _output_fname2, "w", EXIT);
+  if ( _output_fname2 ) fp.open(_output_fname2);
 
   // initialization
   //calloc2 (w, _TT.get_clms()*2, EXIT);
@@ -799,7 +799,7 @@ void KGSSPC::SSPCCORE(){
 	for (i=_II.get_multi_core(); (i--) > 0 ; ){
     SM[i]._o = o;
     SM[i]._w = w;
-    SM[i]._fp = fp;
+    SM[i]._fp = &fp;
     SM[i]._core_id = i;
     SM[i]._lock_i = &begin;
     
@@ -826,7 +826,6 @@ void KGSSPC::SSPCCORE(){
     }
   }
   mfree (w, o, SM);
-  fclose2 (fp);
 }
 
 
@@ -873,7 +872,9 @@ int KGSSPC::run (int argc ,char* argv[]){
 
 	preALLOC();
 
-  print_mesf (&_TT, "separated at %d\n", _TT.get_sep());
+  //print_mesf (&_TT, "separated at %d\n", _TT.get_sep());
+	
+	_TT.printMes("separated at %d\n", _TT.get_sep());
 
   _buf_end = 2;
   _position_fname = (char *)_II.get_perm(); _II.set_perm(NULL);
@@ -896,7 +897,7 @@ int KGSSPC::run (int argc ,char* argv[]){
 	_ip_l1 = _II.get_solutions();
 
   if ( _II.get_topk_end() > 0 || _II.get_itemtopk_end ()> 0 ) _II.last_output ();
-  else print_mesf (&_TT, LONGF " pairs are found\n", _II.get_sc(2));
+  else _TT.printMes( LONGF " pairs are found\n", _II.get_sc(2));
 
 	_II.close();
 

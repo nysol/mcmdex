@@ -24,7 +24,7 @@ int FILE2::getc(){
   int c;
 
   if ( _buf >= _buf_end ){
-    if ( (_buf_end < _buf_org+FILE2_BUFSIZ) && (_buf_end>=_buf_org) ){ FILE_err=2; return (-1); }
+    if ( (_buf_end < _buf_org+FILE2_BUFSIZ) && (_buf_end>=_buf_org) ){ _FILE_err=2; return (-1); }
     _buf = _buf_org;
     _buf_end = _buf_org + fread (_buf, 1, FILE2_BUFSIZ, _fp);
     return getc ();
@@ -42,19 +42,19 @@ int FILE2::getc(){
 FILE_LONG FILE2::read_int(){
   FILE_LONG item;
   int sign=1, ch;
-  FILE_err = 0;
+  _FILE_err = 0;
   while (1){
     ch = getc();
     if ( ch>='0' && ch<='9' ) break;
-    if ( ch == '\n' ){ FILE_err = 5; return (-INTHUGE); }
-    if ( ch < 0 ){ FILE_err = 6; return (-INTHUGE); }
+    if ( ch == '\n' ){ _FILE_err = 5; return (-INTHUGE); }
+    if ( ch < 0 ){ _FILE_err = 6; return (-INTHUGE); }
     if ( ch=='-' ) sign = -1;
   }
   for (item=ch-'0' ; 1 ; item=item*10 +ch-'0'){
     ch = getc();
     if ( ch<'0' || ch>'9' ){
-      if ( ch == '\n' ) FILE_err = 1;
-      if ( ch < 0 ) FILE_err = 2;
+      if ( ch == '\n' ) _FILE_err = 1;
+      if ( ch < 0 ) _FILE_err = 2;
       return (item*sign);
     }
   }
@@ -64,12 +64,12 @@ FILE_LONG FILE2::read_int(){
 double FILE2::read_double (){
   double item, geta=1;
   int sign=1, ch, n=0, d, flag=0;
-  FILE_err = 0;
+  _FILE_err = 0;
   while (1){
     ch = getc();
     if ( ch<'0' || ch>'9' ){
-      if ( ch == '\n' ){ FILE_err = 5; return (-DOUBLEHUGE); }
-      if ( ch < 0 ){ FILE_err = 6; return (-DOUBLEHUGE); }
+      if ( ch == '\n' ){ _FILE_err = 5; return (-DOUBLEHUGE); }
+      if ( ch < 0 ){ _FILE_err = 6; return (-DOUBLEHUGE); }
       if ( ch=='-' ) sign = -1;
       else if ( ch=='.' ){ flag = 1; geta = 0.1; }
       else { sign = 1; geta = 1; flag = 0; }
@@ -80,8 +80,8 @@ double FILE2::read_double (){
   while (1){
     ch = getc();
     if ( ch < '0' || ch > '9' ){
-      if ( ch == '\n' ){ FILE_err = 1; break; }
-      else if ( ch < 0 ){ FILE_err = 2; break; }
+      if ( ch == '\n' ){ _FILE_err = 1; break; }
+      else if ( ch < 0 ){ _FILE_err = 2; break; }
       else if ( ch == '.' ){  // decimal
         if ( flag ) break;   // second decimal; illigal syntax
         if ( d ) item = item * FILE2_POW[d] + n;
@@ -99,8 +99,8 @@ double FILE2::read_double (){
         for ( n=ch-'0' ; 1 ; n=n*10 + ch-'0' ){
           ch = getc();
           if ( ch<'0' || ch>'9' ){
-            if ( ch == '\n' ) FILE_err = 1;
-            if ( ch < 0 ) FILE_err = 2;
+            if ( ch == '\n' ) _FILE_err = 1;
+            if ( ch < 0 ) _FILE_err = 2;
             if ( flag ){
               while ( n>=9 ){ item /= 1000000000.0; n -= 9; }
               while ( n>=3 ){ item /= 1000.0; n -= 3; }
@@ -205,8 +205,6 @@ static void STR_print_real (char **s, double n, int len, char c){
     	}
     }
     n -= nn;
-
-
   }
   if ( len == 0 ) return;  // no decimal digits
   **s = '.'; (*s)++;
@@ -253,20 +251,20 @@ void FILE2::flush (){
 /* read through the file until newline or EOF */
 void FILE2::read_until_newline (){
   int ch;
-  if (FILE_err & 3) return;
+  if (_FILE_err & 3) return;
   while (1){
     ch = getc();
-    if ( ch == '\n' ){ FILE_err = 5; return; }
-    if ( ch < 0 ){ FILE_err = 6; return; }
+    if ( ch == '\n' ){ _FILE_err = 5; return; }
+    if ( ch < 0 ){ _FILE_err = 6; return; }
   }
 }
 
 /* read an edge := a pair of numbers /(and its weight) */
 int FILE2::read_pair ( LONG *x, LONG *y, WEIGHT *w, int flag){
   *x = read_int();
-  if (FILE_err&4) return (1);
+  if (_FILE_err&4) return (1);
   *y = read_int ();
-  if (FILE_err&4) return (1);
+  if (_FILE_err&4) return (1);
   if ( flag & LOAD_ID1 ){ (*x)--; (*y)--; }
   if ( flag & LOAD_EDGEW ) *w = read_double ();
   read_until_newline ();
@@ -278,14 +276,14 @@ int FILE2::read_item (FILE2 *wfp, LONG *x, LONG *y, WEIGHT *w, int fc, int flag)
   int f, ff=0;
   *y = read_int ();
   if ( flag & LOAD_ID1 ){ (*y)--; (*x)--; }
-  if ( FILE_err&4 ) return (0);
+  if ( _FILE_err&4 ) return (0);
   if ( flag & LOAD_EDGEW ) *w = read_double ();
   else if ( wfp ){
-    f = FILE_err; FILE_err = 0;
+    f = _FILE_err; _FILE_err = 0;
     *w = wfp->read_WEIGHT ();
-    if ( (FILE_err&4) && fc ) *w = wfp->read_double ();
-    ff = FILE_err;
-    FILE_err = f;
+    if ( (_FILE_err&4) && fc ) *w = wfp->read_double ();
+    ff = _FILE_err;
+    _FILE_err = f;
   }
   if ( (flag & LOAD_TPOSE) || ((flag&LOAD_EDGE) && *x > *y) ) SWAP_<LONG>(x, y);
   return (ff);
@@ -294,7 +292,7 @@ int FILE2::read_item (FILE2 *wfp, LONG *x, LONG *y, WEIGHT *w, int fc, int flag)
 
 void FILE2::closew (){
   flush_last ();
-  fclose2 (_fp);
+  _fclose2();
   free2 (_buf_org);
   _buf = _buf_end = 0;
 }
@@ -305,9 +303,9 @@ void FILE2::ARY_Read<double>(double *f,size_t num) {
 	for (size_t i=0 ; i < num  ; i++){
 		do{
 			f[i]=read_double();
-		}while((FILE_err&6)==4);
+		}while((_FILE_err&6)==4);
 
-	 	if(FILE_err&2)break;
+	 	if(_FILE_err&2)break;
  	}
 }
 
@@ -330,7 +328,8 @@ int FILE2::ARY_Load(double *f,char* fname,int d){
 
 /********************  file I/O routines  ********************************/
 
-int FILE_err;  /*  signals  0: for normal termination
+//int FILE_err;  
+/*  signals  0: for normal termination
                    1: read a number, then encountered a newline,
                    2: read a number, then encountered the end-of-file
                    5: read no number, and encountered a newline

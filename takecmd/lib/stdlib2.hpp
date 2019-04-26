@@ -116,7 +116,7 @@
 
 extern INT common_INT;
 extern char *common_pnt;
-extern int FILE_err;
+// extern int FILE_err;
 
 /* lock&unlock for multi-core mode */
 #ifdef MULTI_CORE
@@ -140,12 +140,9 @@ extern int FILE_err;
 
 /*  error routine  */
 #define print_err(...)      fprintf(stderr,__VA_ARGS__)
-#define print_mesf(S,...)  do{if(((S)->get_flag())&1)fprintf(stderr,__VA_ARGS__);}while(0)
 #define error(mes,x)        do{fprintf(stderr,"%s\n",mes);x;}while(0)
 #define error_num(mes,n,x)  do{fprintf(stderr,"%s: %g\n",mes,(double)(n));x;}while(0)
 
-
-#define print_mes(S,...)  do{if(((S)->_flag)&1)fprintf(stderr,__VA_ARGS__);}while(0)
 #define print_fname(s,fname,...)  do{if(fname)fprintf(stderr,s,fname);}while(0)
 
 #define mfree(...)          mfree_(NULL, __VA_ARGS__, (void *)1)
@@ -155,13 +152,15 @@ extern int FILE_err;
 #define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
 
 /* a macro for open files with exiting if an error occurs */
+/*
 #ifdef _MSC_
  #define   fopen2(f,a,b,x)     do{fopen_s(&f,a,b);if(!f){ERROR_MES="file open error";fprintf(stderr,"file open error: file name %s, open mode %s\n",a,b);x;}}while(0)
 #else
  #define   fopen2(f,a,b,x)     do{if(!((f)=fopen(a,b))){fprintf(stderr,"file open error: file name %s, open mode %s\n",a,b);x;}}while(0)
 #endif
+*/
 
-#define fclose2(a) do{if(a){fclose(a);(a)=NULL;}}while(0)
+// #define fclose2(a) do{if(a){fclose(a);(a)=NULL;}}while(0)
 
 
 #ifndef VEC_ID
@@ -223,9 +222,6 @@ void mfree_(void *x, ...);
 void mfree2_(void *x, ...);
 
 /* print a real number in a good style */
-void fprint_real(FILE *fp, double f);
-void fprint_WEIGHT(FILE *fp, WEIGHT f);
-
 
 template<typename T,typename Tz>
 T ARY_MAX( T *f,Tz x, Tz y){
@@ -277,7 +273,6 @@ T* realloci(T* f,Tz i){
 	}
 	return f;
 }
-	
 
 template<typename T,typename Tz>
 T* malloc2(T* f ,Tz b){
@@ -426,13 +421,3 @@ class VECARY{
 
 };
 
-
-/* permute f so that f[i]=f[p[i]] (inverse perm). p will be destroyed (filled by end). s is temporary variable of type same as f[] */
-//#define   ARY_INVPERMUTE_(f,p,s,end)  do{ FLOOP(common_INT,0,end){ if ( (p)[common_INT]<(end) ){ (s)=(f)[common_INT]; do { common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; (p)[common_INT2]=end; }while ( (p)[common_INT]<(end) ); (f)[common_INT2] = (s);}}}while(0)
-
-/* permute f so that f[i]=f[p[i]] (inverse perm). not destroy p by allocating tmp memory,  s is temporary variable of type same as f[] */
-//#define   ARY_INVPERMUTE(f,p,s,end,x) do{ calloc2(common_pnt,end,x);FLOOP(common_INT,0,end){ if ( common_pnt[common_INT]==0 ){ (s)=(f)[common_INT]; do{ common_INT2=common_INT; common_INT=(p)[common_INT]; (f)[common_INT2]=(f)[common_INT]; common_pnt[common_INT2]=1; }while( common_pnt[common_INT]==0 ); (f)[common_INT2] = (s); }} free(common_pnt); }while(0)
-
-
-//#define error(mes,x)        do{ERROR_MES=mes;fprintf(stderr,"%s\n",mes);x;}while(0)
-//#define error_num(mes,n,x)  do{ERROR_MES=mes;fprintf(stderr,"%s: %g\n",mes,(double)(n));x;}while(0)

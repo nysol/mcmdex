@@ -93,7 +93,6 @@ class SETFAMILY{
 		  
 		}
 
-
 		VEC_ID * counting(){
 
 			VEC_ID * p ;
@@ -109,8 +108,6 @@ class SETFAMILY{
 			}
 			return p;
 		}
-
-
 
 		QUEUE_INT * get_vv(int i)      { return _v[i].get_v(); }
 		QUEUE_INT   get_vv(int i,int j){ return _v[i].get_v(j); }
@@ -228,31 +225,23 @@ class SETFAMILY{
 		}
 		// 要確認
 		void alloc_v(){
-		  //malloc2 (_v, _end, EXIT0);		
-		  //malloc2 (_v, _end,  exit(1) );
-		  _v = malloc2(_v, _end);
-		  
+		  _v = malloc2(_v, _end);		  
 		}
 		void alloc_buf(){
 			char *buf;
-		  //malloc2 (buf,(_eles+_end+1)*_unit, EXIT0);
-		  //malloc2 (buf,(_eles+_end+1)*_unit, exit(1));
 		  buf = malloc2 (buf,(_eles+_end+1)*_unit);
 		  _buf = (QUEUE_INT *)buf;
 
 		}
 		
 		void allocBuffer(){
-			//malloc2 (_v, _end,  exit(1) );
 			_v = malloc2 (_v, _end );
 			// _unit sizeof(QUEUE_INT)
 			char *buf;
-		  //malloc2( buf,(_eles+_end+1) * _unit, exit(1));
 		  buf = malloc2( buf,(_eles+_end+1) * _unit);
-
 		  _buf = (QUEUE_INT *)buf;
-		  return ;
 
+		  return ;
 		}
 
 
@@ -287,7 +276,6 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			//calloc2( cmm_p ,_t,EXIT);
 			cmm_p = calloc2( cmm_p ,_t);
 
 			for(i1=0; i1 < _t ; i1++){
@@ -311,7 +299,6 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			//calloc2(cmm_p,num,EXIT);
 			cmm_p = calloc2(cmm_p,num);
 
 			for(i1=0; i1 < num ; i1++){
@@ -338,7 +325,6 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			//calloc2(cmm_p,_t,EXIT);
 			cmm_p = calloc2(cmm_p,_t);
 
 			for(i1=0; i1 < _t ; i1++){
@@ -363,7 +349,6 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			//calloc2(cmm_p,_t,EXIT);
 			cmm_p = calloc2(cmm_p,_t);
 
 			for(i1=0; i1 < _t ; i1++){
@@ -490,6 +475,16 @@ class SETFAMILY{
 
 		void setInvPermute(PERM *rperm,PERM *trperm,int flag);
 		void replace_index(PERM *perm, PERM *invperm);
+
+		void printMes(char *frm ,...){
+
+			if( _flag&1 ){
+				va_list ap;
+				va_start(ap,frm);
+				fprintf(stderr,frm,ap);
+				va_end(ap);
+			}
+		}
 
 };
 
