@@ -64,7 +64,8 @@ class SETFAMILY{
   		_cwfname(NULL),_rwfname(NULL),_rperm(NULL),_cperm(NULL),_ERROR_MES(NULL){}
 
 		~SETFAMILY(){
-			mfree (_buf, _buf2, _v, _rw, _cw, _wbuf, _w, _rperm, _cperm);
+			mfree (_buf, _buf2, _v, _rw, _cw, _wbuf, _w, _cperm);
+			delete []  _rperm;
 		}
 
 
@@ -420,6 +421,7 @@ class SETFAMILY{
   	WEIGHT get_w(int i,int j){ return _w[i][j]; }
 
   	WEIGHT get_rw(int i){ return _rw[i]; }
+
   	PERM *get_rperm(){ return _rperm;}
 
   	QUEUE_INT *get_buf(){ return _buf; }

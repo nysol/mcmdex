@@ -9,7 +9,7 @@
 
 void KGMEDSET::help(){
 
-  print_err ("medset: compute the intersection of each set of sets\n\
+  fprintf(stderr,"medset: compute the intersection of each set of sets\n\
 usage: medset [-HRTIitl] cluster-filename set-filename threshold output-filename\n\
 if threshold is negative, output the items whose frequencies are no more than the threshold\n\
 -%%: show progress, -_: no message\n\
@@ -86,7 +86,7 @@ void KGMEDSET::read_file(){
       if ( _fp.readNG() ) break;
 
       if ( x<0 || x >= _FS.get_out_node_num() ){
-        print_err("set ID out of bound "FSTAR_INTF">"FSTAR_INTF"\n", x, _FS.get_out_node_num());
+        fprintf(stderr,"set ID out of bound "FSTAR_INTF">"FSTAR_INTF"\n", x, _FS.get_out_node_num());
         exit(0);
       }
 

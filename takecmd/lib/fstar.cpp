@@ -27,7 +27,9 @@ void FSTAR::sort_adjacent_node (int flag){
     	ENMAX (d, _fstar[x+1]-_fstar[x]);
     }
 
-    p = malloc2 (p, d * (sizeof(FSTAR_INT)+sizeof(WEIGHT))); //ここサイズおかしくなるはず
+		//ここサイズおかしくなるはず
+    //p = malloc2 (p, d * (sizeof(FSTAR_INT)+sizeof(WEIGHT))); 
+    p = new FSTAR_INT [d * (sizeof(FSTAR_INT)+sizeof(WEIGHT))];
 
 		for(x=0;x<_out_node_num;x++){
 			for(y=0;y<_fstar[x+1]-_fstar[x];y++){
@@ -41,7 +43,8 @@ void FSTAR::sort_adjacent_node (int flag){
         _edge_w[y+_fstar[x]] = *((WEIGHT *)(&p[y*s+sizeof(FSTAR_INT)]));
       }
     }
-    free2 (p);
+    //free2 (p);
+    delete [] p ;
   }
   else {
 		for(x=0;x<_out_node_num;x++){

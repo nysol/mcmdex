@@ -140,7 +140,8 @@ class FILE2 {
 
 	void open(FILE *a) {
 		_fp=a;
-		_buf_org = malloc2(_buf_org,FILE2_BUFSIZ+1);
+		//_buf_org = malloc2(_buf_org,FILE2_BUFSIZ+1);
+		_buf_org = new char [FILE2_BUFSIZ+1]; //malloc2(_buf_org,FILE2_BUFSIZ+1);
 		_buf=_buf_org;
 		_buf_end=_buf_org-1;
 		_bit=0;
@@ -153,7 +154,11 @@ class FILE2 {
 
 	void flush_last (void);
 	void flush_ (void);
-	void clear(void){ free2 (_buf_org);}
+	void clear(void){ 
+		delete [] _buf_org;
+		_buf_org = NULL;
+		//free2 (_buf_org);
+	}
 
 	bool needFlush(void){ return ( _buf-_buf_org ) > FILE2_BUFSIZ/2 ; }
 	
@@ -173,7 +178,7 @@ class FILE2 {
 		cmn.open(fname,"r");
 		num = cmn.ARY_Scan_INT(d);
 
-		f = malloc2(f,(num)+1);
+		f = new int[num+1];
 
 		cmn.reset();
 		cmn.ARY_Read(f,num);
@@ -188,7 +193,9 @@ class FILE2 {
 		cmn.open(fname,"r");
 		num = cmn.ARY_Scan_INT(d);
 
-		f = malloc2(f,(num)+1);
+		//f = malloc2(f,(num)+1);
+		f = new long long[num+1];
+
 		cmn.reset();
 		cmn.ARY_Read(f,num);
 		cmn.close();
@@ -204,14 +211,27 @@ class FILE2 {
 		cmn.open(fname,"r");
 		num = cmn.ARY_Scan_INT(d);
 		
-		f = malloc2(f,(num)+1);
+		//f = malloc2(f,(num)+1);
+		f = new unsigned int[num+1];
 		cmn.reset();
 		cmn.ARY_Read(f,num);
 		cmn.close();
 		return num;
 	}
 
-	static int ARY_Load(double *f,char* fname,int d);
+	static int ARY_Load(double *f,char* fname,int d){
+
+		FILE2 cmn;
+		int num;
+
+		cmn.open(fname,"r");
+		num = cmn.ARY_Scan_DBL(d);
+		f = new double[num+1];
+		cmn.reset();
+		cmn.ARY_Read(f,num);
+		cmn.close();
+		return num;
+	}
 
 	static void ARY_Write(char* fname, int *p ,size_t size){
 
@@ -222,7 +242,7 @@ class FILE2 {
 		}
 		fp.putc('\n');
 	}
-	/*
+	/*simsetでいる？
 	static void copy(char *f1, char *f2){
 
 		FILE *fp, *fp2;
@@ -293,10 +313,25 @@ class FILE2 {
  			if(_FILE_err&2)break;
 	 	}
 	}
+	template <>
+	void ARY_Read<double>(double *f,size_t num) {
+
+		for (size_t i=0 ; i < num  ; i++){
+			do{
+				f[i]=read_double();
+			}while((_FILE_err&6)==4);
+
+		 	if(_FILE_err&2)break;
+	 	}
+	}
 
 	void close (){
   	_fclose2();
- 		free2 (_buf_org);
+ 		//free2 (_buf_org);
+		delete [] _buf_org;
+		_buf_org = NULL;
+
+
 	  _buf = _buf_end = 0;
 	}
 

@@ -95,10 +95,10 @@ struct KGLCMSEQ_QUE{
 
 	void inc_t(){ _t++;}
 	void inc_end(){ _end++;}
+
 	void show(){
 		KGLCMSEQ_ELM * xx =_v;
-		xx++;
-		
+		xx++;		
 		std::cerr << "sque show " <<  _v << " - " << (_v + _t) << " (" << xx << ") " << _t << std::endl;
 			for(KGLCMSEQ_ELM * x = _v ;x < _v + _t; x++){
 				std::cerr << "sque " << x->_t << " " << x->_s  << " " << x->_org << std::endl; 
@@ -144,11 +144,13 @@ class QUEUE {
 
 	QUEUE(QUEUE_ID siz ,QUEUE_ID t):_end(siz+1),_t(t),_s(0){
 		//malloc2(_v, siz+1, EXIT);
-		_v = malloc2(_v, siz+1);
+		// _v = malloc2(_v, siz+1);
+		_v = new  QUEUE_INT[siz+1];
 	}
 	QUEUE(QUEUE_ID siz):_end(siz+1),_t(0),_s(0){
 		//malloc2(_v, siz+1, EXIT);
-		_v = malloc2(_v, siz+1);
+		//_v = malloc2(_v, siz+1);
+		_v = new QUEUE_INT[siz+1];
 	}
 
 	~QUEUE(void){
@@ -170,7 +172,8 @@ class QUEUE {
 	}
 
 	void clear(){
-	  free2 (_v);
+	  //free2 (_v);
+		delete [] _v;
 		_v = NULL;
 		_end=0;
 		_t=0;
@@ -357,7 +360,10 @@ class QUEUE {
 		while ( e != Q2->_t){
 			_v[_t] = e;		
 			_t = ( (_t>=_end-1) ? 0 : _t+1);
-			if (_s == _t ) error_num ("QUEUE_ins: overflow", _s, EXIT);
+			if (_s == _t ) {
+				fprintf(stderr,"QUEUE_ins: overflow: "QUEUE_IDF"\n",_s);
+				exit(1);
+			}
 			e =  ( e >= Q2->_end-1) ? 0 : e+1 ;
 		}
 

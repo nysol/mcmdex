@@ -1,3 +1,5 @@
+#pragma once
+
 #define SSPC_INCLUSION 1
 #define SSPC_SIMILARITY 2
 #define SSPC_INTERSECTION 4
@@ -119,7 +121,7 @@ class KGSSPC{
       	for(int j =0 ;j < siz ; j++){
       		perm[j] = p[perm[j]];
       	}
-	      free2 (p);
+	      delete [] p;
       }
 	    else {
     		perm = p;

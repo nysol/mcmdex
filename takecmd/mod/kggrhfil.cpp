@@ -19,7 +19,7 @@
 
 void KGGRHFIL::help(void){
 
-  print_err ("graph filtering: transform/convert/extract graph/subgraph\n\
+  fprintf(stderr,"graph filtering: transform/convert/extract graph/subgraph\n\
 grhfil dDUBeEq [options] input-file output-file\n\
 %%:show progress, _:no message, +:write solutions in append mode\n\
 d:directed graph (x->y), D:directed graph with reverse direction (x<-y)\n\

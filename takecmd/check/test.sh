@@ -4,7 +4,7 @@ if [ -z "$preCMD" ] ; then
 	preCMD=time
 fi
 
-takemcmd=/Users/nain/git/mcmdex/takecmd/
+takemcmd=/Users/nain/work/git/mcmdex/takecmd/
 
 
 p0=/Users/nain/soft/uno/simset20/
@@ -34,7 +34,7 @@ TSIMSET=${p0}simset
 DIFFSIMPLE="-rq"
 
 #INPUT
-sDPATH1=/Users/nain/git/mcmdex/takecmd/check/data/
+sDPATH1=/Users/nain/work/git/mcmdex/takecmd/check/data/
 
 tra100=${sDPATH1}datam.tra_100
 tra10=${sDPATH1}datam.tra_10
@@ -49,11 +49,10 @@ sample0=${sDPATH1}samp0.dat
 strain0=${sDPATH1}strain0.dat
 
 # OUTPUT
-rDPATH0=/Users/nain/git/mcmdex/takecmd/check//out/
+rDPATH0=/Users/nain/work/git/mcmdex/takecmd/check//out/
 
 rm -rf ${rDPATH0}
 mkdir ${rDPATH0}
-
 
 #function skip {
 

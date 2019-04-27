@@ -42,10 +42,10 @@ class MACEVBM {
 
 	~MACEVBM(){
 		_dellist.clear();
-		free2(_edge);
-		free2(_pos);
-		free2(_set);
-		free2(_reset);	
+		delete [] _edge;
+		delete [] _pos;
+		delete [] _set;
+		delete [] _reset;	
 	}
 
 
@@ -55,10 +55,13 @@ class MACEVBM {
     //malloc2 (_pos,   size, goto ERR);
     //malloc2 (_set,   VBMINT_MAX, goto ERR);
     //malloc2 (_reset, VBMINT_MAX, goto ERR);
-    _edge  = malloc2 (_edge,  size);
-    _pos   = malloc2 (_pos,   size);
-    _set   = malloc2 (_set,   VBMINT_MAX);
-    _reset = malloc2 (_reset, VBMINT_MAX);
+    
+
+
+    _edge  = new VBMINT[size];
+    _pos   = new int[size];
+    _set   = new VBMINT[VBMINT_MAX];
+    _reset = new VBMINT[VBMINT_MAX];
 
 
     _dellist.alloc(VBMINT_MAX+2,VBMINT_MAX);

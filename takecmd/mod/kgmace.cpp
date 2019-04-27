@@ -22,7 +22,7 @@
 
 void KGMACE::help(){
 
-  print_err ("mace MCqVe [options] input-filename [output-filename]\n\
+  fprintf(stderr,"mace MCqVe [options] input-filename [output-filename]\n\
 %%:show progress, _:no message, +:write solutions in append mode\n\
 C:enumerate cliques, M:enumerate maximal cliques, e:edge_list format\n\
 [options]\n\

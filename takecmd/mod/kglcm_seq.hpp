@@ -110,11 +110,11 @@ class KGLCMSEQ{
 
   	  j = FILE2::ARY_Load (p, _outperm_fname, 1);
     	if ( perm ){
-     	 //FLOOP (j, 0, siz){
+
      	 for(j=0;j<siz;j++){
      	 	 perm[j] = p[perm[j]];
      	 }
-     	 free2 (p);
+     	 delete [] p;
     	}
     	else{
 				perm = p;

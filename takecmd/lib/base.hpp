@@ -41,8 +41,10 @@ class BASE {
 
 	  for(int i = 0 ; i < _block_end;i++){ 
 		  free2(_base[i]);
+		  //delete[] _base[i];
 		}
   	free2 (_base);
+  	//delete _base;
 	}
 
 

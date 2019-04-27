@@ -19,7 +19,7 @@
 
 void KGSSPC::help(void){
 
-  print_err ("SSPC: [ISCfQq] [options] input-filename ratio/threshold [output-filename]\n\
+  fprintf(stderr,"SSPC: [ISCfQq] [options] input-filename ratio/threshold [output-filename]\n\
 %%:show progress, _:no message, +:write solutions in append mode\n\
 #:count the number of similar records for each record\n\
 i(inclusion): find pairs [ratio] of items (weighted sum) of one is included in the other (1st is included in 2nd)\n\
@@ -871,10 +871,8 @@ int KGSSPC::run (int argc ,char* argv[]){
 	);
 
 	preALLOC();
-
-  //print_mesf (&_TT, "separated at %d\n", _TT.get_sep());
 	
-	_TT.printMes("separated at %d\n", _TT.get_sep());
+	_TT.printMes("separated at "VEC_IDF"\n", _TT.get_sep());
 
   _buf_end = 2;
   _position_fname = (char *)_II.get_perm(); _II.set_perm(NULL);
@@ -893,7 +891,6 @@ int KGSSPC::run (int argc ,char* argv[]){
   _II.set_perm((PERM *)_position_fname);
   _II.merge_counters ();
 	
-//  internal_params.l1 = _II.get_solutions();
 	_ip_l1 = _II.get_solutions();
 
   if ( _II.get_topk_end() > 0 || _II.get_itemtopk_end ()> 0 ) _II.last_output ();

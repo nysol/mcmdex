@@ -129,10 +129,9 @@ class KGLCM{
   	  j = FILE2::ARY_Load (p,  _outperm_fname, 1);
     	if ( perm ){
     		for(j=0;j<siz;j++){
-				//FLOOP (j, 0, siz) 
 					perm[j] = p[perm[j]];
 				}
-				free2 (p);
+				delete [] p;
 	    }
   	  else perm = p;
   	}

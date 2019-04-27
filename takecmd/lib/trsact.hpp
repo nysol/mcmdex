@@ -191,19 +191,9 @@ class TRSACT {
   	_eles_org(0),_total_w(0),_total_pw(0),_str_num(0),
 		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0),_ERROR_MES(NULL)
 		{}
-
-
-		// _wfname2(NULL),_item_wfname2(NULL)
 		
 		
-	~TRSACT(){
-		//if ( _OQ ){ free2 (_OQ->_v ); free2 (_OQ[_T.get_clms()]._v); }
-		/*
-	  if ( _w != _pw ) free2 (_pw);
-		mfree (_w, _perm, _trperm);
- 		mfree (_mark, _shift, _sc, _OQ, _head, _strID);
- 		*/
-	}
+	~TRSACT(){ }
 
 	int loadMain(bool elef=false);
 
@@ -626,7 +616,7 @@ class TRSACT {
 			if( _flag&1 ){
 				va_list ap;
 				va_start(ap,frm);
-				fprintf(stderr,frm,ap);
+				vfprintf(stderr,frm,ap);
 				va_end(ap);
 			}
 		}

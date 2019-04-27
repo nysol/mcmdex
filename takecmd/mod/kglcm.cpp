@@ -14,7 +14,7 @@
 
 void KGLCM::help(){
 
-  print_err ("LCM: [FCMfQIq] [options] input-filename support [output-filename]\n\
+  fprintf(stderr,"LCM: [FCMfQIq] [options] input-filename support [output-filename]\n\
 %%:show progress, _:no message, +:write solutions in append mode\n\
 F:frequent itemset mining, C:closed frequent itemset mining\n\
 M:maximal frequent itemset mining, P:positive-closed itemset mining\n\
@@ -47,7 +47,7 @@ t:transpose the input database (item i will be i-th transaction, and i-th transa
 # if the output file name is -, the solutions will be output to standard output.\n");
 
 	// LAMPはべつにしよう
-  print_err ("LCM_LAMP: [FCMfQIq] -LAMP #positives [-LAMP #transctions] [options] input-filename [alpha]\n");
+  fprintf(stderr,"LCM_LAMP: [FCMfQIq] -LAMP #positives [-LAMP #transctions] [options] input-filename [alpha]\n");
   
 
   EXIT;
@@ -504,7 +504,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
     
     if ( (_iFlag & SHOW_PROGRESS) && (_II.item_get_t() == 0 ) ){
       f++; 
-      print_err ("%d/%d (" LONGF " iterations)\n", f, cnt, _II.get_iters());
+      fprintf(stderr,"%d/%d (" LONGF " iterations)\n", f, cnt, _II.get_iters());
     }
   }
 	

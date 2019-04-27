@@ -102,10 +102,15 @@ class ITEMSET{
   char *_itemflag;       // 1 if it is include in the pattern (and 2 if included in add)
   PERM *_perm;   // permutation array for output itemset: item => original item
   WEIGHT *_item_frq;    // frequency of each item
+
   LONG *_sc, *_sc2;    // #itemsets classified by the sizes / frequencies
-  // void *_X;  // pointer to the original data
+
+
   FILE2 _fp;    // file pointer to the output file
+
   QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
+
+
   WEIGHT *_set_weight;  // the frequency of each prefix of current itemset
   QUEUE **_set_occ;    // the occurrence of each prefix of current itemset
   KGLCMSEQ_QUE **_set_occELE;    // the occurrence of each prefix of current itemset
@@ -139,7 +144,7 @@ class ITEMSET{
 	/* topk.end>0 => initialize heap for topk mining */
 	/* all pointers will be set to 0, but not for */
 	/* if topK mining, set topk.end to "K" */
-	void end ();
+	//void end ();
 
 	// ================================================
 	//  OUTPUT
@@ -200,6 +205,46 @@ class ITEMSET{
 		_multi_core(0),_itemtopk(NULL),
 		_rows_org(0),_trperm(NULL),_ERROR_MES(NULL)
 		{}
+	
+	
+	~ITEMSET(void){
+
+		for(LONG i=0;i<_itemtopk_end;i++){
+		  _itemtopk[i].end();
+    	//if ( _itemtopk_ary ) free2 (_itemtopk_ary[i]);
+    	if ( _itemtopk_ary ) delete [] _itemtopk_ary[i];
+	  }
+	 	delete [] _itemtopk; 
+  	delete [] _itemtopk_ary; 
+	 	delete [] _sc;
+  	delete [] _sc2;
+  	delete [] _item_frq;
+  	delete [] _itemflag;
+  	delete [] _perm;
+  	delete [] _set_weight;
+  	delete [] _set_occ;
+  
+	  if ( _multi_fp ){
+			for(size_t i=0;i<MAX(_multi_core,1);i++){
+				_multi_fp[i].clear();
+			}
+		  delete[] _multi_fp;
+	  	_multi_fp  = NULL;
+	  }
+
+  	delete [] _multi_iters ;
+
+		#ifdef MULTI_CORE
+  	if ( _multi_core>0 ){
+    	pthread_spin_destroy(&_lock_counter);
+    	pthread_spin_destroy(&_lock_sc);
+    	pthread_spin_destroy(&_lock_output);
+	  }
+		#endif
+
+	}
+	
+	
 	
 		// SSPC
 		void setParams(
@@ -294,6 +339,8 @@ class ITEMSET{
 			_separator = separator;
 
 		}
+
+
 
 
 
@@ -475,10 +522,15 @@ class ITEMSET{
 	void set_rows_org(VEC_ID v){ _rows_org = v; }
 	void set_trperm(PERM *v){ _trperm = v; }
 
-	void set_itemflag(char * v){ free2 (_itemflag); _itemflag = v;}
+	void set_itemflag(char * v){ 
+		//free2 (_itemflag); 
+		delete [] _itemflag;
+		_itemflag = v;
 
-	void set_itemflag(int i,char v){_itemflag[i] = v;}
-	char get_itemflag(int i){return _itemflag[i];}
+	}
+
+	void set_itemflag(int i,char v){ _itemflag[i] = v; }
+	char get_itemflag(int i){ return _itemflag[i]; }
 
 
 	void alloc(char *fname, PERM *perm, QUEUE_INT item_max, size_t item_max_org);

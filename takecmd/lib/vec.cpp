@@ -90,24 +90,24 @@ void SETFAMILY::sort (){
   // sort items in each row
   if ( flag ){   
     //malloc2 (p, _clms, EXIT);
-    p = malloc2 (p, _clms);
-
-    //FLOOP (i, 0, _t){
+    // p = malloc2 (p, _clms);
+    p = new PERM[_clms];
     for(i=0;i<_t;i++){
       _v[i].perm_WEIGHT( _w?_w[i]:NULL, p, flag);
     }
-    free (p);
+    delete [] p;
+    p=NULL;
   }
 
   flag = ((_flag&(LOAD_SIZSORT+LOAD_WSORT))? ((_flag&LOAD_DECROWSORT)? -1: 1): 0);
-  if ( flag ){   // sort the rows
-    //if ( _flag & LOAD_SIZSORT ) p = qsort_perm_<VEC> ((VEC *)_v, _t, flag*sizeof(QUEUE));
+
+  if ( flag ){  
+		// sort the rows
 		if ( _flag & LOAD_SIZSORT ) p = qsort_perm_<QUEUE> (_v, _t, flag*sizeof(QUEUE));
     else p = qsort_perm_<WEIGHT> (_rw, _t, flag*sizeof(WEIGHT));
 
-
-		_rperm = malloc2(_rperm,_t);
-
+		//_rperm = malloc2(_rperm,_t);
+		_rperm = new PERM[_t];
 
 		for(size_t st=0; st<_t ;st++){ _rperm[st]=-1; }
 
@@ -117,18 +117,14 @@ void SETFAMILY::sort (){
 
     if ( _rw ){
 			any_INVPERMUTE_rw(p);
-    	//ARY_INVPERMUTE(_rw, p, w, _t, EXIT);
     }
     if ( _w ){
 	    any_INVPERMUTE_w(p);
-    	// ARY_INVPERMUTE(_w, p, ww, _t, EXIT);
     }
     
     ary_INVPERMUTE_(p,Q);
-    //ARY_INVPERMUTE_(_v, p, Q, _t);
 
-
-    free2 (p);
+    delete [] p;
   }
 
   if (_flag&LOAD_RM_DUP){  // unify the duplicated edges

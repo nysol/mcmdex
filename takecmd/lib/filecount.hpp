@@ -47,10 +47,17 @@ class FILE_COUNT{
 	QUEUE_ID _row_lb, _row_ub;
   
   
-  FILE_COUNT_INT *_rowt, *_clmt;   // size of each row/clmn
 
   WEIGHT _total_rw, _total_cw;  // WEIGHTs for rows/columns ... reserved.
+
+  FILE_COUNT_INT *_rowt, *_clmt;   // size of each row/clmn
+	//VECARY <FILE_COUNT_INT> _rowt;
+	//VECARY <FILE_COUNT_INT> _clmt;
+
   WEIGHT *_rw, *_cw;
+	//VECARY <WEIGHT> _rw;
+	//VECARY <WEIGHT> _cw;
+
 
   FILE_COUNT_INT _rw_end, _cw_end;
 
@@ -173,11 +180,14 @@ class FILE_COUNT{
 		} while ( fp->eof() );
 
 		free2 (jump);
+		//delete [] jump
+
     // swap the variables in transpose mode
   	if ( _rw == NULL ){
   		_total_w_org = _total_pw_org = _rows_org; 
   		return 0; 
   	} 
+
 		_clm_btm = MIN(kk, _rows_org);
 		//reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
 		_rw = reallocx<WEIGHT>(_rw, &kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
@@ -189,8 +199,7 @@ class FILE_COUNT{
 	  return 0;
   
 	  ERR:;
-		//wfp.close();
-		mfree (jump);
+		free2(jump);
   	return 1;
 	}
 
@@ -306,7 +315,7 @@ class FILE_COUNT{
 		
 		
 		~FILE_COUNT(void){
-			mfree (_rw, _cw, _clmt, _rowt);
+			//mfree (_rw, _cw, _clmt, _rowt);
 			//rowtは他でセットされる
 		}
 

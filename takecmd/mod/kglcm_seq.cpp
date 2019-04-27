@@ -14,7 +14,7 @@
 
 void KGLCMSEQ::help(){
   _ERROR_MES = "command explanation";
-  print_err ("LCMseq: [FCfQIq] [options] input-filename support [output-filename]\n\
+  fprintf(stderr,"LCMseq: [FCfQIq] [options] input-filename support [output-filename]\n\
 %%:show progress, _:no message, +:write solutions in append mode\n\
 F:position occurrence, C:document occurrence\n\
 m:output extension maximal patterns only, c:output extension closed patterns only\n \
@@ -493,6 +493,7 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
 
   }
   free2 (Q);
+
   _TT.set_new_t(new_t);
   _TT.set_bnum(bnum);
   _TT.set_bblock(bblock);

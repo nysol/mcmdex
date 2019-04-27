@@ -24,8 +24,8 @@ void BASE::alloc (int unit, int block_siz){
 
   //calloc2 (_base, 20, EXIT);
   _base = calloc2 (_base, 20);
-
   _block_end = 20;
+
 }
 
 

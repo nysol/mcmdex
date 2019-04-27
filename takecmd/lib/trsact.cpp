@@ -24,14 +24,17 @@ void TRSACT::prop_print (){
 
   if ( !(_flag & SHOW_MESSAGE) ) return;
 
-  print_err ("trsact: %s", _fname);
-	print_fname(" ,2nd-trsact %s (from ID %d)", _fname2, _C.end1());
-  print_err (" ,#transactions %d ,#items %d ,size %zd", _C.rows(), _C.clms(),_C.eles());
-  print_err (" extracted database: #transactions %d ,#items %d ,size %zd", _T.get_t(), _T.get_clms(), _T.get_eles());
-	print_fname (" ,weightfile %s", _wfname);
-  print_fname (" ,itemweightfile %s", _item_wfname);
-  print_fname (" ,item-order-file %s", _pfname);
-  print_err ("\n");
+  fprintf(stderr,"trsact: %s", _fname);
+  if(_fname2){ 
+  	fprintf(stderr," ,2nd-trsact %s (from ID %d)", _fname2, _C.end1()); 
+  }
+  fprintf(stderr," ,#transactions %d ,#items %d ,size %zd", _C.rows(), _C.clms(),_C.eles());
+  fprintf(stderr," extracted database: #transactions %d ,#items %d ,size %zd", _T.get_t(), _T.get_clms(), _T.get_eles());
+
+	if(_wfname)      { fprintf(stderr," ,weightfile %s", _wfname); }
+	if(_item_wfname) { fprintf(stderr," ,itemweightfile %s", _item_wfname); }
+	if(_pfname)      { fprintf(stderr," ,item-order-file %s", _pfname); }
+  fprintf(stderr,"\n");
 
 }
 
@@ -91,7 +94,7 @@ int TRSACT::alloc(){
 	}else{
      _T.set_clms(_C.c_clms()); 
 	}
-  free2 (p);
+  delete [] p; p=NULL;
   // ここまでのまとめたほうがいい cpemへのセット
 
 	if ( _T.get_clms() == 0 ) error ("there is no frequent item", exit(0));
@@ -108,7 +111,8 @@ int TRSACT::alloc(){
 	_C.initRperm( p , _T.get_eles(), _T.get_t());
 	_T.set_eles(_C.r_eles());
 	_T.set_t(_C.r_clms());
-  free2 (p); 
+
+  delete [] p; p=NULL;
 
   // ここまでのまとめたほうがいい rpemへのセット
 

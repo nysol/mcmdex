@@ -72,7 +72,8 @@ class AHEAP {
 		AHEAP(AHEAP_ID num){
 
 			if ( num>0 ) {
-				_v = malloc2 (_v, num*2);
+				_v = new AHEAP_KEY[num*2];
+				//_v = malloc2 (_v, num*2);
 			}
 
   		_end = num;
@@ -87,7 +88,10 @@ class AHEAP {
 		
 		}
 
-		~AHEAP(){ free2 (_v); }
+		~AHEAP(){ 
+			delete [] _v; 
+			//free2 (_v);  
+		}
 
 		// アクセッサ
 		AHEAP_ID end(void){ return _end;}
@@ -159,90 +163,6 @@ class AHEAP {
 
 } ;
 
-/******************************************************************************/
-/* IHEAP: variable size, index heap */ // LAMP用？
-/******************************************************************************/
-
-#define IHEAP_KEY_DOUBLE
-
-#ifdef IHEAP_KEY_DOUBLE
-	#define IHEAP_KEY  double
-	#define IHEAP_KEYHUGE DOUBLEHUGE
-	#define IHEAP_KEYF "%f"
-#else
-	#define IHEAP_KEY  int
-	#define IHEAP_KEYHUGE INTHUGE
-	#define IHEAP_KEYF "%d"
-#endif
-
-#define IHEAP_ID int
-#define IHEAP_ID_HUGE INTHUGE
-#define IHEAP_IDF "%d"
-
-
-class IHEAP{
-
-  IHEAP_ID *_v;       // array for heap ID's
-  IHEAP_ID _siz, _end;       // the current size, and the maximum size
-  IHEAP_KEY *_x;   // array for the values (IHEAP does not prepare this)
-  int _mode;  // mode; minheap = 1, maxhead = 2;
-  
-  // 未使用
-  //int *_f;  // function for comparing the values; under construction
-  // int _unit;  // size of a value-cell in H->x  
-
-	/* initialization. allocate memory for H and fill it by +infinity */
-
-	/* change the value of i-th node to w, return the position to which the cell moved */
-	IHEAP_ID dec ( IHEAP_ID i, IHEAP_ID j);
-	IHEAP_ID inc ( IHEAP_ID i, IHEAP_ID j);
-
-	int compare( IHEAP_ID a, IHEAP_ID b);
-
-	public:
-
-  IHEAP():
-  	_v(NULL),_siz(0),_end(0),_x(NULL),_mode(0){}
-
-
-	IHEAP_ID chg ( IHEAP_ID i, IHEAP_ID j);
-
-	/* insert/delete an element */
-	IHEAP_ID ins ( IHEAP_ID j);
-
-	void vFill(int s,int e){
-		//FLOOP (i, s, e) 
-		for(int i=s ; i<e; i++){
-			_v[i]=i;	
-		}
-	}
-	
-	//アクセッサ
-	IHEAP_KEY x(int i){ return _x[i]; }
-	IHEAP_ID  v(int i){ return _v[i]; }
-	IHEAP_ID end(void){ return _end; }
-	IHEAP_ID size()   { return _siz; }
-
-	void x(int i,IHEAP_KEY x){ _x[i]=x; }
-
-	// enlarge the frequency pool
-	void xEnlarge(){  
-		_x = realloc2 ( _x , _end+1);
-	}
-
-	// synchronize the keys for max/min heaps
-	void xSync(IHEAP& src){ _x = src._x; }
-
-	void xFree(){ free2(_x); }
-
-	
-	void alloc (int num, int mode, IHEAP_KEY *x);
-
-
-	void print (FILE *fp);
-
-
-};
 
 
 

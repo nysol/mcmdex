@@ -31,9 +31,14 @@
 #ifdef MULTI_CORE
 #include <sys/types.h>
 #include <pthread.h>
+int SPIN_LOCK_dummy;
 #endif
 
 #define CORE_MAX 16
+
+#ifdef MTWISTER
+#include"dSFMT.c"
+#endif
 
 // definition of the process for errors
 #ifdef ERROR_RET  
@@ -114,9 +119,8 @@
  #endif
 #endif
 
-extern INT common_INT;
 extern char *common_pnt;
-// extern int FILE_err;
+extern INT common_INT;
 
 /* lock&unlock for multi-core mode */
 #ifdef MULTI_CORE
@@ -139,28 +143,7 @@ extern char *common_pnt;
 #define ENMIN(a,b)      ((a)=(((a)<(b))?(a):(b)))
 
 /*  error routine  */
-#define print_err(...)      fprintf(stderr,__VA_ARGS__)
 #define error(mes,x)        do{fprintf(stderr,"%s\n",mes);x;}while(0)
-#define error_num(mes,n,x)  do{fprintf(stderr,"%s: %g\n",mes,(double)(n));x;}while(0)
-
-#define print_fname(s,fname,...)  do{if(fname)fprintf(stderr,s,fname);}while(0)
-
-#define mfree(...)          mfree_(NULL, __VA_ARGS__, (void *)1)
-
-
-/* macros for allocating memory with exiting if an error occurs */
-#define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
-
-/* a macro for open files with exiting if an error occurs */
-/*
-#ifdef _MSC_
- #define   fopen2(f,a,b,x)     do{fopen_s(&f,a,b);if(!f){ERROR_MES="file open error";fprintf(stderr,"file open error: file name %s, open mode %s\n",a,b);x;}}while(0)
-#else
- #define   fopen2(f,a,b,x)     do{if(!((f)=fopen(a,b))){fprintf(stderr,"file open error: file name %s, open mode %s\n",a,b);x;}}while(0)
-#endif
-*/
-
-// #define fclose2(a) do{if(a){fclose(a);(a)=NULL;}}while(0)
 
 
 #ifndef VEC_ID
@@ -174,9 +157,6 @@ extern char *common_pnt;
   #define VEC_IDF "%d"
  #endif
 #endif
-
-
-
 
 /*********************************************************/
 
@@ -216,13 +196,22 @@ extern char *common_pnt;
 #define FILE_COUNT_INT VEC_ID
 #define FILE_COUNT_INTF VEC_IDF
 
+// swap macro
+template<typename T>
+void SWAP_(T *a,T *b){ T stmp = *a; *a=*b; *b=stmp; }
 
-/* free many pointers*/
+/* macros for allocating memory with exiting if an error occurs */
+#define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
+
+// free many pointers 
 void mfree_(void *x, ...);
-void mfree2_(void *x, ...);
 
-/* print a real number in a good style */
+#define mfree(...)          mfree_(NULL, __VA_ARGS__, (void *)1)
 
+
+// ==============================
+// template For ARRAY 
+// ==============================
 template<typename T,typename Tz>
 T ARY_MAX( T *f,Tz x, Tz y){
 
@@ -234,7 +223,6 @@ T ARY_MAX( T *f,Tz x, Tz y){
 	}
 	return m;
 }
-
 template<typename T,typename Tz>
 T ARY_MIN( T *f , Tz x, Tz y){
 
@@ -246,13 +234,32 @@ T ARY_MIN( T *f , Tz x, Tz y){
 	}
 	return m;
 }
-
 template<typename T,typename Tz>
 T ARY_SUM( T *v , Tz x,Tz y)       
 {
 	T f = 0;
 	for(Tz i = x ; i < y ; i++){
 		f += v[i];
+	}
+	return f;
+}
+
+
+// ====================================================
+// memmory allcate function
+// ====================================================
+template<typename T,typename Tz>
+T* malloc2(T* f ,Tz b){
+	if(!( f = (T*)malloc(sizeof(T)*b))){
+		throw("memory allocation error : malloc2");
+	}
+	return f;
+}
+
+template<typename T,typename Tz>
+T* calloc2(T* f ,Tz b){
+	if(!( f = (T*)calloc(sizeof(T),b))){
+		throw("memory allocation error : calloc2");
 	}
 	return f;
 }
@@ -274,22 +281,48 @@ T* realloci(T* f,Tz i){
 	return f;
 }
 
-template<typename T,typename Tz>
-T* malloc2(T* f ,Tz b){
-	if(!( f = (T*)malloc(sizeof(T)*b))){
-		throw("memory allocation error : malloc2");
+template<typename T ,typename TI>
+T* reallocx(T *f, TI *end ,size_t i,T e){
+
+	if( i >= *end ){
+		size_t end2 = MAX((*end)*2+16,i+1);
+
+		if(!( f = (T *) realloc( f , sizeof(T) * end2 ) ) ){
+			fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
+		}
+		for(TI j= *end ; j< end2  ; j++ ){
+			f[j]=e;
+		}
+		*end=MAX((*end)*2,(i)+1);
 	}
 	return f;
+
 }
 
-template<typename T,typename Tz>
-T* calloc2(T* f ,Tz b){
-	if(!( f = (T*)calloc(sizeof(T),b))){
-		throw("memory allocation error : calloc2");
+template<typename T,typename TI>
+T* reallocx(T* f, TI *end ,size_t i){
+
+	if( i >= *end ){
+
+		size_t end2 = MAX((*end)*2+16,i+1);
+
+		if(!( f= (T *)realloc( f ,sizeof(T)*end2 ) ) ){
+			fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
+		}
+		for(TI j= *end ; j<end2 ; j++ ){
+			f[j]=j;
+		}
+		*end=MAX((*end)*2,(i)+1);
 	}
 	return f;
+
 }
 
+
+
+// ====================================================
+// sorting function
+// ===================================================
 /* quick sort macros // templateにする?*/ //common_INT common_pntどうにかする
 #define QQSORT_ELE(a,x)  ((a *)(&(common_pnt[(*((PERM *)(x)))*common_INT])))
 
@@ -341,11 +374,11 @@ void qsort_perm__ (T *v, size_t siz, PERM *perm, int unit){
 template<typename T>
 PERM *qsort_perm_ (T *v, size_t siz, int unit){
 
-	PERM *perm; 
-	perm = malloc2(perm, siz);
+	PERM *perm = new PERM[siz]; 
+//	perm = malloc2(perm, siz);
 	for(size_t i=0 ; i<siz; i++){ perm[i]=i; }
 	qsort_perm__<T>(v, siz, perm, unit); 
-	return (perm);
+	return perm;
 }
 
 template<typename T>
@@ -365,49 +398,10 @@ size_t bin_search_(T *v, T u, size_t siz, int unit){
  }
 }
 
-/* swap macro */
-template<typename T>
-void SWAP_(T *a,T *b){ T stmp = *a; *a=*b; *b=stmp; }
-
-
-template<typename T ,typename TI>
-T* reallocx(T *f, TI *end ,size_t i,T e){
-
-	if( i >= *end ){
-		size_t end2 = MAX((*end)*2+16,i+1);
-
-		if(!( f = (T *) realloc( f , sizeof(T) * end2 ) ) ){
-			fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
-		}
-		for(TI j= *end ; j< end2  ; j++ ){
-			f[j]=e;
-		}
-		*end=MAX((*end)*2,(i)+1);
-	}
-	return f;
-
-}
-
-template<typename T,typename TI>
-T* reallocx(T* f, TI *end ,size_t i){
-
-	if( i >= *end ){
-
-		size_t end2 = MAX((*end)*2+16,i+1);
-
-		if(!( f= (T *)realloc( f ,sizeof(T)*end2 ) ) ){
-			fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
-		}
-		for(TI j= *end ; j<end2 ; j++ ){
-			f[j]=j;
-		}
-		*end=MAX((*end)*2,(i)+1);
-	}
-	return f;
-
-}
-
-// vectorでいいようなきもするが一応つくる？
+// ====================================================
+// vectorでいいようなきもするが独自ARAY一応つくる？
+// 
+// ====================================================
 template<class T>
 class VECARY{
 	size_t _end;
@@ -417,7 +411,21 @@ class VECARY{
 	
 	VECARY():_end(0),_v(NULL){}
 
-	~VECARY(){ free2(_v); }
+	~VECARY(){ 
+		free(_v); 
+		_v=NULL;
+	}
+
+	void resize(size_t sz){
+		if(!( _v = (T*)realloc( _v, sizeof(T)*(sz) ))) {
+			throw("memory allocation error : VECARY");
+		}
+	}
+
+	T &operator[](size_t i){ return _v[i]; }
+	
+	
+	
 
 };
 
