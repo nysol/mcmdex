@@ -120,6 +120,7 @@ class FILE2 {
 	bool eof   (void){ return (_FILE_err&2)==0 ; } //<=noteof
 
 	bool getOK1(void){ return (_FILE_err&1); }
+	bool eofx  (void){ return (_FILE_err&2) ; } //<=noteof
 	bool getOK(void) { return (_FILE_err&3); }
 	bool readNG(void){ return (_FILE_err&4); }
 
@@ -324,6 +325,33 @@ class FILE2 {
 		 	if(_FILE_err&2)break;
 	 	}
 	}
+
+	template<typename T>
+	void VARY_Read(VECARY<T> &vec,size_t num) {
+
+		for (size_t i=0 ; i < num  ; i++){
+			do{
+				vec[i]=read_int();
+			}while((_FILE_err&6)==4);
+
+		 	if(_FILE_err&2)break;
+	 	}
+	}
+
+
+	template <>
+	void VARY_Read<double>(VECARY<double> &vec,size_t num) {
+
+		for (size_t i=0 ; i < num  ; i++){
+			do{
+				vec[i]=read_double();
+			}while((_FILE_err&6)==4);
+
+		 	if(_FILE_err&2)break;
+	 	}
+	}
+
+
 
 	void close (){
   	_fclose2();

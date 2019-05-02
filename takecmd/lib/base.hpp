@@ -20,6 +20,7 @@
 class BASE {
 
   char **_base;
+  
   int _block_siz;  // size of one block of memory
   int _block_num;  // currently using block
   int _unit;  // size of one unit memory

@@ -266,8 +266,7 @@ void KGSSPC::output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset,
       else {  
       	// allocate new cell
         b = _buf_end;
-        // realloci(_buf, b+30, EXIT);
-        _buf = realloci(_buf, b+30);
+        _buf.realloci(b+30);
         _buf_end += 2;
       }
 

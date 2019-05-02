@@ -77,7 +77,8 @@ class KGSSPC{
 	char  *_vecchr;
 	WEIGHT *_occ_w;
   QUEUE_INT *_itemary;
-  QUEUE_INT *_buf;
+	VECARY <QUEUE_INT> _buf;
+
   size_t _buf_end;
   QUEUE_ID _i;
 	char *_ERROR_MES;
@@ -152,7 +153,7 @@ class KGSSPC{
 		_output_fname(NULL),_output_fname2(NULL),
 		_outperm_fname(NULL),_table_fname(NULL),
 		_position_fname(NULL),_vecchr(NULL),
-		_occ_w(NULL),_itemary(NULL),_buf(NULL),
+		_occ_w(NULL),_itemary(NULL),
 		_buf_end(0),_i(0),_ERROR_MES(NULL),
 		_row_lb_(0.0),_row_lb(0),
 		_row_ub_(0.0),_row_ub(QUEUE_IDHUGE),

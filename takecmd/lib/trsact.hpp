@@ -68,7 +68,8 @@ class TRSACT {
 
   SETFAMILY _T;   // transaction
 
-  WEIGHT *_w, *_pw;  // weight/positive-weight of transactions
+  VECARY<WEIGHT> _w;
+  WEIGHT *_pw;  // weight/positive-weight of transactions
 
   QUEUE_INT _clms_org, _clm_max, _clms_end;  // #items in original file, max size of clms, and max of (original item, internal item)
 
@@ -184,7 +185,7 @@ class TRSACT {
   	_fname(NULL),_wfname(NULL),_item_wfname(NULL),_fname2(NULL),_pfname(NULL),
   	_flag(0),_flag2(0),_clms_org(0),_clm_max(0),_clms_end(0),
   	/*_rows_org(0),*/_row_max(0),_end1(0),_sep(0),
-  	_perm(NULL), _trperm(NULL),_w(NULL),_pw(NULL),
+  	_perm(NULL), _trperm(NULL),_pw(NULL),
   	_clm_lb(0),_clm_ub(VEC_ID_END),_row_lb(0),_row_ub(QUEUE_IDHUGE),
   	_clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
   	_w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),
@@ -454,8 +455,7 @@ class TRSACT {
 
 	void reallocW(void){
 		VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
-	  //realloc2 (_w , size ,EXIT);
-	  _w = realloc2 (_w , size );
+		_w.realloc2(size);
 		for(size_t i=0; i<size;i++){ _w[i] = 1;}
 	}
 

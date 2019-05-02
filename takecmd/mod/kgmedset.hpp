@@ -28,7 +28,11 @@
 class kgClusterForCC{
 
 	// cnt: cluster siz, if v is representative, and #vertices covering v, if v isn't representative 
-	UNIONFIND_ID *_mark, *_set, *_cnt;
+	//UNIONFIND_ID *_mark, *_set, *_cnt;
+	VECARY<UNIONFIND_ID> _mark,_set,_cnt;
+	
+
+
 	UNIONFIND_ID _end1, _end2, _end3;
 	FSTAR_INT _xmax;
 
@@ -63,11 +67,9 @@ class kgClusterForCC{
 	public:
 
 	kgClusterForCC():
-		_mark(NULL),_set(NULL),_cnt(NULL),
 		_end1(0), _end2(0), _end3(0),_xmax(0){}
 
 	~kgClusterForCC(){
-		mfree(_mark, _set,_cnt);
 	}
 		
 
@@ -82,8 +84,8 @@ class kgClusterForCC{
 
 			ENMAX(_xmax, MAX(x, y)+1);
 
-			_mark = reallocx (_mark, &_end1, _xmax);
-			_set  = reallocx (_set , &_end2, _xmax);
+			_end1 = _mark.reallocSeq(_end1, _xmax);
+			_end2 = _set .reallocSeq(_end2, _xmax);
 
 			_unify_set(x, y);
 
@@ -107,9 +109,9 @@ class kgClusterForCC{
 
   	    ENMAX (_xmax, MAX(x, y)+1);
 
-    	  _mark = reallocx(_mark, &_end1, _xmax);
-				_set  = reallocx(_set,  &_end2, _xmax);
-     	 _cnt  = reallocx(_cnt,  &_end3, _xmax, (UNIONFIND_ID)0);
+				_end1 = _mark.reallocSeq(_end1, _xmax);
+				_end2 = _set .reallocSeq(_end2, _xmax);
+		    _end3 = _cnt .reallocx  (_end3, _xmax, (UNIONFIND_ID)0);
 
 	      if ( _cnt[x] < _cnt[y] ) SWAP_<LONG> (&x, &y);
 

@@ -35,13 +35,19 @@ void *BASE::get_memory (int i){
   if ( _num >= _block_siz ){  /* if reach to the end of base array */
     _num = i;  /* allocate one more base array, and increment the counter */
     _block_num++;
+		// reallocx
+		if( _block_num >= _block_end ){
+			size_t end2 = MAX((_block_end)*2+16,_block_num+1);
 
-    //reallocx(_base, _block_end, _block_num, NULL, EXIT0);
-		_base = reallocx<char *, size_t>(_base, &_block_end, _block_num, NULL);
-
-
+			if(!( _base = (char**) realloc( _base , sizeof(char*) * end2 ) ) ){
+				fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(char*)*(end2)) );
+			}
+			for(size_t j= _block_end ; j< end2  ; j++ ){
+				_base[j]=NULL;
+			}
+			_block_end=MAX((_block_end)*2,(i)+1);
+		}
     if ( _base[_block_num] == NULL ){
-      //malloc2 (_base[_block_num], _block_siz*_unit, EXIT0);
     	_base[_block_num] = malloc2(_base[_block_num],  _block_siz*_unit);
     }
     return (_base[_block_num]);

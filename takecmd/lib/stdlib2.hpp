@@ -263,7 +263,7 @@ T* calloc2(T* f ,Tz b){
 	}
 	return f;
 }
-
+/*
 template<typename T,typename Tz>
 T* realloc2(T* f ,Tz b){
 
@@ -318,7 +318,7 @@ T* reallocx(T* f, TI *end ,size_t i){
 
 }
 
-
+*/
 
 // ====================================================
 // sorting function
@@ -404,6 +404,7 @@ size_t bin_search_(T *v, T u, size_t siz, int unit){
 // ====================================================
 template<class T>
 class VECARY{
+
 	size_t _end;
 	T * _v;
 	
@@ -415,17 +416,116 @@ class VECARY{
 		free(_v); 
 		_v=NULL;
 	}
+	// 仮
+	T* getp(){ return _v;}
 
 	void resize(size_t sz){
 		if(!( _v = (T*)realloc( _v, sizeof(T)*(sz) ))) {
 			throw("memory allocation error : VECARY");
 		}
+		_end = sz;
 	}
+
+	bool empty(){ return _end==0; }
 
 	T &operator[](size_t i){ return _v[i]; }
 	
-	
-	
 
+	void realloc2(size_t b){
+		if(!( _v = (T*)realloc( _v, sizeof(T)*(b) ))) {
+			throw("memory allocation error : VECARY realloc2");
+		}
+		_end = b;
+		return;
+	}
+
+	void realloci(size_t i){
+		if( !( i & (i-1) )){
+			if(!( _v = (T*)realloc( _v, sizeof(T)*(i*2+1) ))) {
+				throw("memory allocation error : VECARY realloci ");
+			}
+			_end = i*2+1; 
+		}
+	}
+
+	void malloc2(size_t b){
+		if(!( _v = (T*)malloc(sizeof(T)*b))){
+			throw("memory allocation error : VECARY malloc2");
+		}
+		_end = b;
+	}
+
+	size_t reallocx( size_t end ,size_t i,T e){
+		// _endのみでいけるはず
+		if( i >= end ){
+
+			size_t end2 = MAX((end)*2+16,i+1);
+
+			if(!( _v = (T *) realloc(  _v , sizeof(T) * end2 ) ) ){
+				fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
+			}
+			for(size_t j= end ; j< end2  ; j++ ){
+				_v[j]=e;
+			}
+			end=MAX((end)*2,(i)+1);
+			_end = end;
+		}
+		return end;
+	}
+
+	size_t reallocSeq( size_t end ,size_t i){
+	
+		if( i >= end ){
+
+			size_t end2 = MAX((end)*2+16,i+1);
+			if(!(  _v= (T *)realloc( _v ,sizeof(T)*end2 ) ) ){
+				fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
+			}
+			for(size_t j= end ; j<end2 ; j++ ){
+				_v[j]=j;
+			}
+			end=MAX((end)*2,(i)+1);
+			_end = end;
+		}
+		return end;
+
+	}
+
+	PERM* qsort_perm(size_t size,int flg){
+    return qsort_perm_<T>(_v, size, flg);
+	}
+
+	static void swap( VECARY<T> &a , VECARY<T> &b ){
+
+		size_t t0 = a._end;
+		T * t1 = a._v;
+		a._end = b._end;
+		a._v = b._v;
+		b._end = t0;
+		b._v = t1;
+	}
+
+
+	T min( size_t x, size_t y){
+		T m = _v[x];
+		for(size_t i0 = x+1 ; i0 < y ; i0++){
+			if( m > _v[i0] ){
+				m = _v[i0];
+			}
+		}
+		return m;
+	}
+
+	T max( size_t x, size_t y){
+
+		T m = _v[x];
+		for(size_t i0 = x+1 ; i0 < y ; i0++){
+			if( m < _v[i0]) { 
+				m = _v[i0];
+			}
+		}
+		return m;
+	}
+	
 };
 

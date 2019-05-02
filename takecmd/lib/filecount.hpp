@@ -50,13 +50,14 @@ class FILE_COUNT{
 
   WEIGHT _total_rw, _total_cw;  // WEIGHTs for rows/columns ... reserved.
 
-  FILE_COUNT_INT *_rowt, *_clmt;   // size of each row/clmn
-	//VECARY <FILE_COUNT_INT> _rowt;
-	//VECARY <FILE_COUNT_INT> _clmt;
+  // size of each row/clmn
+	VECARY <FILE_COUNT_INT> _rowt;
+	VECARY <FILE_COUNT_INT> _clmt;
 
-  WEIGHT *_rw, *_cw;
-	//VECARY <WEIGHT> _rw;
-	//VECARY <WEIGHT> _cw;
+  //WEIGHT *_rw; 
+  //WEIGHT *_cw;
+	VECARY <WEIGHT> _rw;
+	VECARY <WEIGHT> _cw;
 
 
   FILE_COUNT_INT _rw_end, _cw_end;
@@ -85,12 +86,12 @@ class FILE_COUNT{
 		#endif
 
 	  kk += _rows_org;
-	  _rw = realloc2(_rw, kk+1);
+	  _rw.realloc2(kk+1);
 
 		wfp.reset();
-	  wfp.ARY_Read(_rw, kk);
+	  wfp.VARY_Read(_rw, kk);
 
-		w = ARY_MIN ( _rw, 0, kk);
+		w = _rw.min(0, kk);
 		
 		if ( w<0 ) { _negaFLG = true;}
 		wfp.close();
@@ -112,7 +113,7 @@ class FILE_COUNT{
 
 	  QUEUE_INT i, item, kk=0, k, jump_end=0;
 	  WEIGHT w, s;
-	  VEC_ID *jump=NULL;
+	  VECARY<VEC_ID> jump;
 
   	LONG jj;
 
@@ -133,16 +134,14 @@ class FILE_COUNT{
 				if ( fp->readOK() && jj<TRSACT_MAXNUM && jj>=0 ){
        		ENMAX (_clms_org, item+1);  // update #items
         	//reallocx (jump, jump_end, k, 0, goto ERR);
-        	jump = reallocx(jump, &jump_end, k, 0);
-
+        	jump_end = jump.reallocx(jump_end, k, 0);
 
       		jump[k] = item;
         	k++;
         	s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
 
           // count/weight-sum for the transpose mode
-        	//reallocx (_clmt, _clm_end, item, 0, goto ERR);
-        	_clmt = reallocx(_clmt, &_clm_end, item, 0);
+        	_clm_end = _clmt.reallocx(_clm_end, item, 0);
 
         	_clmt[item]++;
 	      }
@@ -150,14 +149,11 @@ class FILE_COUNT{
   		} while ( fp->remain() );
 
        // count/weight-sum for the transpose mode
-			//reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
-			_rowt = reallocx (_rowt, &_row_end, _rows_org, 0);
-
+			_row_end = _rowt.reallocx(_row_end, _rows_org, 0);
     	_rowt[_rows_org] = k;
 
 			// LOAD_TPOSEの時
-			//reallocx (_cw, _cw_end, _rows_org, 0, goto ERR);
-			_cw = reallocx<WEIGHT>(_cw, &_cw_end, _rows_org, 0);
+			_cw_end = _cw.reallocx(_cw_end, _rows_org, 0);
 
       _cw[_rows_org] = s;    // sum up positive weights
 
@@ -179,18 +175,17 @@ class FILE_COUNT{
 
 		} while ( fp->eof() );
 
-		free2 (jump);
 		//delete [] jump
 
     // swap the variables in transpose mode
-  	if ( _rw == NULL ){
+  	if ( _rw.empty() ){
   		_total_w_org = _total_pw_org = _rows_org; 
   		return 0; 
   	} 
 
 		_clm_btm = MIN(kk, _rows_org);
-		//reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
-		_rw = reallocx<WEIGHT>(_rw, &kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
+
+		kk = _rw.reallocx(kk,_rows_org, TRSACT_DEFAULT_WEIGHT);
 
 		for(int i0 = 0 ; i0 < _rows_org ; i0++){
   	  _total_w_org  += _rw[i0];
@@ -199,7 +194,6 @@ class FILE_COUNT{
 	  return 0;
   
 	  ERR:;
-		free2(jump);
   	return 1;
 	}
 
@@ -210,7 +204,7 @@ class FILE_COUNT{
 	
 	  QUEUE_INT i, item, kk=0, k, jump_end=0;
 	  WEIGHT w, s;
-	  VEC_ID *jump=NULL;
+	  VECARY<VEC_ID> jump;
 
   	LONG jj;
 	  if ( wf ){ kk = weight_Scan(wf); }
@@ -230,21 +224,18 @@ class FILE_COUNT{
 
        		ENMAX (_clms_org, item+1);  // update #items
         	// reallocx (jump, jump_end, k, 0, goto ERR);
-        	jump = reallocx(jump, &jump_end, k, 0);
+        	jump_end = jump.reallocx(jump_end, k, 0);
 
       		jump[k] = item;
         	k++;
         	s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
 
           // count/weight-sum for the transpose mode
-        	//reallocx (_clmt, _clm_end, item, 0, goto ERR);
-        	_clmt = reallocx (_clmt, &_clm_end, item, 0);
+        	_clm_end = _clmt.reallocx(_clm_end, item, 0);
         	_clmt[item]++;
 
 					// NOT TPOSE
-          //reallocx (_cw, _cw_end, item, 0, goto ERR);
-          _cw = reallocx<WEIGHT>(_cw, &_cw_end, item, 0);
-
+          _cw_end = _cw.reallocx(_cw_end, item, 0);
           _cw[item] += MAX(w,0);    // sum up positive weights
 	      }
 
@@ -252,10 +243,11 @@ class FILE_COUNT{
 
        // count/weight-sum for the transpose mode
 			//reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
-			_rowt = reallocx (_rowt, &_row_end, _rows_org, 0);
+			_row_end = _rowt.reallocx (_row_end, _rows_org, 0);
+
     	_rowt[_rows_org] = k;
 
-			if ( k==0 && fp->eof() ) break;
+			if ( k==0 && fp->eofx() ) break;
 
 			_rows_org++;  // increase #transaction
     
@@ -271,16 +263,14 @@ class FILE_COUNT{
       }
 		} while ( fp->eof() );
 
-		free2 (jump);
-		
     // swap the variables in transpose mode
-  	if ( _rw == NULL ){
+  	if ( _rw.empty() ){
   		_total_w_org = _total_pw_org = _rows_org; 
   		return 0; 
   	} 
 		_clm_btm = MIN(kk, _rows_org);
-		//reallocx (_rw, kk, _rows_org, TRSACT_DEFAULT_WEIGHT, goto ERR);
-		_rw = reallocx<WEIGHT>(_rw, &kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
+		kk = _rw.reallocx( kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
+
 
 	  for(int i0=0 ; i0 < _rows_org ; i0++ ){
   	  _total_w_org += _rw[i0];
@@ -290,7 +280,6 @@ class FILE_COUNT{
   
 	  ERR:;
 		//wfp.close();
-		mfree (jump);
   	return 1;
 	}
 
@@ -300,8 +289,7 @@ class FILE_COUNT{
 			_clms_org(0) ,_rows_org(0) , _total_w_org(0) , _total_pw_org(0) ,_eles_org(0) ,
 			_clms(0) , _rows(0) , _eles(0), _clm_end(0) , _row_end(0),
 			_row_btm(0) , _clm_btm(0) , _row_min(0) , _row_max(0),
-			_clm_min(0) , _clm_max(0) , _rowt(NULL) , _clmt(NULL),
-			_total_rw(0), _total_cw(0), _rw(NULL) , _cw(NULL),
+			_clm_min(0) , _clm_max(0) , _total_rw(0), _total_cw(0),
 			_rw_end(0) , _cw_end(0) , _rperm(NULL) , _cperm(NULL),_negaFLG(false),
 			_w_lb(0) , _w_ub(0) ,_clm_lb(0) , _clm_ub(0), _row_lb(0), _row_ub(0),_end1(0),
 			_c_eles(0),_c_clms(0),_r_eles(0),_r_clms(0)
@@ -349,7 +337,7 @@ class FILE_COUNT{
 		size_t get_clmt(VEC_ID tt){ return _clmt[tt]; }
     size_t get_rowt(VEC_ID tt){ return _rowt[tt]; }
 
-		FILE_COUNT_INT * getp_rowt(){ return _rowt; }// たぶん NULLにした方がいい
+		FILE_COUNT_INT * getp_rowt(){ return _rowt.getp(); }// たぶん NULLにした方がいい
 
 
 		bool rPermGErows(VEC_ID t){
@@ -358,7 +346,7 @@ class FILE_COUNT{
  
  
     size_t get_rw(VEC_ID tt){ 
-    	return _rw ? _rw[tt] :1 ;
+    	return _rw.empty() ? 1 : _rw[tt] ;
     }
 
     void set_cperm(VEC_ID tt,PERM v){ _cperm[tt] = v; }
@@ -372,25 +360,23 @@ class FILE_COUNT{
 
 		PERM *clmw_perm_sort(int flg){
 		
-    	return qsort_perm_<WEIGHT> (_cw, _clms_org, flg);
+    	return _cw.qsort_perm(_clms_org, flg);
     }
     PERM *clmt_perm_sort(int flg){
-      return qsort_perm_<FILE_COUNT_INT> (_clmt, _clms_org, flg);
+      return _clmt.qsort_perm(_clms_org, flg);
     }
     PERM *roww_perm_sort(int flg){
-    	if(_rw){
-	      return qsort_perm_<WEIGHT> (_rw, _rows_org, flg);
+    	if(_rw.empty()){
+	      return _rowt.qsort_perm(_rows_org, flg);
 	    }
 	    else{
-	      return qsort_perm_<FILE_COUNT_INT> (_rowt, _rows_org, flg);
+	      return _rw.qsort_perm( _rows_org, flg);
 	    }
 	    
     }
     PERM *rowt_perm_sort(int flg){
-      return qsort_perm_<FILE_COUNT_INT> (_rowt, _rows_org, flg);
+      return _rowt.qsort_perm( _rows_org, flg);
     }
-
-
 
 		// _headとstrIDを使うなら再考
     VEC_ID adjust_sep(VEC_ID sep,VEC_ID end,int flag){ 
@@ -495,9 +481,7 @@ class FILE_COUNT{
 		_clms_org = (QUEUE_INT)_rows_org;
 		_rows_org = (VEC_ID)swap_tmp;
 		
-		FILE_COUNT_INT * swap_pnt = _clmt;
-		_clmt = _rowt;
-		_rowt = swap_pnt;
+		VECARY<FILE_COUNT_INT>::swap(_clmt,_rowt);
 
 	}
 	
@@ -600,28 +584,28 @@ class FILE_COUNT{
 	    if ( y >= _clms ){
   	    _clms = y+1;
     	  if ( fc ) {
-    	  	_clmt = reallocx(_clmt, &_clm_end, _clms, 0);
+    	  	_clm_end = _clmt.reallocx(_clm_end, _clms, 0);
     	  }
 			}
 			
 			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && x >= _clms ){
       	_clms = x+1;
 				if ( fc ) { 
-					_clmt = reallocx (_clmt, &_clm_end, _clms, 0);
+					_clm_end = _clmt.reallocx ( _clm_end, _clms, 0);
 				}
 	    }
  
  			if ( x >= _rows ){
       	_rows = x+1;
 				if ( fr ) { 
-					_rowt = reallocx (_rowt, &_row_end, _rows, 0);
+					_row_end = _rowt.reallocx(_row_end, _rows, 0);
 				}
 			}
 		
 			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && y >= _rows ){ // for undirected edge version
       	_rows = y+1;
 	      if ( fr ) { 
-	      	_rowt = reallocx (_rowt, &_row_end, _rows, 0);
+	      	_row_end = _rowt.reallocx(_row_end, _rows, 0);
 	      }
     }
     
@@ -667,24 +651,24 @@ class FILE_COUNT{
 
   if ( fc ){ 
   	//reallocx (_clmt, _clm_end, _clms, 0, goto END);
-  	_clmt = reallocx (_clmt, &_clm_end, _clms, 0);
+  	_clm_end = _clmt.reallocx(_clm_end, _clms, 0);
   }
   if ( fr ){
     //reallocx (_rowt, _row_end, _rows, 0, goto END);
-    _rowt = reallocx (_rowt, &_row_end, _rows, 0);
+    _row_end = _rowt.reallocx(_row_end, _rows, 0);
 
     //ARY_MAX (_row_max, k, _rowt, 0, _rows);
     //ARY_MIN (_row_min, k, _rowt, 0, _rows);
     // 一緒にする？
-    _row_max = ARY_MAX(_rowt, 0, _rows);
-		_row_min = ARY_MIN(_rowt, 0, _rows);
+    _row_max = _rowt.max(0, _rows);
+		_row_min = _rowt.min(0, _rows);
   }
-  if ( fe && _clmt ){
+  if ( fe && !_clmt.empty() ){
     //ARY_MAX (_clm_max, k, _clmt, 0, _clms);
     // ARY_MIN (_clm_min, k, _clmt, 0, _clms);
     // 一緒にする？
-    _clm_max = ARY_MAX( _clmt, 0, _clms);
-    _clm_min = ARY_MIN( _clmt, 0, _clms);
+    _clm_max = _clmt.max(0, _clms);
+    _clm_min = _clmt.min(0, _clms);
   }
   END:;
   // if ( ERROR_MES ) mfree (C.rowt, C.clmt);

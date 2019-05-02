@@ -121,10 +121,7 @@ int TRSACT::alloc(){
   if ( flag ){ _T.set_eles(_C.c_eles()); }
 	_T.adjustEnd((_flag&LOAD_DBLBUF));
 
-  //if ( TRSACT_NEGATIVE ) malloc2 (_pw, _T.get_end(), EXIT0);
-  //else _pw = NULL;
-  // malloc2 (_w, _T.get_end(), EXIT0);
-  _w = malloc2 (_w, _T.get_end());
+  _w.malloc2( _T.get_end());
 
   if ( _flag2&TRSACT_NEGATIVE ) { 	// たぶんこう？
   	//malloc2 (_pw, _T.get_end(), EXIT0);
@@ -522,14 +519,14 @@ void TRSACT::delivery (WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m){
   if (occ) {
 
   	for(QUEUE_INT *b = occ->start() ; b < occ->end() ; b++){
-    	_T.delivery_iter( w, pw, *b, m ,&_jump,_OQ,_w,_pw,_flag2&TRSACT_NEGATIVE);
+    	_T.delivery_iter( w, pw, *b, m ,&_jump,_OQ,_w.getp(),_pw,_flag2&TRSACT_NEGATIVE);
 	  }
 
 	}
 	else{
 
   	for(VEC_ID t=0 ; t<_T.get_t(); t++){
-    	_T.delivery_iter( w, pw, t, m ,&_jump,_OQ,_w,_pw,_flag2&TRSACT_NEGATIVE);
+    	_T.delivery_iter( w, pw, t, m ,&_jump,_OQ,_w.getp(),_pw,_flag2&TRSACT_NEGATIVE);
     }
 	}
 	
