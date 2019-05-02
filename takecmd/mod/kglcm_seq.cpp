@@ -532,8 +532,8 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
 	
 
   //malloc2 (occ->_v, _TT.get_t(), EXIT);
-	occ->_v = malloc2 (occ->_v, _TT.get_t());
-
+	occ->_v = new KGLCMSEQ_ELM[_TT.get_t()];
+	 
 
   occ->_end = _TT.get_clm_max(); 
   occ->_s = occ->_t = 0;

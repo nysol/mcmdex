@@ -60,8 +60,9 @@ char * SGRAPH::initOQ(QUEUE * OQ){
 
 	char *OQp ;
 	// malloc2 (OQp,(OQMemSize + (_edge.get_t()*2)+2)*(sizeof(QUEUE_INT)),  EXIT ); 
-	OQp =  malloc2 (OQp,(OQMemSize + (_edge.get_t()*2)+2)*(sizeof(QUEUE_INT)) ); 
-
+	if(!( OQp = (char*)malloc(sizeof(char)* (OQMemSize + (_edge.get_t()*2)+2)*(sizeof(QUEUE_INT))  ))){
+		throw("memory allocation error : SGRAPH::initOQ");
+	}
 	char *cmn_pnt = OQp;
 
 	for(VEC_ID i=0; i < _edge.get_t() ;i++){

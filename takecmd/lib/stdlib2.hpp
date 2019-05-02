@@ -248,6 +248,7 @@ T ARY_SUM( T *v , Tz x,Tz y)
 // ====================================================
 // memmory allcate function
 // ====================================================
+/*
 template<typename T,typename Tz>
 T* malloc2(T* f ,Tz b){
 	if(!( f = (T*)malloc(sizeof(T)*b))){
@@ -263,7 +264,6 @@ T* calloc2(T* f ,Tz b){
 	}
 	return f;
 }
-/*
 template<typename T,typename Tz>
 T* realloc2(T* f ,Tz b){
 

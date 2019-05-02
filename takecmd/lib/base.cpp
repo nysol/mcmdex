@@ -23,7 +23,10 @@ void BASE::alloc (int unit, int block_siz){
   _block_num = -1;
 
   //calloc2 (_base, 20, EXIT);
-  _base = calloc2 (_base, 20);
+
+	if(!( _base = (char **)calloc(sizeof(char *),20))){
+		throw("memory allocation error : calloc2");
+	}
   _block_end = 20;
 
 }

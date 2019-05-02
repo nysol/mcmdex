@@ -591,7 +591,9 @@ class TRSACT {
 		//	{delete(_OQELE); EXIT;}
 		//);
 		try{ 
-			cmn_pnt = malloc2(cmn_pnt, (cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)) );
+			if(!( cmn_pnt = (char *)malloc(sizeof(char)* ((cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)))  ))){
+				throw("memory allocation error : malloc2");
+			}
 		}catch(...){
 			delete[] _OQELE;
 			throw;

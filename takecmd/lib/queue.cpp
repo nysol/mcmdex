@@ -116,6 +116,7 @@ void QUEUE::occ_dup ( QUEUE **QQ, QUEUE *Q, WEIGHT **ww, WEIGHT *w, WEIGHT **ppw
   size_t cnt=0;
   QUEUE_INT e, *x;
   char *buf;
+
   int unit = sizeof(*Q) + (w?sizeof(*w):0) + (pw?sizeof(*pw):0);
  
   ENMAX (u, sizeof(*x));
@@ -124,9 +125,16 @@ void QUEUE::occ_dup ( QUEUE **QQ, QUEUE *Q, WEIGHT **ww, WEIGHT *w, WEIGHT **ppw
 
   if ( cnt == 0 ){ *QQ=NULL; return; }
 
-  buf = malloc2 (buf, l*unit + (cnt+l)*u);
+  //buf = malloc2 (buf, l*unit + (cnt+l)*u);
+	if(!( buf = (char*)malloc(sizeof(char)* ( l*unit + (cnt+l)*u ) ))){
+		throw("memory allocation error : malloc2");
+	}
 
-  *QQ = (QUEUE*)buf; buf += sizeof(*Q) *l;
+
+  *QQ = (QUEUE*)buf; 
+  buf += sizeof(*Q) * l;
+
+
   if ( w ){ *ww = (WEIGHT *)buf; buf += sizeof(*w)*l; }
   if ( pw ){ *ppw = (WEIGHT *)buf; buf += sizeof(*pw)*l; }
   for (i=0 ; i< _t ; i++){
@@ -159,7 +167,13 @@ void QUEUE::occ_dupELE ( KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, WEIGHT **ww, WEIGHT
 	for(x=_v; x < _v+_t ; x++) cnt += Q[*x]._t;
   if ( cnt == 0 ){ *QQ=NULL; return; }
 
-  buf = malloc2 (buf, l*unit + (cnt+l)*u);
+  //buf = malloc2 (buf, l*unit + (cnt+l)*u);
+
+	if(!( buf = (char*)malloc(sizeof(char)*( l*unit + (cnt+l)*u) ))){
+		throw("memory allocation error : malloc2");
+	}
+
+
 
   *QQ = (KGLCMSEQ_QUE*)buf; buf += sizeof(*Q) *l;
   if ( w ){ *ww = (WEIGHT *)buf; buf += sizeof(*w)*l; }
