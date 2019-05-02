@@ -289,7 +289,7 @@ class TRSACT {
 		// skipping items of large frequencies
 		if ( _flag & LOAD_SIZSORT ){
 			//malloc2 (o, _T.get_clms(), exit(1));
-			o = malloc2 (o, _T.get_clms());
+			o = new QUEUE_INT *[_T.get_clms()];
 
 			for ( QUEUE_ID i =0 ; i < _T.get_clms() ; i++){
 				o[i] = _OQ[i].get_v();
@@ -484,9 +484,7 @@ class TRSACT {
 
 	void calloc_sc(VEC_ID sise){
 		//calloc2 (_sc, sise, return);
-		_sc = calloc2 (_sc, sise);
-
-
+		_sc = new char[sise]();
 	}
 	void delivery( WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
 	void deliv( QUEUE *occ, QUEUE_INT m);
@@ -548,7 +546,7 @@ class TRSACT {
 		//); 
 		// err処理 delete(_OQ)
 		try{
-			cmn_pnt = malloc2 (cmn_pnt, (cmmsize+_T.get_clms()+2) );
+			cmn_pnt = new QUEUE_INT[cmmsize+_T.get_clms()+2];
 		}catch(...){
 			delete[] _OQ;
 			throw;
@@ -573,12 +571,9 @@ class TRSACT {
     // ARY_INIT_PERM (_OQ[_T.get_clms()].get_v(), _T.get_t());   
     _OQ[_T.get_clms()].initVprem(_T.get_t());
 
-    free (p);
+    delete [] p;
     
   }
-
-
-
 
 	void Mque_allocELE(VEC_ID *p){
 		size_t cmn_size_t = 0;

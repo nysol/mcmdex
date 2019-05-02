@@ -42,6 +42,7 @@ class SETFAMILY{
   PERM *_rperm, *_cperm;  // row permutation
 
   QUEUE *_v;
+  
 	char *_ERROR_MES;
 
 	void flie_load(FILE2 *fp);
@@ -64,8 +65,10 @@ class SETFAMILY{
   		_cwfname(NULL),_rwfname(NULL),_rperm(NULL),_cperm(NULL),_ERROR_MES(NULL){}
 
 		~SETFAMILY(){
-			mfree (_buf, _buf2, _v, _rw, _cw, _wbuf, _w, _cperm);
+			mfree (_buf2, _rw, _cw, _wbuf, _w, _cperm);
 			delete []  _rperm;
+			delete []  _buf;
+			delete []  _v;
 		}
 
 
@@ -98,7 +101,7 @@ class SETFAMILY{
 
 			VEC_ID * p ;
   	  // calloc2 (p, _clms, {exit(1);});
-  	  p = calloc2 (p, _clms);
+  	  p = new VEC_ID[_clms]();
 
 			for (VEC_ID iv=0 ; iv< _t ; iv++){
 
@@ -226,21 +229,24 @@ class SETFAMILY{
 		}
 		// 要確認
 		void alloc_v(){
-		  _v = malloc2(_v, _end);		  
+		  //_v = malloc2(_v, _end);
+		  _v = new QUEUE[_end]; 
 		}
 		void alloc_buf(){
-			char *buf;
-		  buf = malloc2 (buf,(_eles+_end+1)*_unit);
-		  _buf = (QUEUE_INT *)buf;
+			//char *buf;
+		  //buf = malloc2 (buf,(_eles+_end+1)*_unit);
+		  //_buf = (QUEUE_INT *)buf;
+		  _buf = new QUEUE_INT[_eles+_end+1];
 
 		}
 		
 		void allocBuffer(){
-			_v = malloc2 (_v, _end );
-			// _unit sizeof(QUEUE_INT)
-			char *buf;
-		  buf = malloc2( buf,(_eles+_end+1) * _unit);
-		  _buf = (QUEUE_INT *)buf;
+			//_v = malloc2 (_v, _end );
+		  _v = new QUEUE[_end]; 
+			//char *buf;
+		  //buf = malloc2( buf,(_eles+_end+1) * _unit);
+		  //_buf = (QUEUE_INT *)buf;
+		  _buf = new QUEUE_INT[_eles+_end+1];
 
 		  return ;
 		}
@@ -277,7 +283,8 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			cmm_p = calloc2( cmm_p ,_t);
+			//cmm_p = calloc2( cmm_p ,_t);
+			cmm_p = new char[_t]();
 
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 
@@ -292,7 +299,7 @@ class SETFAMILY{
 				}
 			}
 
-			free(cmm_p); 
+			delete [] cmm_p; 
 
 		}
 		void ary_INVPERMUTE( PERM *invperm ,QUEUE& Q,VEC_ID num){
@@ -300,7 +307,8 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			cmm_p = calloc2(cmm_p,num);
+			//cmm_p = calloc2(cmm_p,num);
+			cmm_p = new char[num]();
 
 			for(i1=0; i1 < num ; i1++){
 
@@ -316,7 +324,7 @@ class SETFAMILY{
 				}
 
 			}
-			free(cmm_p); 
+			delete [] cmm_p; 
 		}
 
 		void any_INVPERMUTE_w(PERM * rperm){
@@ -326,7 +334,8 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			cmm_p = calloc2(cmm_p,_t);
+			//cmm_p = calloc2(cmm_p,_t);
+			cmm_p = new char[_t]();
 
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 
@@ -340,7 +349,7 @@ class SETFAMILY{
 					_w[i2] = ww; 
 				}
 			}
-			free(cmm_p); 
+			delete [] cmm_p; 
 		}
 
 		void any_INVPERMUTE_rw(PERM * rperm){
@@ -350,7 +359,8 @@ class SETFAMILY{
 			char  * cmm_p;
 			int i1,i2;
 
-			cmm_p = calloc2(cmm_p,_t);
+			//cmm_p = calloc2(cmm_p,_t);
+			cmm_p = new char[_t]();
 
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 
@@ -364,7 +374,7 @@ class SETFAMILY{
 					_rw[i2] = w; 
 				}
 			}
-			free(cmm_p); 
+			delete [] cmm_p; 
 		}
 
 

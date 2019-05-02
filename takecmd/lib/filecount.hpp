@@ -408,8 +408,7 @@ class FILE_COUNT{
 			_c_clms=0;
 
 			// malloc2 (_cperm, _clms_org+1, exit(1));
-			_cperm = malloc2 (_cperm, _clms_org+1);
-			
+			_cperm = new PERM[_clms_org+1];
 			for(size_t i =0 ;i<_clms_org;i++){ 
 				_cperm[i] = _clms_org+1; 
 			}
@@ -436,7 +435,8 @@ class FILE_COUNT{
 			_r_clms = base_clm;
 
 			//malloc2 (_rperm, _rows_org, exit(1));
-			_rperm = malloc2(_rperm, _rows_org);
+			_rperm = new PERM[_rows_org];
+			
 		  // compute #elements according to rowt, and set rperm
 			VEC_ID tt=0;
 			for( VEC_ID t=0 ; t<_rows_org ; t++){

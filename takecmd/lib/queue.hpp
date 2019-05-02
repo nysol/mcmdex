@@ -89,7 +89,8 @@ struct KGLCMSEQ_QUE{
 	void alloc (QUEUE_ID siz){
 		_end =  siz+1;
 		//malloc2(_v, siz+1, EXIT);
-		_v = malloc2(_v, siz+1);
+		_v =new KGLCMSEQ_ELM[siz+1];
+
 	}
 
 
@@ -144,12 +145,10 @@ class QUEUE {
 
 	QUEUE(QUEUE_ID siz ,QUEUE_ID t):_end(siz+1),_t(t),_s(0){
 		//malloc2(_v, siz+1, EXIT);
-		// _v = malloc2(_v, siz+1);
-		_v = new  QUEUE_INT[siz+1];
+		_v = new QUEUE_INT[siz+1];
 	}
 	QUEUE(QUEUE_ID siz):_end(siz+1),_t(0),_s(0){
 		//malloc2(_v, siz+1, EXIT);
-		//_v = malloc2(_v, siz+1);
 		_v = new QUEUE_INT[siz+1];
 	}
 
@@ -172,6 +171,7 @@ class QUEUE {
 	}
 
 	void clear(){
+		printf("clear\n");
 	  //free2 (_v);
 		delete [] _v;
 		_v = NULL;
@@ -197,14 +197,16 @@ class QUEUE {
 	QUEUE_INT pop_back(){ return _v[--_t]; }
 
 	// insと同じ？ org QUE_INS INs
-	void push_back(QUEUE_INT v){ _v[_t++]=v; }
+	void push_back(QUEUE_INT v){
+		 _v[_t++]=v; 
+	}
 
 
 
 	//void INS(QUEUE_INT v){ _v[_t++]=v; }
 
 	void show(){
-		std::cerr << "QUE";
+		std::cerr << "QUE ";
 		for(QUEUE_INT * x= begin() ; x < end(); x++){
 			std::cerr << " " << *x  ;
  		}
@@ -267,7 +269,13 @@ class QUEUE {
 
 	//void cp_s2t(){ _t=_s; }
 
-	void set_v(QUEUE_ID *v){ _v=v;}
+	void set_v(QUEUE_ID *v){
+		//std::cerr << "sv" << std::endl;
+	
+		//std::cerr << "setVb " << v << std::endl;
+		_v=v;
+		//std::cerr << "setVa " << _v << std::endl;
+	}
 	void set_v(int i,QUEUE_ID v){ _v[i]=v;}
 
 	void set_end(QUEUE_ID v){ _end=v;}
@@ -303,11 +311,12 @@ class QUEUE {
 	void alloc (QUEUE_ID siz){
 		_end =  siz+1;
 		//malloc2(_v, siz+1, EXIT);
-		_v = malloc2(_v, siz+1);
+		_v = new QUEUE_ID[siz+1];
+
 	}
 	void alloc (QUEUE_ID siz , QUEUE_ID end){
 		//malloc2(_v, siz+1, EXIT);
-		_v = malloc2(_v, siz+1);
+		_v = new QUEUE_ID[siz+1];
 		_end =  end;
 	}
 
@@ -320,7 +329,7 @@ class QUEUE {
 
 		_end =  siz+1;
 		//malloc2(_v, siz+1, EXIT);
-		_v = malloc2(_v, siz+1);
+		_v = new QUEUE_ID[siz+1];
 		for(size_t i=0 ; i< siz; i++){ _v[i] = i; }
 		_t = siz;
 

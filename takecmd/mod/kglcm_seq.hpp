@@ -87,7 +87,7 @@ class KGLCMSEQ{
 
   	//if ( f&(PROBLEM_OCC_W+PROBLEM_OCC_PW) ) 
   	// calloc2 (_occ_w, siz+2, goto ERR);
-  	_occ_w = calloc2 (_occ_w, siz+2);
+  	_occ_w = new WEIGHT[siz+2]();
 
 
 	  //if ( f&PROBLEM_OCC_PW ) calloc2 (_occ_pw, siz+2, goto ERR);
@@ -95,7 +95,7 @@ class KGLCMSEQ{
 	  
 	  if(_tFlag2&TRSACT_NEGATIVE){
 		  //calloc2 (_occ_pw, siz+2, goto ERR);
-		  _occ_pw = calloc2 (_occ_pw, siz+2);
+		  _occ_pw = new WEIGHT[siz+2]();
 	  }else{
 		  _occ_pw = _occ_w;
 	  }
@@ -123,7 +123,6 @@ class KGLCMSEQ{
 		_II.alloc(_output_fname, perm, siz, siz3);
 
 	  if ( _target < siz && _II.get_perm() ){
-      //FLOOP (j, 0, _II.get_item_max()){ 
      	for(j=0;j<_II.get_item_max();j++){
       	if ( _target == _II.get_perm(j) ){ 
       		_II.set_target(j); 

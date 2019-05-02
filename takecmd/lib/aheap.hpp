@@ -118,9 +118,10 @@ class AHEAP {
 		void alloc (AHEAP_ID num){
   		AHEAP_ID i;
   		if ( num>0 ){
-				_v = malloc2 (_v, num*2);
-			}
+				//_v = malloc2 (_v, num*2);
+				_v = new AHEAP_KEY[num*2];
 
+			}
   		_end = num;
 
 			for(size_t i =0 ;i<num*2;i++){ 

@@ -127,9 +127,7 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
   } 
 
   if ( _flag&ITEMSET_ITEMFRQ ){
-	  //_item_frq = malloc2(_item_frq, item_max+2);
 	  _item_frq =  new WEIGHT[item_max+2];
-
 	}
 
   if ( _flag&ITEMSET_RULE ){

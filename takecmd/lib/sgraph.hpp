@@ -38,14 +38,15 @@ class SGRAPH {
 		_itemary(NULL),_perm(NULL) {}
 
 	~SGRAPH(){
-	  mfree (_perm,_itemary);
+	  //mfree (_perm,_itemary);
+	  delete [] _itemary;
+	  delete [] _perm;
 	}
 
 
 	int itemAlloc(size_t siz){
 		//calloc2(_itemary, siz+2, return 1); 
-		_itemary = calloc2(_itemary, siz+2); 
-
+		_itemary = new QUEUE_INT[siz+2](); 
 		return 0;
 	}
 
@@ -78,7 +79,7 @@ class SGRAPH {
 		PERM *tmp   = NULL;
 
     // malloc2 (sperm, _edge.get_t(), EXIT);
-    sperm = malloc2(sperm, _edge.get_t());
+    sperm = new PERM[ _edge.get_t()];
 
 		for(size_t i=0 ; i< _edge.get_t(); i++){  sperm[i]=i; }
 		
@@ -88,9 +89,9 @@ class SGRAPH {
 		
 		//malloc2(tmp , _edge.get_t() , {free(sperm);EXIT;});
 		try{
-			tmp = malloc2(tmp , _edge.get_t() );
+			tmp = new PERM[_edge.get_t()];
 		}catch(...){
-			free(sperm);
+			delete [] sperm;
 			throw;
 		}
 
@@ -102,7 +103,8 @@ class SGRAPH {
 
 		replace_index(sperm, tmp);
 
-    mfree (tmp, sperm);
+    delete [] tmp;
+    delete [] sperm;
 
 		_perm = NULL;
 		

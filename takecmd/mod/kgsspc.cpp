@@ -417,7 +417,7 @@ void KGSSPC::list_comp(){
   _II.set_itemset_t(2);
 
   //calloc2 (w, _TT.get_t(), EXIT);
-  w = calloc2 (w, _TT.get_t());
+  w = new WEIGHT[_TT.get_t()]();
 
   if ( (_problem & SSPC_INNERPRODUCT) && !_TT.exist_Tw() ){
    // FLOOP (i, 0, _TT.get_clms())  _TT.w_multipule(i);
@@ -511,9 +511,9 @@ void KGSSPC::list_comp(){
     comp2( i, j, c, wi, wx, sqrt(w[i]), &cnt, &fp2, _II.getp_itemset(), 0);
 
   } while ( fp.eof() );
-
+  
   _II.set_perm(p);
-
+	delete [] w;
 }
 
 /* iteration for muticore mode */
@@ -545,12 +545,12 @@ void *KGSSPC::iter (void *p){
 
   if ( _problem & SSPC_NO_NEIB ){
   	 //calloc2 (mark, _TT.get_clms(), EXIT);
-  	mark = calloc2 (mark, _TT.get_clms());
+  	mark = new char[_TT.get_clms()]();
   }
   //calloc2 (occ_w, _TT.get_clms(), EXIT);
-  occ_w = calloc2 (occ_w, _TT.get_clms());
+  occ_w = new WEIGHT[_TT.get_clms()]();
   //calloc2 (OQend, _TT.get_clms(), EXIT);
-  OQend = calloc2 (OQend, _TT.get_clms());
+  OQend = new QUEUE_INT[_TT.get_clms()]();
 
   while (1){
 
@@ -701,9 +701,7 @@ void *KGSSPC::iter (void *p){
      	_II.getp_multi_fp(core_id)->putc('\n');
 			_II.getp_multi_fp(core_id)->flush();
 
-      // MQUE_FLOOP_CLS (jump, x) _vecchr[*x] = 0;  // clear mark
       jump.clrMark( _vecchr );
-			//for(x=jump.get_v();x<jump.get_v()+jump.get_t() ; x++){ _vecchr[*x] = 0; }
 
 			// data polish;  clear OQ, and marks
       if ( _problem & SSPC_POLISH2 ){  
@@ -723,7 +721,6 @@ void *KGSSPC::iter (void *p){
 	   	_TT.clrMark_Q(i,mark);
     }
 
-		//_TT.set_OQ_end(i,0);
 		_TT.clrOQend(i);
 
     if ( _problem & SSPC_COUNT ){
@@ -768,7 +765,7 @@ void KGSSPC::SSPCCORE(){
 
   // initialization
   //calloc2 (w, _TT.get_clms()*2, EXIT);
-  w = calloc2 (w, _TT.get_clms()*2);
+  w = new WEIGHT[_TT.get_clms()*2]();
   if ( (_problem&SSPC_INNERPRODUCT) && !_TT.exist_Tw() ) {//ここなに
   	_TT.multipule_w();
   }
@@ -792,8 +789,8 @@ void KGSSPC::SSPCCORE(){
   }
 
   // for multi-core
-  //malloc2 (SM, _II.get_multi_core(), EXIT);
-  SM = malloc2 (SM, _II.get_multi_core());
+  //SM = malloc2 (SM, _II.get_multi_core());
+	SM = new SSPC_MULTI_CORE[_II.get_multi_core()];
 
 	for (i=_II.get_multi_core(); (i--) > 0 ; ){
     SM[i]._o = o;
@@ -824,7 +821,9 @@ void KGSSPC::SSPCCORE(){
     	_TT.sizSort(i,o);
     }
   }
-  mfree (w, o, SM);
+  delete [] w;
+  delete [] o;
+	delete SM;
 }
 
 

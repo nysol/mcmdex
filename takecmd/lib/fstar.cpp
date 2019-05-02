@@ -64,19 +64,24 @@ LONG FSTAR::alloc_deg (){
   _node_num = MAX (_out_node_num, _in_node_num);
   
   if ( _edge_dir == 0 ) _in_node_num = _out_node_num = _node_num;
-  _fstar = calloc2 (_fstar, _out_node_num+2);
+  //_fstar = calloc2 (_fstar, _out_node_num+2);
+  _fstar = new FSTAR_INT[_out_node_num+2]();
 
   if ( _flag & LOAD_EDGE ) return j;
 
   if ( _flag & FSTAR_CNT_IN ){
     if ( _flag & FSTAR_CNT_DEG_ONLY ){
-      _in_deg = calloc2 (_in_deg, _node_num+2);
+      //_in_deg = calloc2 (_in_deg, _node_num+2);
+      _in_deg = new FSTAR_INT[_node_num+2]();
+      
     } else {
-    	_in_deg = calloc2 (_in_deg, _in_node_num+2);
+    	//_in_deg = calloc2 (_in_deg, _in_node_num+2);
+      _in_deg = new FSTAR_INT[ _in_node_num+2]();
     }
   }
   if ( _flag & FSTAR_CNT_OUT ){
-    _out_deg = calloc2 (_out_deg, _out_node_num+2);
+    //_out_deg = calloc2 (_out_deg, _out_node_num+2);
+    _out_deg = new FSTAR_INT[_out_node_num+2]();
   }
 
   return j;
@@ -95,13 +100,15 @@ void FSTAR::calc_fstar (){
   }
   _fstar[i] = _edge_num = j;
 
-
-  _edge = malloc2 (_edge, _edge_num +2);
+  //_edge = malloc2 (_edge, _edge_num +2);
+  _edge = new FSTAR_INT[_edge_num +2];
+  
 
 	for(size_t i =0 ;i<_edge_num +2 ;i++){ _edge[i] = _node_num+1; }
 
   if ( (_flag&LOAD_EDGEW) || _wfname ) {
-  	_edge_w = malloc2 (_edge_w, _edge_num +2);
+  	//_edge_w = malloc2 (_edge_w, _edge_num +2);
+  	_edge_w = new WEIGHT[_edge_num +2];
   }
 
 }
@@ -595,7 +602,8 @@ void FSTAR::write_table_file (char *fname){
 	FSTAR_INT i, flag;
   OFILE2 fp(fname);
   
-  _table = calloc2(_table, _node_num);
+  //_table = calloc2(_table, _node_num);
+  _table = new FSTAR_INT[ _node_num]();
 
   _reduced_node_num = 0;
 

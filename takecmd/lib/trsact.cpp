@@ -125,7 +125,7 @@ int TRSACT::alloc(){
 
   if ( _flag2&TRSACT_NEGATIVE ) { 	// たぶんこう？
   	//malloc2 (_pw, _T.get_end(), EXIT0);
-  	_pw = malloc2 (_pw, _T.get_end());
+  	_pw = new WEIGHT[_T.get_end()];
   }
   else{
   	_pw = NULL;
@@ -134,7 +134,7 @@ int TRSACT::alloc(){
 	_T.allocBuffer(); 
 
   //calloc2 (_perm, _T.get_clms()+1, EXIT0);
-  _perm = calloc2 (_perm, _T.get_clms()+1);
+  _perm = new PERM[_T.get_clms()+1]();
 
   _jump.alloc(_T.get_clms()+1);
 
@@ -145,11 +145,14 @@ int TRSACT::alloc(){
 
   if ( _flag2&TRSACT_SHRINK ){
     //malloc2 (_mark, _T.get_end(), EXIT0);
-    _mark = malloc2 (_mark, _T.get_end());
+    _mark = new VEC_ID[_T.get_end()];
+
     //malloc2 (_shift, _T.get_end(), EXIT0);
-    _shift = malloc2 (_shift, _T.get_end());
+    _shift = new QUEUE_INT *[_T.get_end()];
+
     //calloc2 (_sc, _T.get_clms(), EXIT0);
-    _sc = calloc2 (_sc, _T.get_clms());
+    _sc = new char[_T.get_clms()]();
+
   }
   if ( !_T.exist_w() && (_flag2&TRSACT_UNION)) {
 		_T.alloc_w();
@@ -158,7 +161,7 @@ int TRSACT::alloc(){
 		_T.alloc_weight ( _C.getp_rowt());
 	}
   //malloc2 (_trperm, _T.get_t(), EXIT0);
-  _trperm = malloc2 (_trperm, _T.get_t());
+  _trperm = new PERM[_T.get_t()];
 
 
   // set variables w.r.t rows
@@ -367,7 +370,7 @@ void TRSACT::sortELE ( FILE_COUNT *C){
   if ( _flag2&(TRSACT_ALLOC_OCC+TRSACT_SHRINK) ){
 
     //calloc2 (p, _T.get_clms(), EXIT);
-    p = calloc2 (p, _T.get_clms());
+    p = new VEC_ID[_T.get_clms()]();
     
     // QUEUE_delivery (NULL, p, NULL, _T._v, NULL, _T._t, _T._clms);
 		//===================
@@ -400,7 +403,7 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 		}
     _OQELE[_T.get_clms()].set_t( _T.get_t());
 
-    free (p);
+    delete p;
 
   }
 

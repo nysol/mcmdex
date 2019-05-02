@@ -105,12 +105,13 @@ class KGSSPC{
 	  PERM *p;
 
 		//calloc2(_occ_w, siz+2, goto ERR);
-		_occ_w = calloc2(_occ_w, siz+2);
+		_occ_w = new WEIGHT[siz+2]();
 		//calloc2(_vecchr, siz2+2, goto ERR);
-		_vecchr = calloc2(_vecchr, siz2+2);
+		_vecchr = new char[siz2+2]();
 
 		if(_problem&SSPC_POLISH2) {
-			_itemary = calloc2(_itemary, siz+2);
+			//_itemary = calloc2(_itemary, siz+2);
+			_itemary = new QUEUE_INT[siz+2]();
 		}
 
     // set outperm

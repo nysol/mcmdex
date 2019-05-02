@@ -132,7 +132,9 @@ class FILE2 {
 	{
 		if(fname){ _fopen2( fname,rw );}
 		else { _fp=NULL;}
-		_buf_org = malloc2(_buf_org,FILE2_BUFSIZ+1);
+
+		//_buf_org = malloc2(_buf_org,FILE2_BUFSIZ+1);
+		_buf_org = new char [FILE2_BUFSIZ+1];
 		_buf=_buf_org;
 		_buf_end=_buf_org-1;
 		_bit=0;
@@ -142,7 +144,7 @@ class FILE2 {
 	void open(FILE *a) {
 		_fp=a;
 		//_buf_org = malloc2(_buf_org,FILE2_BUFSIZ+1);
-		_buf_org = new char [FILE2_BUFSIZ+1]; //malloc2(_buf_org,FILE2_BUFSIZ+1);
+		_buf_org = new char [FILE2_BUFSIZ+1];
 		_buf=_buf_org;
 		_buf_end=_buf_org-1;
 		_bit=0;

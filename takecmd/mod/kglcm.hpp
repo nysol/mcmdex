@@ -93,11 +93,11 @@ class KGLCM{
   	int j;
 
 		//calloc2 (_occ_w, siz+2, goto ERR);
-		_occ_w = calloc2 (_occ_w, siz+2);
+		_occ_w = new WEIGHT[siz+2]();
 
 		if ( _tFlag2 & TRSACT_NEGATIVE){
 			//calloc2 (_occ_pw, siz+2, goto ERR);
-			_occ_pw = calloc2 (_occ_pw, siz+2);
+			_occ_pw = new WEIGHT[siz+2]();
 		}else{
 			_occ_pw = _occ_w;
 		}
@@ -107,11 +107,12 @@ class KGLCM{
 			_occ_pw2 = _occ_pw; 
 		}
 		else{
-  	 	_occ_w2 = calloc2 (_occ_w2, siz+2);
   	  //calloc2 (_occ_w2, siz+2, goto ERR);
+  	 	_occ_w2 = new WEIGHT[siz+2]();
+  	 	
     	if ( _tFlag2 & TRSACT_NEGATIVE ){
     		 //calloc2 (_occ_pw2, siz+2, goto ERR);
-    		 _occ_pw2 = calloc2 (_occ_pw2, siz+2);
+    		 _occ_pw2 =  new WEIGHT[siz+2]();
     	}
 			else{
 				_occ_pw2 = _occ_w2;
@@ -122,7 +123,7 @@ class KGLCM{
 	  	if ( _SG.itemAlloc(siz+2) ){ goto ERR; }
 	  }
 
-	  _itemcand.alloc ( siz+2);
+	  _itemcand.alloc(siz+2);
 
 	   // set outperm
 	  if ( _outperm_fname ){

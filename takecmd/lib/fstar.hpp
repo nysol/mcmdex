@@ -125,7 +125,14 @@ class FSTAR{
 			_w_lb(-WEIGHTHUGE),_w_ub(WEIGHTHUGE),_ERROR_MES(NULL){}
 
 		~FSTAR(){
-			mfree (_edge, _edge_w, _in_deg, _out_deg, _fstar, _table);
+			//mfree (_edge, _edge_w, _in_deg, _out_deg, _fstar, _table);
+			delete [] _edge; 
+			delete [] _edge_w; 
+			delete [] _in_deg; 
+			delete [] _out_deg; 
+			delete [] _fstar;
+			delete [] _table;
+
 		}
 
 	

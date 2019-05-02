@@ -120,12 +120,10 @@ void QUEUE::occ_dup ( QUEUE **QQ, QUEUE *Q, WEIGHT **ww, WEIGHT *w, WEIGHT **ppw
  
   ENMAX (u, sizeof(*x));
 
-  //MQUE_FLOOP (*jump, x) cnt += Q[*x].t;
-
 	for(x=_v; x < _v+_t ; x++) cnt += Q[*x]._t;
+
   if ( cnt == 0 ){ *QQ=NULL; return; }
 
-  //malloc2 (buf, l*unit + (cnt+l)*u, EXIT);
   buf = malloc2 (buf, l*unit + (cnt+l)*u);
 
   *QQ = (QUEUE*)buf; buf += sizeof(*Q) *l;
@@ -161,9 +159,7 @@ void QUEUE::occ_dupELE ( KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, WEIGHT **ww, WEIGHT
 	for(x=_v; x < _v+_t ; x++) cnt += Q[*x]._t;
   if ( cnt == 0 ){ *QQ=NULL; return; }
 
-  //malloc2 (buf, l*unit + (cnt+l)*u, EXIT);
   buf = malloc2 (buf, l*unit + (cnt+l)*u);
-
 
   *QQ = (KGLCMSEQ_QUE*)buf; buf += sizeof(*Q) *l;
   if ( w ){ *ww = (WEIGHT *)buf; buf += sizeof(*w)*l; }

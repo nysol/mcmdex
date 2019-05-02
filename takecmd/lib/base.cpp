@@ -48,7 +48,10 @@ void *BASE::get_memory (int i){
 			_block_end=MAX((_block_end)*2,(i)+1);
 		}
     if ( _base[_block_num] == NULL ){
-    	_base[_block_num] = malloc2(_base[_block_num],  _block_siz*_unit);
+    	//_base[_block_num] = malloc2(_base[_block_num],  _block_siz*_unit);
+    	_base[_block_num] = new char[_block_siz*_unit];
+
+
     }
     return (_base[_block_num]);
   }

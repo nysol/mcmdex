@@ -72,8 +72,12 @@ void KGMEDSET::read_file(){
 
   FSTAR_INT *cnt, *que, t, s, i, x;
 
-  cnt = calloc2 (cnt, _FS.get_in_node_num());
-  que = calloc2 (que, _FS.get_in_node_num()*2);
+  //cnt = calloc2 (cnt, _FS.get_in_node_num());
+  //que = calloc2 (que, _FS.get_in_node_num()*2);
+
+  cnt = new FSTAR_INT[_FS.get_in_node_num()]();
+  que = new FSTAR_INT[_FS.get_in_node_num()*2]();
+
 
   do {
 
@@ -137,7 +141,8 @@ void KGMEDSET::read_file(){
   } while ( _fp.eof());
 
   END:;
-  mfree (cnt, que);
+  delete cnt;
+  delete que;
 }
 
 

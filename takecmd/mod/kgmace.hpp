@@ -51,13 +51,6 @@ class MACEVBM {
 
   void alloc(size_t size){
 
-    //malloc2 (_edge,  size, goto ERR);
-    //malloc2 (_pos,   size, goto ERR);
-    //malloc2 (_set,   VBMINT_MAX, goto ERR);
-    //malloc2 (_reset, VBMINT_MAX, goto ERR);
-    
-
-
     _edge  = new VBMINT[size];
     _pos   = new int[size];
     _set   = new VBMINT[VBMINT_MAX];
@@ -195,7 +188,7 @@ class KGMACE{
 	 // PROBLEM_ITEMJUMP + PROBLEM_ITEMCAND + PROBLEM_SHIFT + PROBLEM_OCC_T
 		
 		//calloc2 (_shift, siz, goto ERR);
-		_shift = calloc2 (_shift, siz);
+		_shift = new QUEUE_ID *[siz]();
 
 		_itemcand.alloc(siz);
 

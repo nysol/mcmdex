@@ -49,7 +49,7 @@ char * SGRAPH::initOQ(QUEUE * OQ){
 	VEC_ID    *occ_t;
 
 	// calloc2 ( occ_t, _edge.get_t()+2, EXIT);
-	occ_t = calloc2 ( occ_t, _edge.get_t()+2);
+	occ_t = new VEC_ID[_edge.get_t()+2]();
 
 	for (VEC_ID iv=0 ; iv< _edge.get_t(); iv++){
 		for ( x= _edge.get_vv(iv) ; *x < _edge.get_t() ; x++){ occ_t[*x]++; }
@@ -68,7 +68,7 @@ char * SGRAPH::initOQ(QUEUE * OQ){
 		OQ[i].set_endv(occ_t[i],(QUEUE_ID *)cmn_pnt);
 		cmn_pnt += (sizeof(QUEUE_INT)) * (occ_t[i]+(2));
 	}
-	mfree(occ_t);
+	delete [] occ_t;
 	return OQp; 
 
 
