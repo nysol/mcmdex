@@ -273,7 +273,6 @@ void TRSACT::sort(FILE_COUNT *C){
 		_T.setInvPermute( C->get_rperm(),_trperm,flag);
 
   }
-
   //free2 (C->rperm); free2 (C->cperm);
 
 
@@ -303,11 +302,6 @@ void TRSACT::sort(FILE_COUNT *C){
 
     find_same( &Q, _T.get_clms());
 
-    //f = _flag2;  // preserve the flag    
-    //BITRM(_flag2 ,TRSACT_MAKE_NEW +TRSACT_UNION +TRSACT_INTSEC);
-    //_flag2 = f;  // recover flag
-    // merge_trsact ( _T.get_clms()); // just remove duplicated trsacts
-		// just remove duplicated trsacts
 		removeDupTrsacts(); 
 
     _OQ[_T.get_clms()].tClr();
@@ -336,16 +330,14 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 	_T.allvvInit();
 
   flag = (_flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE); // QUEUEsでOK?
+
   if ( flag ){   
   	// sort rows for the case that some columns are not read
 		//_T.setInvPermute( C->get_rperm(),_trperm,flag);
-
 		_T.qsort_perm(C->get_rperm(), flag);
 		_T.any_INVPERMUTE( C->get_rperm());
 		if ( _T.exist_w() ) {
 			_T.any_INVPERMUTE_w(C->get_rperm());
-
-			// ARY_INVPERMUTE (_T.get_w(), C->get_rperm(), ww, _T.get_t(), EXIT); 
 		}
 		_T.any_INVPERMUTE_(_trperm, C->get_rperm());
 		

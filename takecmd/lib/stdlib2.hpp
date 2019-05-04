@@ -234,6 +234,7 @@ T ARY_MIN( T *f , Tz x, Tz y){
 	}
 	return m;
 }
+
 template<typename T,typename Tz>
 T ARY_SUM( T *v , Tz x,Tz y)       
 {
@@ -244,81 +245,6 @@ T ARY_SUM( T *v , Tz x,Tz y)
 	return f;
 }
 
-
-// ====================================================
-// memmory allcate function
-// ====================================================
-/*
-template<typename T,typename Tz>
-T* malloc2(T* f ,Tz b){
-	if(!( f = (T*)malloc(sizeof(T)*b))){
-		throw("memory allocation error : malloc2");
-	}
-	return f;
-}
-
-template<typename T,typename Tz>
-T* calloc2(T* f ,Tz b){
-	if(!( f = (T*)calloc(sizeof(T),b))){
-		throw("memory allocation error : calloc2");
-	}
-	return f;
-}
-template<typename T,typename Tz>
-T* realloc2(T* f ,Tz b){
-
-	if(!( f = (T*)realloc( f, sizeof(T)*(b) ))) {
-		throw("memory allocation error : realloc2");
-	}
-	return f;
-}
-
-template<typename T,typename Tz>
-T* realloci(T* f,Tz i){
-	if( !( i & (i-1) )){
-		f = realloc2( f, i*2+1 );
-	}
-	return f;
-}
-
-template<typename T ,typename TI>
-T* reallocx(T *f, TI *end ,size_t i,T e){
-
-	if( i >= *end ){
-		size_t end2 = MAX((*end)*2+16,i+1);
-
-		if(!( f = (T *) realloc( f , sizeof(T) * end2 ) ) ){
-			fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
-		}
-		for(TI j= *end ; j< end2  ; j++ ){
-			f[j]=e;
-		}
-		*end=MAX((*end)*2,(i)+1);
-	}
-	return f;
-
-}
-
-template<typename T,typename TI>
-T* reallocx(T* f, TI *end ,size_t i){
-
-	if( i >= *end ){
-
-		size_t end2 = MAX((*end)*2+16,i+1);
-
-		if(!( f= (T *)realloc( f ,sizeof(T)*end2 ) ) ){
-			fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
-		}
-		for(TI j= *end ; j<end2 ; j++ ){
-			f[j]=j;
-		}
-		*end=MAX((*end)*2,(i)+1);
-	}
-	return f;
-
-}
-
-*/
 
 // ====================================================
 // sorting function
@@ -418,13 +344,6 @@ class VECARY{
 	}
 	// 仮
 	T* getp(){ return _v;}
-
-	void resize(size_t sz){
-		if(!( _v = (T*)realloc( _v, sizeof(T)*(sz) ))) {
-			throw("memory allocation error : VECARY");
-		}
-		_end = sz;
-	}
 
 	bool empty(){ return _end==0; }
 

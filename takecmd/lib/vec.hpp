@@ -468,7 +468,7 @@ class SETFAMILY{
 
   	void adjustEnd(int dblFlg){ 
   		_ele_end = _eles;
-  		_end = _t * ( ( dblFlg ? 2 : 1 ) + 1 ) ;
+  		_end = _t * ( dblFlg ? 2 : 1 ) + 1  ;
   	}
 
   	void set_w(int i,int j,WEIGHT w){ _w[i][j]=w;}

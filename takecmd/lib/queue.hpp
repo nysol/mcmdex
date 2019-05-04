@@ -171,7 +171,6 @@ class QUEUE {
 	}
 
 	void clear(){
-		printf("clear\n");
 	  //free2 (_v);
 		delete [] _v;
 		_v = NULL;
@@ -269,13 +268,7 @@ class QUEUE {
 
 	//void cp_s2t(){ _t=_s; }
 
-	void set_v(QUEUE_ID *v){
-		//std::cerr << "sv" << std::endl;
-	
-		//std::cerr << "setVb " << v << std::endl;
-		_v=v;
-		//std::cerr << "setVa " << _v << std::endl;
-	}
+	void set_v(QUEUE_ID *v){ _v=v; }
 	void set_v(int i,QUEUE_ID v){ _v[i]=v;}
 
 	void set_end(QUEUE_ID v){ _end=v;}
