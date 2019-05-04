@@ -403,7 +403,7 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 		}
     _OQELE[_T.get_clms()].set_t( _T.get_t());
 
-    delete p;
+    delete [] p;
 
   }
 
@@ -668,6 +668,8 @@ void TRSACT::find_same (KGLCMSEQ_QUE *occ, QUEUE_INT end){
 
   _jump.setEndByStart(); 
   QQ[_T.get_clms()].set_s(0);
+  int vcnt=0;
+	int iii=0;
 
   while (1){
     if ( o->size()  == 1 ){
@@ -685,14 +687,11 @@ void TRSACT::find_same (KGLCMSEQ_QUE *occ, QUEUE_INT end){
     
     // insert each t to buckets
     for (KGLCMSEQ_ELM *xx=o->begin() ; xx<o->begin()+t_end ; xx++){
-         // get next item in transaction t
+			// get next item in transaction t
       do{
-
         e = *(_shift[xx->_t]);
         _shift[xx->_t]++;
-
         if ( e >= end ){ e = _T.get_clms(); break; }
-
       }while ( _sc[e] );
 
       EQ = &QQ[e];

@@ -329,7 +329,7 @@ class QUEUE {
 
 		_end =  siz+1;
 		//malloc2(_v, siz+1, EXIT);
-		_v = new QUEUE_ID[siz+1];
+		_v = new QUEUE_INT[siz+1];
 		for(size_t i=0 ; i< siz; i++){ _v[i] = i; }
 		_t = siz;
 

@@ -15,15 +15,13 @@
 
 /*  initialization, and allocate memory for header */
 void BASE::alloc (int unit, int block_siz){
-  //*B = INIT_BASE;
-  //_dellist = B;
+
   _unit = unit;
   _block_siz = block_siz;
   _num = block_siz;
   _block_num = -1;
 
   //calloc2 (_base, 20, EXIT);
-
 	if(!( _base = (char **)calloc(sizeof(char *),20))){
 		throw("memory allocation error : calloc2");
 	}
@@ -48,7 +46,7 @@ void *BASE::get_memory (int i){
 			for(size_t j= _block_end ; j< end2  ; j++ ){
 				_base[j]=NULL;
 			}
-			_block_end=MAX((_block_end)*2,(i)+1);
+			_block_end=MAX((_block_end)*2,(_block_num)+1);
 		}
     if ( _base[_block_num] == NULL ){
     	//_base[_block_num] = malloc2(_base[_block_num],  _block_siz*_unit);

@@ -68,6 +68,7 @@ class TRSACT {
 
   SETFAMILY _T;   // transaction
 
+  //VECARY<WEIGHT> _w;
   VECARY<WEIGHT> _w;
   WEIGHT *_pw;  // weight/positive-weight of transactions
 
@@ -456,6 +457,7 @@ class TRSACT {
 	void reallocW(void){
 		VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
 		_w.realloc2(size);
+		//_w.resize(size);
 		for(size_t i=0; i<size;i++){ _w[i] = 1;}
 	}
 

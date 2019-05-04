@@ -383,11 +383,12 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
 
   if ( _II.get_itemset_t() == 0 ){
 		_II.set_frq ( _TT.get_total_w_org());
-    if ( _II.get_frq() != 0 )
+    if ( _II.get_frq() != 0 ){
         //FLOOP (i, 0, _TT.get_clms()){
         for(i=0;i<_TT.get_clms();i++){
          _II.set_item_frq(i,_occ_w[i]/_TT.get_total_w_org());
         }
+      }
   }
 
   _II.set_prob(1.0);

@@ -141,8 +141,8 @@ void KGMEDSET::read_file(){
   } while ( _fp.eof());
 
   END:;
-  delete cnt;
-  delete que;
+  delete [] cnt;
+  delete [] que;
 }
 
 

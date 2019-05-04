@@ -26,17 +26,13 @@ class BASE {
   int _unit;  // size of one unit memory
   int _num;   // current position in a block
   size_t _block_end;  // current end of the block
-  void *_dellist;
-
-	//void end ();
 
 
 	public:
 	BASE(void):
 		_base(NULL),
 		_block_siz(0),_block_num(0),
-		_unit(0),_num(0),_block_end(-1),
-		_dellist(NULL){}
+		_unit(0),_num(0),_block_end(-1){}
 
 	~BASE(void){
 
