@@ -45,12 +45,21 @@ struct KGLCMSEQ_ELM{
   QUEUE_INT _org;  // original position
 } ;
 
-struct KGLCMSEQ_QUE{
-  unsigned char _type;  // type of the structure
+class KGLCMSEQ_QUE{
+
   KGLCMSEQ_ELM *_v;  // pointer to the array
   QUEUE_ID _end;  // the length of the array
   QUEUE_ID _t;  // end position+1
   QUEUE_ID _s;  // start position
+
+
+	public:
+
+	KGLCMSEQ_QUE(void):_v(NULL),_end(0),_t(0),_s(0){}
+
+	~KGLCMSEQ_QUE(void){
+	  // free2 (_v); setvが有る限りむり
+	}
 
 	KGLCMSEQ_ELM * get_v(){ return _v;}
 	QUEUE_ID get_t(){ return _t;}
@@ -63,7 +72,9 @@ struct KGLCMSEQ_QUE{
 	void set_t(QUEUE_ID val){ _t = val;}
 	void set_v(KGLCMSEQ_ELM *val){ _v = val;}
 	void set_v(int i,QUEUE_ID v){ _v[i]._t=v;}
-
+	void set_v(int i,KGLCMSEQ_ELM v){ _v[i]=v;}
+	
+	
 	void endClr(){ _end = 0;  }
 	void tClr()  { _t = 0;  }
 	bool posCheck(){ return  _s < _t ;}
@@ -88,9 +99,7 @@ struct KGLCMSEQ_QUE{
 	/* initialization, not fill the memory by 0 */
 	void alloc (QUEUE_ID siz){
 		_end =  siz+1;
-		//malloc2(_v, siz+1, EXIT);
-		_v =new KGLCMSEQ_ELM[siz+1];
-
+		_v = new KGLCMSEQ_ELM[siz+1]; //malloc2(_v, siz+1, EXIT);
 	}
 
 
@@ -101,13 +110,13 @@ struct KGLCMSEQ_QUE{
 		KGLCMSEQ_ELM * xx =_v;
 		xx++;		
 		std::cerr << "sque show " <<  _v << " - " << (_v + _t) << " (" << xx << ") " << _t << std::endl;
-			for(KGLCMSEQ_ELM * x = _v ;x < _v + _t; x++){
-				std::cerr << "sque " << x->_t << " " << x->_s  << " " << x->_org << std::endl; 
-			}
+		for(KGLCMSEQ_ELM * x = _v ;x < _v + _t; x++){
+			std::cerr << "sque " << x->_t << " " << x->_s  << " " << x->_org << std::endl; 
+		}
 	}
 	void setStartByEnd(){ _s = _t; }
 
-} ;
+};
 
 
 class QUEUE {
@@ -137,19 +146,21 @@ class QUEUE {
 
   /* print */
 	void print ();
-		
 
 	public:
 
 	QUEUE(void):_v(NULL),_end(0),_t(0),_s(0){}
 
-	QUEUE(QUEUE_ID siz ,QUEUE_ID t):_end(siz+1),_t(t),_s(0){
-		//malloc2(_v, siz+1, EXIT);
-		_v = new QUEUE_INT[siz+1];
+	QUEUE(QUEUE_ID siz ,QUEUE_ID t):
+		_end(siz+1),_t(t),_s(0)
+	{
+		_v = new QUEUE_INT[siz+1]; //malloc2(_v, siz+1, EXIT);
 	}
-	QUEUE(QUEUE_ID siz):_end(siz+1),_t(0),_s(0){
-		//malloc2(_v, siz+1, EXIT);
-		_v = new QUEUE_INT[siz+1];
+
+	QUEUE(QUEUE_ID siz):
+		_end(siz+1),_t(0),_s(0)
+	{
+		_v = new QUEUE_INT[siz+1]; //malloc2(_v, siz+1, EXIT);
 	}
 
 	~QUEUE(void){
@@ -179,8 +190,6 @@ class QUEUE {
 		_s=0;
 	}
 
-
-
 	QUEUE_INT * begin(){ return _v; }
 	QUEUE_INT * start(){ return _v + _s; }
 	QUEUE_INT * end()  { return _v + _t; }
@@ -199,10 +208,6 @@ class QUEUE {
 	void push_back(QUEUE_INT v){
 		 _v[_t++]=v; 
 	}
-
-
-
-	//void INS(QUEUE_INT v){ _v[_t++]=v; }
 
 	void show(){
 		std::cerr << "QUE ";
@@ -399,10 +404,16 @@ class QUEUE {
 		 WEIGHT **ww, WEIGHT *w, WEIGHT **ppw, WEIGHT *pw, int u);
 
 
-	/* sort a QUEUE with WEIGHT, with already allocated memory (size have to no less than the size of QUEUE) */
+	/* 
+		sort a QUEUE with WEIGHT, with already allocated memory 
+		(size have to no less than the size of QUEUE) 
+	*/
 	void perm_WEIGHT (WEIGHT *w, PERM *invperm, int flag);
 
-	/* remove (or unify) the consecutive same ID's in a QUEUE (duplication delete, if sorted) */
+	/* 
+		remove (or unify) the consecutive same ID's in a QUEUE 
+		(duplication delete, if sorted) 
+	*/
 	void rm_dup_WEIGHT (WEIGHT *w);
 
 	/* 
@@ -427,7 +438,6 @@ class QUEUE {
   	else if ( j < _s && j >= _t ) {
   		error ("QUEUE_rm: j is out of queue", EXIT);
 	  }
-		//void tLoopDec(){ _t = ( (_t==0) ? _end-1 : _t-1); }
   	_t = ( (_t==0) ? _end-1 : _t-1 ); 
   	_v[j] = _v[_t];
 	}
@@ -437,28 +447,29 @@ class QUEUE {
 			WEIGHT *w, WEIGHT *pw, 
 			VEC_ID t, QUEUE_INT m, 
 			QUEUE *jmp,QUEUE *oq,
-			WEIGHT *tw, WEIGHT *tpw,WEIGHT *y,int f)
+			VECARY<WEIGHT> &tw, WEIGHT *tpw,WEIGHT *y,int f)
 	{
 
 			QUEUE_INT *x;
 
 			for( x=_v; *x <m ; x++){
-				if ( oq[*x]._end == 0 ){ 
-					//jmp->INS(*x); 
-					jmp->_v[jmp->_t++] = *x; 
 
+				if ( oq[*x]._end == 0 ){ 
+					jmp->_v[jmp->_t++] = *x; 
 					w[*x] = 0; 
 					if ( f ) pw[*x] = 0; 
    			}
+
     		oq[*x]._end++;
 
 		    if ( y ){
-    		  w[*x] += *y; if ( *y>0 && f) pw[*x] += *y;
+    		  w[*x] += *y; 
+    		  if ( *y>0 && f){ pw[*x] += *y; }
       		y++;
     		}
     		else {
 					w[*x] += tw[t]; 
-					if ( f ) pw[*x] += tpw[t];
+					if( f ){ pw[*x] += tpw[t]; }
 				}
 			}			
 	}

@@ -11,23 +11,16 @@
 
 /* allocate memory according to rows and rowt */
 /* if eles == 0, compute eles from rowt and rows */
-void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
+// void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
+void SETFAMILY::alloc (VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles){
 
   VEC_ID i;
   //char *buf;
-  if ( eles == 0 ) { _ele_end = ARY_SUM( rowt, 0, rows); }
+  if ( eles == 0 ) { _ele_end =  fc.sumRow(0, rows);  }
   else { _ele_end = eles; }
 
   //calloc2 (buf, (_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)*_unit, EXIT);
-
-  //buf = calloc2 (
-  //	buf, 
-  //	(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)*_unit
-  //);
-  //_buf = (QUEUE_INT *)buf;
-
   _buf = new QUEUE_INT[(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)]();
-  //malloc2 (_v, rows+1, {free(_buf);EXIT;});
   try {
 	 //_v = malloc2 (_v, rows+1 );
 	 _v = new QUEUE[rows+1];
@@ -39,39 +32,40 @@ void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
 	for(size_t i =0 ;i<rows;i++){ 
 		_v[i] = QUEUE(); 
 	}
-
+ 
   _end = rows;
   _clms = clms;
-
 	QUEUE_INT *pos = _buf;
-  if ( rowt ){
+
+  if ( !fc.rowEmpty() ){
   	for(i=0;i<rows;i++){
       _v[i].set_v(pos);
-      _v[i].set_end(rowt[i]+1);
-      pos += (rowt[i] +1);
+      _v[i].set_end( fc.get_rowt(i)+1 );
+      pos += (fc.get_rowt(i) + 1);
     }
   }
+
+
 }
 
 /* allocate memory according to rows and rowt */
 /* if eles == 0, compute eles from rowt and rows */
-void SETFAMILY::alloc_weight ( QUEUE_ID *t){
+//void SETFAMILY::alloc_weight ( QUEUE_ID *t){
+void SETFAMILY::alloc_weight (FILE_COUNT &fc){
+
   VEC_ID i;
-  //calloc2 (_w, _end +1, EXIT);
-	_w = new WEIGHT*[_end +1]();
+  
+	_w = new WEIGHT*[_end +1](); //calloc2 (_w, _end +1, EXIT);
 
-  //calloc2 (_wbuf, _ele_end*((_flag&LOAD_DBLBUF)?2:1)+1, {free(_w);EXIT;});
 	try{
-	  _wbuf = new WEIGHT[_ele_end*((_flag&LOAD_DBLBUF)?2:1)+1]();
-
+	  _wbuf = new WEIGHT[_ele_end*((_flag&LOAD_DBLBUF)?2:1)+1](); //calloc2
 	}catch(...){
 		delete [] _w;
 		throw;
 	}
   _w[0] = _wbuf; 
-  //FLOOP (i, 1, _t){
   for(i=1;i<_t;i++){
-  	_w[i] = _w[i-1] + (t?t[i-1]:_v[i-1].get_t());
+  	_w[i] = _w[i-1] + ( fc.rowEmpty() ?  _v[i-1].get_t() : fc.get_rowt(i-1));
   }
 }
 
@@ -141,17 +135,16 @@ void SETFAMILY::sort (){
   }
 }
 
-void SETFAMILY::SMAT_alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
+void SETFAMILY::SMAT_alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles){
   VEC_ID i;
-  if ( eles == 0 ) { _ele_end = ARY_SUM( rowt, 0, rows); }
+  if ( eles == 0 ) { _ele_end =  fc.sumRow(0, rows); }
   else {  _ele_end = eles; } 
 
   //calloc2 (_buf, _ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2, EXIT);
   _buf = new QUEUE_INT[_ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2]();
 
 	try{
-	  //_v = malloc2 (_v, rows+1);
-	  _v = new QUEUE[rows+1];
+	  _v = new QUEUE[rows+1]; //_v = malloc2 (_v, rows+1);
 	}catch(...){
 		delete [] _buf;
 		throw;
@@ -165,11 +158,10 @@ void SETFAMILY::SMAT_alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles)
 
   _end = rows;
   _clms = clms;
-  if ( rowt ){
-    //FLOOP (i, 0, rows){
+  if ( !fc.rowEmpty() ){
     for(i=0;i<rows;i++){
-      _v[i].set_v( i? _v[i-1].get_v() + rowt[i-1] +1: _buf);
-      _v[i].set_end( rowt[i]);
+      _v[i].set_v( i? _v[i-1].get_v() + fc.get_rowt(i-1) +1: _buf);
+      _v[i].set_end(fc.get_rowt(i));
     }
   }
 }
@@ -193,10 +185,10 @@ void SETFAMILY::flie_load(FILE2 *fp){
 
   if ( _clms == 0 ) _clms = C.get_clms();
   if ( _t == 0 ) _t = C.get_rows();
-  if ( flag ) SMAT_alloc ( _t, C.getp_rowt(), _clms, 0);
+  if ( flag ) SMAT_alloc ( _t, C, _clms, 0);
   else {
-    alloc ( _t, C.getp_rowt(), _clms, 0);
-    if ( wflag ) alloc_weight ( C.getp_rowt());
+    alloc ( _t, C, _clms, 0);
+    if ( wflag ) alloc_weight ( C );
   }
 
   if ( _wfname ) wfp.open ( _wfname, "r");

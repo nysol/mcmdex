@@ -222,28 +222,6 @@ T ARY_MAX( T *f,Tz x, Tz y){
 	}
 	return m;
 }
-template<typename T,typename Tz>
-T ARY_MIN( T *f , Tz x, Tz y){
-
-	T m = f[x];
-	for(Tz i0 = x+1 ; i0 < y ; i0++){
-		if( m > f[i0] ){
-			m = f[i0];
-		}
-	}
-	return m;
-}
-
-template<typename T,typename Tz>
-T ARY_SUM( T *v , Tz x,Tz y)       
-{
-	T f = 0;
-	for(Tz i = x ; i < y ; i++){
-		f += v[i];
-	}
-	return f;
-}
-
 
 // ====================================================
 // sorting function
@@ -320,12 +298,18 @@ class VECARY{
 		_v=NULL;
 	}
 	// 仮
-	T* getp(){ return _v;}
+	//T* getp(){ return _v;}
 
 	bool empty(){ return _end==0; }
 
 	T &operator[](size_t i){ return _v[i]; }
 	
+	void calloc2(size_t b){
+		if(!( _v = (T*)calloc( b , sizeof(T) ))) {
+			throw("memory allocation error : VECARY realloc2");
+		}
+	}
+
 
 	void realloc2(size_t b){
 		if(!( _v = (T*)realloc( _v, sizeof(T)*(b) ))) {
@@ -334,6 +318,7 @@ class VECARY{
 		_end = b;
 		return;
 	}
+
 
 	void realloci(size_t i){
 		if( !( i & (i-1) )){
@@ -422,6 +407,17 @@ class VECARY{
 		}
 		return m;
 	}
+
+	T sum(size_t x,size_t y)
+	{
+		T f = 0;
+		for(size_t i = x ; i < y ; i++){
+			f += _v[i];
+		}
+		return f;
+	}
+
+
 	
 };
 

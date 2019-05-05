@@ -8,6 +8,7 @@
    If one wants to re-distribute this code, please 
     refer the newest code, and show the link to homepage of 
     Takeaki Uno, to notify the news about the codes for the users. */
+#pragma once
 
 #include "stdlib2.hpp"
 #include "file2.hpp"
@@ -320,6 +321,9 @@ class FILE_COUNT{
 			_row_ub = row_ub;
   	};
 		
+		int  sumRow(size_t s,size_t e){ return _rowt.sum(s,e); }
+		bool rowEmpty(){ return _rowt.empty(); }
+
 		bool existNegative(){ return _negaFLG;}
 		
 		WEIGHT get_total_w_org(){ return _total_w_org;}
@@ -337,7 +341,7 @@ class FILE_COUNT{
 		size_t get_clmt(VEC_ID tt){ return _clmt[tt]; }
     size_t get_rowt(VEC_ID tt){ return _rowt[tt]; }
 
-		FILE_COUNT_INT * getp_rowt(){ return _rowt.getp(); }// たぶん NULLにした方がいい
+		//FILE_COUNT_INT * getp_rowt(){ return _rowt.getp(); }// たぶん NULLにした方がいい
 
 
 		bool rPermGErows(VEC_ID t){
@@ -650,22 +654,16 @@ class FILE_COUNT{
   } while ( rfp->eof());
 
   if ( fc ){ 
-  	//reallocx (_clmt, _clm_end, _clms, 0, goto END);
-  	_clm_end = _clmt.reallocx(_clm_end, _clms, 0);
+  	_clm_end = _clmt.reallocx(_clm_end, _clms, 0); 
   }
   if ( fr ){
-    //reallocx (_rowt, _row_end, _rows, 0, goto END);
     _row_end = _rowt.reallocx(_row_end, _rows, 0);
-
-    //ARY_MAX (_row_max, k, _rowt, 0, _rows);
-    //ARY_MIN (_row_min, k, _rowt, 0, _rows);
     // 一緒にする？
     _row_max = _rowt.max(0, _rows);
 		_row_min = _rowt.min(0, _rows);
+		
   }
   if ( fe && !_clmt.empty() ){
-    //ARY_MAX (_clm_max, k, _clmt, 0, _clms);
-    // ARY_MIN (_clm_min, k, _clmt, 0, _clms);
     // 一緒にする？
     _clm_max = _clmt.max(0, _clms);
     _clm_min = _clmt.min(0, _clms);

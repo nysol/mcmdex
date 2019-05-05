@@ -148,7 +148,7 @@ int TRSACT::alloc(){
 		_T.alloc_w();
   }
 	if ( !_T.exist_w() && _item_wfname ){
-		_T.alloc_weight ( _C.getp_rowt());
+		_T.alloc_weight ( _C );
 	}
   _trperm = new PERM[_T.get_t()];   //malloc2 (_trperm, _T.get_t(), EXIT0);
 
@@ -350,8 +350,10 @@ void TRSACT::sortELE ( FILE_COUNT *C){
   if ( _flag2&(TRSACT_ALLOC_OCC+TRSACT_SHRINK) ){
 
     //calloc2 (p, _T.get_clms(), EXIT);
-    p = new VEC_ID[_T.get_clms()]();
-    
+    VECARY<VEC_ID> p;
+    p.calloc2(_T.get_clms());
+
+
     // QUEUE_delivery (NULL, p, NULL, _T._v, NULL, _T._t, _T._clms);
 		//===================
 		VEC_ID iv, ev;
@@ -362,7 +364,7 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 		}
 		//===================
 
-    _clm_max = ARY_MAX( p, 0 , _T.get_clms());
+    _clm_max = p.max( 0 , _T.get_clms());
 
     Mque_allocELE(p);
 
@@ -382,7 +384,6 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 		}
     _OQELE[_T.get_clms()].set_t( _T.get_t());
 
-    delete [] p;
 
   }
 
@@ -501,14 +502,21 @@ void TRSACT::delivery (WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m){
   if (occ) {
 
   	for(QUEUE_INT *b = occ->start() ; b < occ->end() ; b++){
-    	_T.delivery_iter( w, pw, *b, m ,&_jump,_OQ,_w.getp(),_pw,_flag2&TRSACT_NEGATIVE);
+    	_T.delivery_iter(
+    		 w, pw, *b, m ,
+    		 &_jump,_OQ,
+    		 _w,_pw,
+    		 _flag2&TRSACT_NEGATIVE);
 	  }
 
 	}
 	else{
 
   	for(VEC_ID t=0 ; t<_T.get_t(); t++){
-    	_T.delivery_iter( w, pw, t, m ,&_jump,_OQ,_w.getp(),_pw,_flag2&TRSACT_NEGATIVE);
+    	_T.delivery_iter( 
+    		w, pw, t, m ,
+    		&_jump,_OQ, _w,_pw,
+    		_flag2&TRSACT_NEGATIVE);
     }
 	}
 	

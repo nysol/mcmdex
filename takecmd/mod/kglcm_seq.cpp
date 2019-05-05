@@ -227,7 +227,8 @@ void KGLCMSEQ::occ_delivery (KGLCMSEQ_QUE *occ, int flag){
   QUEUE_ID j;
   QUEUE_INT e, m, *x;
   WEIGHT w;
-  KGLCMSEQ_ELM *u, *uu, *u_end = occ->_v + (occ->_t-1);
+  KGLCMSEQ_ELM *u, *uu, *u_end = occ->end() -1 ;
+  
   int f = _TT.get_flag2()&TRSACT_NEGATIVE;
   int fl = (!(_problem&PROBLEM_CLOSED)&&!flag) || (!(_problem&LCMSEQ_LEFTMOST)&&flag);
 
@@ -317,7 +318,7 @@ void KGLCMSEQ::rm_infreq (){
 /* remove merged occurrences from occ, and re-set temporary end-marks marked in each occurrence */
 void KGLCMSEQ::reduce_occ ( KGLCMSEQ_QUE *occ, QUEUE_INT item){
 	// _TT へ移動?
-  KGLCMSEQ_ELM *u, *uu=occ->_v;
+  KGLCMSEQ_ELM *u, *uu=occ->begin();
 
 	for( u =  occ->begin() ; u < occ->end() ; u++){
 
@@ -334,7 +335,7 @@ void KGLCMSEQ::reduce_occ ( KGLCMSEQ_QUE *occ, QUEUE_INT item){
     }
     uu++;
   }
-  occ->_t = (VEC_ID)(uu - occ->_v);
+  occ->set_t( (VEC_ID)(uu - occ->begin()));
 }
 
 /***************************************************************/
@@ -414,7 +415,7 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
   if ( cnt == 0 || _II.get_itemset_t() >= _II.get_ub() ) goto END;
 
 	///////     database reduction     ///////////
-  if ( cnt > 5 && _dir && occ->_t>2 && _II.get_itemset_t()>0 ){ //なんで５？
+  if ( cnt > 5 && _dir && occ->get_t()>2 && _II.get_itemset_t()>0 ){ //なんで５？
 
 		Q = _TT.getp_OQELE(_TT.get_clms());
     Q->set_s(0);
@@ -440,11 +441,15 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
 
 		for( u = occ->begin(); u < occ->end() ; u++){ //これOK?
 
-      if ( _TT.get_Tvv(u->_t,u->_s) == item ) occ->_v[i++] = *u;
-      else _TT.set_Tvv ( u->_t,u->_s,item);
+      if ( _TT.get_Tvv(u->_t,u->_s) == item ){
+      	 occ->set_v(i++,*u);
+      }
+      else{	
+      	_TT.set_Tvv ( u->_t,u->_s,item);
+      }
 
     }
-    occ->_t = i;
+    occ->set_t(i);
   }
 
 	/////////////     deliverly    /////////////
@@ -533,11 +538,12 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
 	
 
   //malloc2 (occ->_v, _TT.get_t(), EXIT);
-	occ->_v = new KGLCMSEQ_ELM[_TT.get_t()];
+	occ->set_v(new KGLCMSEQ_ELM[_TT.get_t()]);
 	 
 
-  occ->_end = _TT.get_clm_max(); 
-  occ->_s = occ->_t = 0;
+  occ->set_end(_TT.get_clm_max()); 
+  occ->set_s(0);
+  occ->set_t(0);
 
   _TT.set_perm(NULL);
   if ( _II.get_perm() && RANGE(0, _II.get_target(), _II.get_item_max()) ) _II.set_target ( _II.get_perm(_II.get_target()));
@@ -586,8 +592,7 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
 int KGLCMSEQ::run(int argc, char *argv[]){
 
   KGLCMSEQ_QUE occ;
-  occ._v = NULL;
-  
+
   setArgs (argc, argv);
 	
 	if ( _ERROR_MES ) return (1);
@@ -633,7 +638,6 @@ int KGLCMSEQ::run(int argc, char *argv[]){
   _II.last_output();
 
   
-  free2 (occ._v);
   _TT.set_sc(NULL);
 
   return (_ERROR_MES?1:0);

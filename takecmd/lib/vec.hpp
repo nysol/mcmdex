@@ -8,6 +8,7 @@
 #include"math.h"
 #include"stdlib2.hpp"
 #include"file2.hpp"
+#include"filecount.hpp"
 #include"queue.hpp"
 
 #ifndef SVEC_VAL
@@ -47,7 +48,7 @@ class SETFAMILY{
 
 	void flie_load(FILE2 *fp);
 
-	void SMAT_alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles);
+	void SMAT_alloc (VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
 
 	//void end ();
 
@@ -72,9 +73,9 @@ class SETFAMILY{
 		}
 
 
-		void alloc_weight (QUEUE_ID *t);
+		void alloc_weight (FILE_COUNT &fc);
 		void alloc_w(void);
-		void alloc(VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles);
+		void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
 		void sort(void);
 
 		void load(int flag , char *fname);
@@ -87,7 +88,7 @@ class SETFAMILY{
 			WEIGHT *w, WEIGHT *pw, 
 			VEC_ID t, QUEUE_INT m, 
 			QUEUE *jmp,QUEUE *oq,
-			WEIGHT *tw, WEIGHT *tpw,int f){
+			VECARY<WEIGHT> &tw, WEIGHT *tpw,int f){
 		
 		  WEIGHT *y=0;
   		QUEUE_INT *x;
@@ -228,25 +229,16 @@ class SETFAMILY{
 		}
 		// 要確認
 		void alloc_v(){
-		  //_v = malloc2(_v, _end);
-		  _v = new QUEUE[_end]; 
+		  _v = new QUEUE[_end];  //malloc2(_v, _end);
 		}
 		void alloc_buf(){
-			//char *buf;
-		  //buf = malloc2 (buf,(_eles+_end+1)*_unit);
-		  //_buf = (QUEUE_INT *)buf;
-		  _buf = new QUEUE_INT[_eles+_end+1];
+		  _buf = new QUEUE_INT[_eles+_end+1]; //malloc2 (buf,(_eles+_end+1)*_unit);
 
 		}
 		
-		void allocBuffer(){
-			//_v = malloc2 (_v, _end );
-		  _v = new QUEUE[_end]; 
-			//char *buf;
-		  //buf = malloc2( buf,(_eles+_end+1) * _unit);
-		  //_buf = (QUEUE_INT *)buf;
-		  _buf = new QUEUE_INT[_eles+_end+1];
-
+		void allocBuffer(){			
+		  _v   = new QUEUE[_end];  // _v = malloc2 (_v, _end );
+		  _buf = new QUEUE_INT[_eles+_end+1]; //malloc2( buf,(_eles+_end+1) * _unit);
 		  return ;
 		}
 
@@ -279,11 +271,8 @@ class SETFAMILY{
 		void any_INVPERMUTE(PERM * rperm){
 
 		  QUEUE Q;
-			char  * cmm_p;
 			int i1,i2;
-
-			//cmm_p = calloc2( cmm_p ,_t);
-			cmm_p = new char[_t]();
+			char * cmm_p = new char[_t](); //calloc2( cmm_p ,_t);
 
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 
@@ -303,11 +292,8 @@ class SETFAMILY{
 		}
 		void ary_INVPERMUTE( PERM *invperm ,QUEUE& Q,VEC_ID num){
 
-			char  * cmm_p;
 			int i1,i2;
-
-			//cmm_p = calloc2(cmm_p,num);
-			cmm_p = new char[num]();
+			char  * cmm_p = new char[num](); //calloc2(cmm_p,num);
 
 			for(i1=0; i1 < num ; i1++){
 
@@ -329,12 +315,9 @@ class SETFAMILY{
 		void any_INVPERMUTE_w(PERM * rperm){
 
 		  WEIGHT * ww;
-
-			char  * cmm_p;
 			int i1,i2;
 
-			//cmm_p = calloc2(cmm_p,_t);
-			cmm_p = new char[_t]();
+			char  * cmm_p = new char[_t](); //calloc2(cmm_p,_t);
 
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 

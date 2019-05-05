@@ -152,7 +152,9 @@ void QUEUE::occ_dup ( QUEUE **QQ, QUEUE *Q, WEIGHT **ww, WEIGHT *w, WEIGHT **ppw
 
 
 //QUEUE *jump,
-void QUEUE::occ_dupELE ( KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, WEIGHT **ww, WEIGHT *w, WEIGHT **ppw, WEIGHT *pw, int u){
+void QUEUE::occ_dupELE ( 
+	KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, 
+	WEIGHT **ww, WEIGHT *w, WEIGHT **ppw, WEIGHT *pw, int u){
   QUEUE_ID i, l=_t-_s; //QUEUE_LENGTH_(*jump);
   size_t cnt=0;
   QUEUE_INT e, *x;
@@ -164,7 +166,7 @@ void QUEUE::occ_dupELE ( KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, WEIGHT **ww, WEIGHT
 
   //MQUE_FLOOP (*jump, x) cnt += Q[*x].t;
 
-	for(x=_v; x < _v+_t ; x++) cnt += Q[*x]._t;
+	for(x=_v; x < _v+_t ; x++) cnt += Q[*x].get_t();
   if ( cnt == 0 ){ *QQ=NULL; return; }
 
   //buf = malloc2 (buf, l*unit + (cnt+l)*u);
@@ -173,18 +175,25 @@ void QUEUE::occ_dupELE ( KGLCMSEQ_QUE **QQ, KGLCMSEQ_QUE *Q, WEIGHT **ww, WEIGHT
 		throw("memory allocation error : malloc2");
 	}
 
+  *QQ = (KGLCMSEQ_QUE*)buf; 
+  buf += sizeof(*Q) *l;
 
+  if ( w ){ 
+  	*ww = (WEIGHT *)buf; 
+  	buf += sizeof(*w)*l; 
+  }
+  if ( pw ){ 
+  	*ppw = (WEIGHT *)buf; 
+  	buf += sizeof(*pw)*l; 
+  }
 
-  *QQ = (KGLCMSEQ_QUE*)buf; buf += sizeof(*Q) *l;
-  if ( w ){ *ww = (WEIGHT *)buf; buf += sizeof(*w)*l; }
-  if ( pw ){ *ppw = (WEIGHT *)buf; buf += sizeof(*pw)*l; }
   for (i=0 ; i< _t ; i++){
-    e = _v[i];
-    (*QQ)[i]._end = e;
-    (*QQ)[i]._v = (KGLCMSEQ_ELM *)buf;
-    (*QQ)[i]._t = Q[e]._t;
-    memcpy (buf, Q[e]._v, (Q[e]._t+1)*u);
-    buf += (Q[e]._t+1) *u;
+    e = _v[i];    
+    (*QQ)[i].set_end(e);
+    (*QQ)[i].set_v((KGLCMSEQ_ELM *)buf);
+    (*QQ)[i].set_t(Q[e].get_t());
+    memcpy(buf, Q[e].get_v(), (Q[e].get_t()+1)*u);
+    buf += (Q[e].get_t()+1) *u;
     if ( w ) (*ww)[i] = w[e];
     if ( pw ) (*ppw)[i] = pw[e];
   }

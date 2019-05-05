@@ -68,7 +68,6 @@ class TRSACT {
 
   SETFAMILY _T;   // transaction
 
-  //VECARY<WEIGHT> _w;
   VECARY<WEIGHT> _w;
   WEIGHT *_pw;  // weight/positive-weight of transactions
 
@@ -577,7 +576,7 @@ class TRSACT {
     
   }
 
-	void Mque_allocELE(VEC_ID *p){
+	void Mque_allocELE(VECARY<VEC_ID> &p){
 		size_t cmn_size_t = 0;
 
 		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
