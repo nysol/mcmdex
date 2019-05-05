@@ -61,7 +61,7 @@ void QUEUE::perm_WEIGHT (WEIGHT *w, PERM *invperm, int flag){
     // ARY_INIT_PERM (invperm, _t);
 		for(size_t i=0 ; i<_t; i++){ invperm[i]=i; }
 
-    qsort_perm__<QUEUE_INT> (_v, _t, invperm, flag);
+    qsort_perm__(_v, _t, invperm, flag);
 
 		//FLOOP(cmn_i,0,_t){ 
 		for(int cmn_i=0; cmn_i< _t; cmn_i++ ){

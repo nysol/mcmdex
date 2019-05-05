@@ -31,7 +31,6 @@
 #ifdef MULTI_CORE
 #include <sys/types.h>
 #include <pthread.h>
-int SPIN_LOCK_dummy;
 #endif
 
 #define CORE_MAX 16
@@ -119,8 +118,8 @@ int SPIN_LOCK_dummy;
  #endif
 #endif
 
-extern char *common_pnt;
-extern INT common_INT;
+//extern char *common_pnt;
+//extern INT common_INT;
 
 /* lock&unlock for multi-core mode */
 #ifdef MULTI_CORE
@@ -249,9 +248,6 @@ T ARY_SUM( T *v , Tz x,Tz y)
 // ====================================================
 // sorting function
 // ===================================================
-/* quick sort macros // templateにする?*/ //common_INT common_pntどうにかする
-#define QQSORT_ELE(a,x)  ((a *)(&(common_pnt[(*((PERM *)(x)))*common_INT])))
-
 template<typename T>
 int qsort_cmp_(const void *x,const void *y){
  if ( *(T *)x < *(T *)y ) return (-1); else return ( *(T *)x > *(T *)y );
@@ -263,65 +259,46 @@ int qsort_cmp__(const void *x,const void *y){
 }
 
 template<typename T>
-int qqsort_cmp_(const void *x,const void *y){
-
- T *xx=QQSORT_ELE(T,x), *yy=QQSORT_ELE(T,y);
- if ( *xx < *yy ) return (-1); 
-  else return ( *xx > *yy ); 
-}
-
-template<typename T>
-int qqsort_cmp__(const void *x, const void *y){ 
-
- T *xx=QQSORT_ELE(T,x), *yy=QQSORT_ELE(T,y);
- if ( *xx > *yy ) return (-1); 
- else return ( *xx < *yy ); 
-}
-
-
-template<typename T>
 void qsort_ (T *v, size_t siz, int unit){
  if ( unit == 1 || unit==-1 ) unit *= sizeof(T);
- if (unit<0) qsort (v, siz, -unit, qsort_cmp__<T>); else qsort (v, siz, unit, qsort_cmp_<T>); 
+
+ if (unit<0){ qsort(v, siz, -unit, qsort_cmp__<T>); } 
+ else       { qsort(v, siz,  unit, qsort_cmp_<T>);   }
+
 } 
 
+template<typename T>
+int qqsort_cmp_r(void * v,const void *x,const void *y){
+
+	if ( ((T *)v)[*(PERM *)(x)] < ((T *)v)[*(PERM *)(y)] ) return (-1); 
+	else return (  ((T *)v)[*(PERM *)(x)] > ((T *)v)[*(PERM *)(y)]  ); 
+
+}
 
 template<typename T>
-void qsort_perm__ (T *v, size_t siz, PERM *perm, int unit){
+int qqsort_cmp__r(void * v,const void *x, const void *y){ 
+
+	if ( ((T *)v)[*(PERM *)(x)] > ((T *)v)[*(PERM *)(y)] ) return (-1); 
+	else return (  ((T *)v)[*(PERM *)(x)] < ((T *)v)[*(PERM *)(y)]  ); 
+
+}
+
+template<typename T>
+void qsort_perm__(T *v, size_t siz, PERM *perm, int unit){
 
  if ( unit == 1 || unit==-1 ) unit *= sizeof(*v);  
- if ( unit == 1 || unit==-1 ) unit *= sizeof(PERM);  
- common_INT = MAX(unit,-unit); common_pnt = (char *)v;
- if (unit<0) qsort(perm, siz, sizeof(PERM), qqsort_cmp__<T>);
- else        qsort(perm, siz, sizeof(PERM), qqsort_cmp_<T>);
+ if (unit<0) qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp__r<T>);
+ else        qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp_r<T>);
 
 } 
 
 template<typename T>
-PERM *qsort_perm_ (T *v, size_t siz, int unit){
+PERM *qsort_perm_(T *v, size_t siz, int unit){
 
-	PERM *perm = new PERM[siz]; 
-//	perm = malloc2(perm, siz);
+	PERM *perm = new PERM[siz];  //	perm = malloc2(perm, siz);
 	for(size_t i=0 ; i<siz; i++){ perm[i]=i; }
 	qsort_perm__<T>(v, siz, perm, unit); 
 	return perm;
-}
-
-template<typename T>
-size_t bin_search_(T *v, T u, size_t siz, int unit){ 
- size_t s=0, t;
- T n;
- if ( unit == 1 ) unit *= sizeof (T); 
- while (1){ 
-   if ( siz-s <= 2 ){ 
-     if ( u <= *((T *)(((char *)v)+unit*s)) ) return (s);
-     if ( siz == s+1 || u <= *((T *)(((char *)v)+unit*(s+1))) ) return (s+1);
-     return (s+2);
-   }
-   t = (s+siz) /2;
-   n = *((T *)(((char *)v)+unit*t));
-   if ( u < n ) siz = t; else s = t;
- }
 }
 
 // ====================================================

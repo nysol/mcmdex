@@ -18,8 +18,6 @@ using namespace std;
 #include"queue.hpp"
 #include"stdlib2.hpp"
 
-
-
 void TRSACT::prop_print (){
 
   if ( !(_flag & SHOW_MESSAGE) ) return;
@@ -69,16 +67,13 @@ int TRSACT::alloc(){
     // LOAD_INCSORTはセットされない(sgflagにセットされるかのうせいあり)
 
     if ( _flag&LOAD_PERM ){ 
-
       if ( _flag2&TRSACT_FRQSORT ){ 
       	p = _C.clmw_perm_sort((_flag&LOAD_INCSORT)?1:-1);
       }
       else {
       	p = _C.clmt_perm_sort((_flag&LOAD_INCSORT)?1:-1);
       }
-
     }
-
     if ( _pfname ) { FILE2::ARY_Write(_pfname , p , _C.clms()); }
 
   }
@@ -124,8 +119,7 @@ int TRSACT::alloc(){
   _w.malloc2( _T.get_end());
 
   if ( _flag2&TRSACT_NEGATIVE ) { 	// たぶんこう？
-  	//malloc2 (_pw, _T.get_end(), EXIT0);
-  	_pw = new WEIGHT[_T.get_end()];
+  	_pw = new WEIGHT[_T.get_end()]; //malloc2 (_pw, _T.get_end(), EXIT0);
   }
   else{
   	_pw = NULL;
@@ -144,14 +138,10 @@ int TRSACT::alloc(){
   _wbuf.alloc( sizeof(WEIGHT), bufSize);
 
   if ( _flag2&TRSACT_SHRINK ){
-    //malloc2 (_mark, _T.get_end(), EXIT0);
-    _mark = new VEC_ID[_T.get_end()];
-
-    //malloc2 (_shift, _T.get_end(), EXIT0);
-    _shift = new QUEUE_INT *[_T.get_end()];
-
-    //calloc2 (_sc, _T.get_clms(), EXIT0);
-    _sc = new char[_T.get_clms()]();
+    
+    _mark = new VEC_ID[_T.get_end()]; //malloc2 (_mark, _T.get_end(), EXIT0);
+    _shift = new QUEUE_INT *[_T.get_end()]; //malloc2 (_shift, _T.get_end(), EXIT0);
+    _sc = new char[_T.get_clms()](); //calloc2 (_sc, _T.get_clms(), EXIT0);
 
   }
   if ( !_T.exist_w() && (_flag2&TRSACT_UNION)) {
@@ -160,9 +150,7 @@ int TRSACT::alloc(){
 	if ( !_T.exist_w() && _item_wfname ){
 		_T.alloc_weight ( _C.getp_rowt());
 	}
-  //malloc2 (_trperm, _T.get_t(), EXIT0);
-  _trperm = new PERM[_T.get_t()];
-
+  _trperm = new PERM[_T.get_t()];   //malloc2 (_trperm, _T.get_t(), EXIT0);
 
   // set variables w.r.t rows
   tt=0 ;
@@ -293,8 +281,8 @@ void TRSACT::sort(FILE_COUNT *C){
   	OccAlloc();
   }
 
-    // shrinking database
 
+	// shrinking database
   if ( _flag2&TRSACT_1ST_SHRINK ){
 
     Q = _OQ[_T.get_clms()];
@@ -370,7 +358,6 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 	  QUEUE_INT *x;
 		for (iv=0 ; iv<_T.get_t() ; iv++){
     	ev =  iv;
-    	// MLOOP (x, _T.get_vv(ev), _T.get_clms()) p[*x]++;
     	for(x=_T.get_vv(ev); *x < _T.get_clms() ;x++){ p[*x]++; }
 		}
 		//===================

@@ -158,7 +158,6 @@ class SETFAMILY{
 			qsort_perm__( _v, _t, rperm, flag); 
 		}
 
-
 		void push_back(int i,QUEUE_INT v){ _v[i].push_back(v); }
 
 

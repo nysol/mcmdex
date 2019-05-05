@@ -11,8 +11,8 @@
 
 #include"stdlib2.hpp"
 
-char *common_pnt;
-INT common_INT;
+//char *common_pnt;
+//INT common_INT;
 
 #ifdef MULTI_CORE
 int SPIN_LOCK_dummy;

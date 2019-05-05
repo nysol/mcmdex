@@ -105,8 +105,12 @@ void SETFAMILY::sort (){
 
   if ( flag ){  
 		// sort the rows
-		if ( _flag & LOAD_SIZSORT ) p = qsort_perm_<QUEUE> (_v, _t, flag*sizeof(QUEUE));
-    else p = qsort_perm_<WEIGHT> (_rw, _t, flag*sizeof(WEIGHT));
+		if ( _flag & LOAD_SIZSORT ) {
+			p = qsort_perm_(_v, _t, flag);
+		}
+    else{
+    	p = qsort_perm_(_rw, _t, flag);
+    }
 
 		//_rperm = malloc2(_rperm,_t);
 		_rperm = new PERM[_t];
@@ -264,7 +268,6 @@ void SETFAMILY::load (int flag , char *fname)
 
 	// end mark これいる？
 	for(i=0;i<_t;i++){
-  //FLOOP (i, 0, _t) 
 	  _v[i].set_v(_v[i].get_t(),_clms); 
 	}
 
@@ -278,119 +281,118 @@ void SETFAMILY::load (int flag , char *fname)
 
 }
 
-void SETFAMILY::replace_index(PERM *perm, PERM *invperm){
+void SETFAMILY::replace_index(PERM *perm, PERM *invperm)
+{
+	if ( _v ){
+		for(size_t i=0; i<_t ; i++){
+			for( QUEUE_INT *x = _v[i].begin() ; x < _v[i].end() ; x++ ){
+				*x = perm[*x];
+			}
+		}
+		// INVPERMUTE
+		char * cmmp=NULL; 
+		QUEUE Q;
+		int i1,i2;
+		cmmp = new char[_t](); // calloc2(cmmp,_t,EXIT);
+		for( i1 = 0; i1 < _t ; i1++ ){
+			if ( cmmp[i1]==0 ){ 
+				Q = _v[i1]; 
+				do{ 
+					i2 = i1; 
+					i1 = invperm[i1]; 
+					_v[i2]=_v[i1]; 
+					cmmp[i2] = 1;
+				} while( cmmp[i1]==0 );
+				_v[i2] = Q; 
+			}
+		}
+		delete [] cmmp;
+	}
 
-		  if ( _v ){
-		  	for(size_t i=0; i<_t ; i++){
-			  	for( QUEUE_INT *x = _v[i].begin() ; x < _v[i].end() ; x++ ){
-  					*x = perm[*x];
-					}
-    		}
-		    // INVPERMUTE
-				char * cmmp=NULL; 
-			  QUEUE Q;
-			  int i1,i2;
-				// calloc2(cmmp,_t,EXIT);
-				cmmp = new char[_t]();
-				for( i1 = 0; i1 < _t ; i1++ ){
-					if ( cmmp[i1]==0 ){ 
-						Q = _v[i1]; 
-						do{ 
-							i2 = i1; 
-							i1 = invperm[common_INT]; 
-							_v[i2]=_v[i1]; 
-							cmmp[i2] = 1;
-						} while( cmmp[i1]==0 );
-						_v[i2] = Q; 
-					}
-				}
-				delete [] cmmp;
-    	}
-
-		  if ( _w ){
-		    // INVPERMUTE
-				char * cmmp=NULL; 
- 				WEIGHT *w;
- 			  int i1,i2;
-				//calloc2(cmmp,_t,EXIT);
-				cmmp = new char[_t]();
-				for( i1 = 0; i1 < _t ; i1++ ){
-					if ( cmmp[i1]==0 ){ 
-						w = _w[i1]; 
-						do{ 
-							i2 = i1; 
-							i1 = invperm[common_INT]; 
-							_w[i2]=_w[i1]; 
-							cmmp[i2] = 1;
-						} while( cmmp[i1]==0 );
-						_w[i2] = w; 
-					}
-				}
-				delete [] cmmp;
-		  }
+	if ( _w ){
+		// INVPERMUTE
+		char * cmmp=NULL; 
+		WEIGHT *w;
+		int i1,i2;
+		
+		cmmp = new char[_t](); //calloc2(cmmp,_t,EXIT);
+		for( i1 = 0; i1 < _t ; i1++ ){
+			if ( cmmp[i1]==0 ){ 
+				w = _w[i1]; 
+					do{ 
+						i2 = i1; 
+						i1 = invperm[i1]; 
+						_w[i2]=_w[i1]; 
+						cmmp[i2] = 1;
+					} while( cmmp[i1]==0 );
+					_w[i2] = w; 
+			}
+		}
+		delete [] cmmp;
+	}
 
 }
 
 
-void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag){
+void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
+{
+	QUEUE Q;	
+	char  *cmm_p=NULL;
+	int cmm_i,cmm_i2;
 
-			QUEUE Q;	
-			char  *cmm_p=NULL;
-			int cmm_i,cmm_i2;
+	qsort_perm__( _v, _t, rperm, flag); 
 
-			qsort_perm__( _v, _t, rperm, flag); 
+	
+	cmm_p = new char[_t](); //calloc2(cmm_p,_t,EXIT);
 
-			//calloc2(cmm_p,_t,EXIT);
-			cmm_p = new char[_t]();
-
-			//FLOOP(cmm_i,0,_t){ 
-			for(cmm_i=0;cmm_i<_t;cmm_i++){
-				if ( cmm_p[cmm_i]==0 ){ 
-					Q = _v[cmm_i]; 
-					do{ 
-						cmm_i2=cmm_i; 
-						cmm_i=rperm[cmm_i]; 
-						_v[cmm_i2]=_v[cmm_i]; 
-						cmm_p[cmm_i2]=1; 
-					}while( cmm_p[cmm_i]==0 ); 
-					_v[cmm_i2] = Q; 
-				}
-			}
-			delete [] cmm_p; 
+	for(cmm_i=0;cmm_i<_t;cmm_i++){
+		if ( cmm_p[cmm_i]==0 ){ 
+			Q = _v[cmm_i]; 
+			do{ 
+				cmm_i2=cmm_i; 
+				cmm_i=rperm[cmm_i]; 
+				_v[cmm_i2]=_v[cmm_i]; 
+				cmm_p[cmm_i2]=1; 
+			}while( cmm_p[cmm_i]==0 ); 
+			_v[cmm_i2] = Q; 
+		}
+	}
+	delete [] cmm_p; 
 			
-			if(_w){
-				WEIGHT *ww;
-				char  *cmm_p=NULL;
-				//calloc2(cmm_p,_t,EXIT);
-				cmm_p = new char[_t]();
-				for(cmm_i=0;cmm_i<_t;cmm_i++){
-				//FLOOP(cmm_i,0,_t){ 
-					if ( cmm_p[cmm_i]==0 ){ 
-						ww = _w[cmm_i]; 
-						do{ 
-							cmm_i2=cmm_i; 
-							cmm_i=rperm[cmm_i]; 
-							_w[cmm_i2]=_w[cmm_i]; 
-							cmm_p[cmm_i2]=1; 
-						}while( cmm_p[cmm_i]==0 ); 
-						_w[cmm_i2] = (ww); 
-					}
-				}
-				delete [] cmm_p; 
-			} 
-			
-		  PERM pp;
-			//FLOOP(cmm_i,0,_t){ 
-			for(cmm_i=0;cmm_i<_t;cmm_i++){
-				if ( rperm[cmm_i]< _t ){ 
-					pp = trperm[cmm_i]; 
-					do { 
-						cmm_i2=cmm_i; 
-						cmm_i=rperm[cmm_i]; 
-						rperm[cmm_i2]=trperm[cmm_i]; 
-						rperm[cmm_i2]=_t; 
-					}while ( rperm[cmm_i]< _t ); 
-					rperm[cmm_i2] = pp;
-				}
+	if(_w){
+
+		WEIGHT *ww;
+		char  *cmm_p = new char[_t](); //calloc2(cmm_p,_t,EXIT);
+
+		for(cmm_i=0;cmm_i<_t;cmm_i++){
+			if ( cmm_p[cmm_i]==0 ){ 
+				ww = _w[cmm_i]; 
+				do{ 
+					cmm_i2=cmm_i; 
+					cmm_i=rperm[cmm_i]; 
+					_w[cmm_i2]=_w[cmm_i]; 
+					cmm_p[cmm_i2]=1; 
+				}while( cmm_p[cmm_i]==0 ); 
+				_w[cmm_i2] = (ww); 
 			}
+		}
+		delete [] cmm_p; 
+
+	} 
+			
+	PERM pp;
+
+	for(cmm_i=0;cmm_i<_t;cmm_i++){
+
+		if ( rperm[cmm_i]< _t ){ 
+			pp = trperm[cmm_i]; 
+			do { 
+				cmm_i2=cmm_i; 
+				cmm_i=rperm[cmm_i]; 
+				trperm[cmm_i2]=trperm[cmm_i]; 
+				rperm[cmm_i2]=_t; //?
+			}while ( rperm[cmm_i]< _t ); 
+			trperm[cmm_i2] = pp;
+		}
+	}
 }
