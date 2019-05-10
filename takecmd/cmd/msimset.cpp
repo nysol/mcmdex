@@ -1,4 +1,4 @@
-#include "simset.hpp"
+#include "kgsimset.hpp"
 
 // extern用
 //char *ERROR_MES;
@@ -7,6 +7,6 @@
 int main(int ac ,char* av[]){
 
 	//SIMSET sim;
-	SIMSET().run(ac,av);
+	KGSIMSET().run(ac,av);
 	
 }

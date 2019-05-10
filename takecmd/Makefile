@@ -17,7 +17,7 @@ LCMOBJ = cmd/mlcm.o mod/kglcm.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue
 
 LCMSEQOBJ = cmd/mlcmseq.o mod/kglcm_seq.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o 
 
-SIMSETOBJS = cmd/msimset.o mod/simset.o mod/kgsspc.o mod/kggrhfil.o mod/kgmace.o mod/kgmedset.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/fstar.o lib/sgraph.o
+SIMSETOBJS = cmd/msimset.o mod/kgsimset.o mod/kgsspc.o mod/kggrhfil.o mod/kgmace.o mod/kgmedset.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/fstar.o lib/sgraph.o
 
 #all : msspc mgrhfil mmace mmedset mlcm mlcmseq msspc4tra2gc msimset
 

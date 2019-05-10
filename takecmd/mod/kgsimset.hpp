@@ -8,7 +8,7 @@
 #define WEIGHT_DOUBLE
 
 
-class SIMSET{
+class KGSIMSET{
 
 	int   _cmn_argc;
 	char *_ERROR_MES;
@@ -93,7 +93,7 @@ class SIMSET{
 
 	public :
 
-	SIMSET(void):
+	KGSIMSET(void):
 		_ERROR_MES(NULL),
 		_th(0.0),_th1(0.0),_th2(0.0),_th3(0.0),_th4(0.0),_thk(0),
 		_nodes(0),_deg_ub(INTHUGE),_deg_lb(0),_outperm_fname(NULL),

@@ -6,7 +6,7 @@
    
 #include <unistd.h>
 
-#include "simset.hpp"
+#include "kgsimset.hpp"
 #include "kggrhfil.hpp"
 #include "kgsspc.hpp"
 #include "kgmedset.hpp"
@@ -32,7 +32,7 @@ void mremove_ (char *x, ...){
 // remove a file on the specified directory
 #define MREMOV(dir,...) mremove_(dir, __VA_ARGS__, NULL, NULL)
 
-void SIMSET::_error(void){
+void KGSIMSET::_error(void){
 
   _ERROR_MES = "command explanation";
 
@@ -89,7 +89,7 @@ if similarity-threshold is 0, skip the similarity graph construction phase\n");
 /***********************************************************************/
 /*  read parameters given by command line  */
 /***********************************************************************/
-void SIMSET::read_param(int argc, char *argv[]){
+void KGSIMSET::read_param(int argc, char *argv[]){
  int c=1;
   _prog[0] = 0; _sep[0] = 0;
 		
@@ -247,7 +247,7 @@ void SIMSET::read_param(int argc, char *argv[]){
 /* unify the similar records, by deleting them except for one representative */
 /*****************************************************************************/
 // flag= 0:cluster, 1:graph, 2:for mace
-void SIMSET::unify (char *fname, char *fname2, int flag){  
+void KGSIMSET::unify (char *fname, char *fname2, int flag){  
 
 	FSTAR FF;
   char c;
@@ -311,7 +311,7 @@ void SIMSET::unify (char *fname, char *fname2, int flag){
 /*************************************************************************/
 /* main function of SIMSET */
 /*************************************************************************/
-int SIMSET::run (int argc ,char* argv[]){
+int KGSIMSET::run (int argc ,char* argv[]){
 
 	read_param (argc, argv);
   if ( _ERROR_MES ) return (1);  // read params, and exit if error
