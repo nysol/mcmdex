@@ -43,7 +43,6 @@ class SGRAPH {
 	  delete [] _perm;
 	}
 
-
 	int itemAlloc(size_t siz){
 		//calloc2(_itemary, siz+2, return 1); 
 		_itemary = new QUEUE_INT[siz+2](); 
@@ -163,7 +162,7 @@ class SGRAPH {
 			if( _flag&1 ){
 				va_list ap;
 				va_start(ap,frm);
-				fprintf(stderr,frm,ap);
+				vfprintf(stderr,frm,ap);
 				va_end(ap);
 			}
 		}

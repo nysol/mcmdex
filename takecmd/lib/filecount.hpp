@@ -115,7 +115,6 @@ class FILE_COUNT{
 	  QUEUE_INT i, item, kk=0, k, jump_end=0;
 	  WEIGHT w, s;
 	  VECARY<VEC_ID> jump;
-
   	LONG jj;
 
 	  if ( wf ){ kk = weight_Scan(wf); }
@@ -158,7 +157,7 @@ class FILE_COUNT{
 
       _cw[_rows_org] = s;    // sum up positive weights
 
-			if ( k==0 && fp->eof() ) break;
+			if ( k==0 && fp->eofx() ) break;
 			_rows_org++;  // increase #transaction
 
     	
@@ -209,6 +208,7 @@ class FILE_COUNT{
 
   	LONG jj;
 	  if ( wf ){ kk = weight_Scan(wf); }
+
 
 	  do {
 
@@ -263,6 +263,7 @@ class FILE_COUNT{
       	}
       }
 		} while ( fp->eof() );
+
 
     // swap the variables in transpose mode
   	if ( _rw.empty() ){

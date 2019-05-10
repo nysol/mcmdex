@@ -17,6 +17,7 @@
 #define SSPC_OUTPUT_INTERSECT 131072
 #define SSPC_COMP_ITSELF 262144
 
+#include <vector>
 #include "trsact.hpp"
 #include "problem.hpp"
 #include "itemset.hpp"
@@ -68,8 +69,8 @@ class KGSSPC{
 
 	// gloval value in org
 	// LONG _ip_l2;
-	 LONG _ip_l3;
-	 LONG _ip_l1;
+	LONG _ip_l3;
+	LONG _ip_l1;
 
 	int _siz;
 
@@ -104,14 +105,11 @@ class KGSSPC{
 	 	PERM *perm    = _TT.get_perm();
 	  PERM *p;
 
-		//calloc2(_occ_w, siz+2, goto ERR);
-		_occ_w = new WEIGHT[siz+2]();
-		//calloc2(_vecchr, siz2+2, goto ERR);
-		_vecchr = new char[siz2+2]();
+		_occ_w = new WEIGHT[siz+2](); // calloc2
+		_vecchr = new char[siz2+2](); // calloc2
 
 		if(_problem&SSPC_POLISH2) {
-			//_itemary = calloc2(_itemary, siz+2);
-			_itemary = new QUEUE_INT[siz+2]();
+			_itemary = new QUEUE_INT[siz+2](); //calloc2
 		}
 
     // set outperm
@@ -138,11 +136,12 @@ class KGSSPC{
 
 	  return;
 
-  	ERR:;
-
   	EXIT;
+
 	}
+
 	int setArgs(int argc, char *argv[]);
+
  	void help();
 
 	public :
@@ -173,7 +172,15 @@ class KGSSPC{
 
 	int run(int argc ,char* argv[]);
 	
-	static int mrun(int argc ,char* argv[]);
+	vector<LONG> iparam(){ 
+		vector<LONG> rtn(2);
+		rtn[0] = _ip_l1;
+		rtn[1] = _ip_l3;
+		return rtn;
+	}
+	
+	static vector<LONG> mrun(int argc ,char* argv[]);
+	
 
 
 };

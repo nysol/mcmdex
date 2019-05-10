@@ -345,7 +345,9 @@ int KGGRHFIL::run (int argc ,char* argv[]){
   return 0;
 }
 
-int KGGRHFIL::mrun(int argc ,char* argv[]){
-	return KGGRHFIL().run(argc,argv);
+LONG KGGRHFIL::mrun(int argc ,char* argv[]){
+	KGGRHFIL mod;
+	mod.run(argc,argv);
+	return mod.iparam();
 }
 

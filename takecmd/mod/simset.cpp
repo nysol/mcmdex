@@ -7,16 +7,36 @@
 #include <unistd.h>
 
 #include "simset.hpp"
-#include "grhfil.hpp"
-#include "sspc.hpp"
-#include "medset.hpp"
-#include "mace.hpp"
+#include "kggrhfil.hpp"
+#include "kgsspc.hpp"
+#include "kgmedset.hpp"
+#include "kgmace.hpp"
+
+
+//_REMAIN_DIFFS_は除去
+
+/* remove many files */
+void mremove_ (char *x, ...){
+  va_list argp;
+  char *a;
+	char common_comm[1024];
+  va_start (argp, x);
+  while((a = va_arg(argp, char *))){
+    sprintf (common_comm, "%s%s", x, a);
+    remove (common_comm);
+  }
+  va_end (argp);
+}
+
+
+// remove a file on the specified directory
+#define MREMOV(dir,...) mremove_(dir, __VA_ARGS__, NULL, NULL)
 
 void SIMSET::_error(void){
 
   _ERROR_MES = "command explanation";
 
-  print_err ("simset ISCMOt [options] similarity-graph-filename similarity-threshold degree-threshold output-filename\n\
+  fprintf(stderr,"simset ISCMOt [options] similarity-graph-filename similarity-threshold degree-threshold output-filename\n\
 %%:show progress, _:no message, +:write solutions in append mode, =:do not remove temporal files\n\
 @:do not execute data polishing, E:read edge list file\n\
 i:set similarity measure to the ratio of one is included in the other\n\
@@ -87,6 +107,7 @@ void SIMSET::read_param(int argc, char *argv[]){
   else if ( strchr (argv[1], 'S') ) _com = 'S';
   else if ( strchr (argv[1], 'R') ) _com = 'R';
   else if ( strchr (argv[1], 's') ) _com = 's';
+
   if ( strchr (argv[1], 'M') ) _intersection = 1;
   if ( strchr (argv[1], 'm') ) _no_remove = 1;
   if ( strchr (argv[1], 'O') ) _repeat = 10000000;
@@ -106,43 +127,106 @@ void SIMSET::read_param(int argc, char *argv[]){
   while ( argv[c][0] == '-' ){
     if ( argc<c+5 ){ _error (); return; }
     switch ( argv[c][1] ){
-      case 'G': if ( !strchr ("IiCTSsR", argv[c+1][0]) )
-          error_num("unknown similarity measure", 0, EXIT);
-        if ( (_th1 = atof(argv[c+2])) <= 0 )
-          error_num("the majority threshold has to be positive", atof(argv[c+1]), EXIT);
+      case 'G':
+      	if ( !strchr ("IiCTSsR", argv[c+1][0]) ){
+          fprintf(stderr,"unknown similarity measure\n");
+					exit(1);
+        }
+        if ( (_th1 = atof(argv[c+2])) <= 0 ){
+          fprintf(stderr,"the majority threshold has to be positive : %g\n", atof(argv[c+1]) );
+          exit(1);
+      	}
         _com1 = argv[c+1][0]; c++; 
-      break; case 'v': _vote_th = atof(argv[c+1]);
-      break; case 'm': if ( (_th3 = atof(argv[c+1])) <= 0 )
-          error_num("the independent set threshold has to be positive", atof(argv[c+1]), EXIT);
-          if ( argv[c][2] ) _com2 = argv[c][2]; else _com2 = 'R';
-      break; case 'M': if ( (_th2 = atof(argv[c+1])) <= 0 )
-          error_num("the merge threshold has to be positive", atof(argv[c+1]), EXIT);
-          if ( argv[c][2] ) _com2 = argv[c][2]; else _com2 = 'R';
-      break; case '9': if ( (_th4 = atof(argv[c+1])) <= 0 )
-          error_num("the unification threshold has to be positive", atof(argv[c+1]), EXIT);
-      break; case 'k': if ( (_thk = atoi(argv[c+1])) <= 0 )
-          error_num("the k-best threshold has to be positive", atof(argv[c+1]), EXIT);
-      break; case 'u': _deg_ub = atoi(argv[c+1]);
-      break; case 'l': _deg_lb = atoi(argv[c+1]);
-      break; case 'U': sprintf (_trsact_ub, " -u %d", atoi(argv[c+1]));
-      break; case 'L': sprintf (_trsact_lb, " -l %d", atoi(argv[c+1]));
-      break; case 'I': sprintf (_item_ub, " -U%s %f", argv[c][2]=='I'?"U":"", atof(argv[c+1]));
-      break; case 'i': sprintf (_item_lb, " -L%s %f", argv[c][2]=='i'?"L":"", atof(argv[c+1]));
-      break; case 'T': _ignore = atoi(argv[c+1]);
-      break; case 't': _ignore2 = atoi(argv[c+1]);
-      break; case 'O': _repeat = atoi(argv[c+1]);
-      break; case 'X': if ( (_multiply = atof(argv[c+1])) <= 0 )
-          error_num("the factor has to be positive", atof(argv[c+1]), EXIT);
-      break; case 'x': if ( (_power = atof(argv[c+1])) == 0 )
-          error_num("the factor has to be non zero", atof(argv[c+1]), EXIT);
-      break; case 'y': if ( (_cut = atof(argv[c+1])) == 0 )
-          error_num("the threshold has to be positive", atof(argv[c+1]), EXIT);
-      break; case 'w': _itemweight_file = argv[c+1];
-      break; case '!': if ( (_cores = atoi(argv[c+1])) <= 0 )
-          error_num("the number of cores has to be positive", atoi(argv[c+1]), EXIT);
-      break; case 'W': _workdir = argv[c+1];
-      break; case ',': _sep[0] = '-'; _sep[1] = argv[c+1][0]; _sep[2] = 32; _sep[3] = 0;
-      break; case 'Q': _outperm_fname = argv[c+1];
+
+      break; case 'v':
+      	_vote_th = atof(argv[c+1]);
+
+      break; case 'm': 
+      	if ( (_th3 = atof(argv[c+1])) <= 0 ){
+          fprintf(stderr,"the independent set threshold has to be positive : %g\n", atof(argv[c+1]) );
+          exit(1);
+        }
+        if ( argv[c][2] ){ _com2 = argv[c][2]; }
+        else { _com2 = 'R'; }
+
+      break; case 'M': 
+      	if ( (_th2 = atof(argv[c+1])) <= 0 ){
+					fprintf(stderr,"the merge threshold has to be positive : %g\n", atof(argv[c+1]) );
+					exit(1);
+				}
+				if ( argv[c][2] ){ _com2 = argv[c][2];}
+				else { _com2 = 'R';}
+
+      break; case '9':
+      	if ( (_th4 = atof(argv[c+1])) <= 0 ){
+					fprintf(stderr,"the unification threshold has to be positive : %g\n", atof(argv[c+1]) );
+					exit(1);
+        }
+      break; case 'k': 
+      	if ( (_thk = atoi(argv[c+1])) <= 0 ){
+					fprintf(stderr,"the k-best threshold has to be positive : %g\n", atof(argv[c+1]) );
+					exit(1);
+        }
+      break; case 'u': 
+      	_deg_ub = atoi(argv[c+1]);
+
+      break; case 'l': 
+      	_deg_lb = atoi(argv[c+1]);
+      	
+      break; case 'U': 
+      	sprintf (_trsact_ub, " -u %d", atoi(argv[c+1]));
+      	
+      break; case 'L': 
+      	sprintf (_trsact_lb, " -l %d", atoi(argv[c+1]));
+      	
+      break; case 'I': 
+      	sprintf (_item_ub, " -U%s %f", argv[c][2]=='I'?"U":"", atof(argv[c+1]));
+      	
+      break; case 'i': 
+      	sprintf (_item_lb, " -L%s %f", argv[c][2]=='i'?"L":"", atof(argv[c+1]));
+      	
+      break; case 'T': 
+      	_ignore = atoi(argv[c+1]);
+
+      break; case 't': 
+      	_ignore2 = atoi(argv[c+1]);
+
+      break; case 'O': 
+      	_repeat = atoi(argv[c+1]);
+      break; case 'X': 
+      	if ( (_multiply = atof(argv[c+1])) <= 0 ){
+					fprintf(stderr,"the factor has to be positive : %g\n", atof(argv[c+1]) );
+					exit(1);
+        }
+      break; case 'x': 
+      	if ( (_power = atof(argv[c+1])) == 0 ){
+					fprintf(stderr,"the factor has to be non zero : %g\n", atof(argv[c+1]) );
+					exit(1);
+        }
+      break; case 'y': 
+      	if ( (_cut = atof(argv[c+1])) == 0 ){
+					fprintf(stderr,"the threshold has to be positive : %g\n", atof(argv[c+1]) );
+					exit(1);
+        }
+      break; case 'w': 
+      	_itemweight_file = argv[c+1];
+      break; case '!': 
+      	if ( (_cores = atoi(argv[c+1])) <= 0 ){
+					fprintf(stderr,"the number of cores has to be positive : %d\n", atoi(argv[c+1]) );
+					exit(1);
+        }
+      break; case 'W': 
+      	_workdir = argv[c+1];
+
+      break; case ',':
+      	 _sep[0] = '-'; 
+      	 _sep[1] = argv[c+1][0]; 
+      	 _sep[2] = 32; 
+      	 _sep[3] = 0;
+
+      break; case 'Q': 
+      	_outperm_fname = argv[c+1];
+
       break; default: goto NEXT;
    }
     c += 2;
@@ -153,8 +237,10 @@ void SIMSET::read_param(int argc, char *argv[]){
   _lb = atoi(argv[c+2]);  // threshold for cluster size
   _outfname = argv[c+3];  // output file name
 
-  if ( (c = strlen(_infname) + strlen(_workdir)) > 800 )
-      error_num ("too long filename/workdir", c, EXIT);
+  if ( (c = strlen(_infname) + strlen(_workdir)) > 800 ){
+		fprintf(stderr,"too long filename/workdir : %d\n", c );
+		exit(1);
+	}
 }
 
 /*****************************************************************************/
@@ -171,60 +257,54 @@ void SIMSET::unify (char *fname, char *fname2, int flag){
   LONG x, y;
   
   if ( flag ){
-    if ( !_unify_mark )
-         UNIONFIND_init (&_unify_mark, &_unify_set, _nodes);
+    if ( !_unifind.empty() ){
+	    _unifind.alloc(_nodes);
+	  }
     fp.open ( fname2, "r");
     do {
       if ( fp.read_pair( &x, &y, NULL, 0) ) continue;
-      UNIONFIND_unify_set (x, y, _unify_mark, _unify_set);
-    } while ( !(FILE_err&2) );
+      _unifind.unify_set(x,y);
+
+    } while ( !(fp.eofx()) );
     fp.close();
   }
 
-	FF.set_fname(fname);
+	FF.setParams(fname);
 	FF.load();
-  //FSTAR_load (&FF);
   wfp.open(fname, "w");
-  // FILE2_open (fp, fname, "w", EXIT);
 
-  FLOOP (i, 0, FF.get_node_num()){
-    if ( flag==0 || _unify_mark[i] == i ){
+	for(i=0;i<FF.get_node_num() ; i++){
+    if ( flag==0 || _unifind.mark(i) == i ){
       if ( flag == 0 ){
         z = 0; 
-        FLOOP (j, FF.get_fstar(i), FF.get_fstar(i+1)){
+        for(j=FF.get_fstar(i);j<FF.get_fstar(i+1);j++){
           e = FF.get_edge(j);
-          if ( _unify_mark[e] != e ) continue;
+          if ( _unifind.mark(e) != e ) continue;
           while (1){
             z++;
-            if ( _unify_set[e] == e ) break;
-            e = _unify_set[e];
+            if ( _unifind.set(e) == e ) break;
+            e = _unifind.set(e);
           }
         }
         if ( z < _lb ) continue;
       }
       c = 0;
-      FLOOP (j, FF.get_fstar(i), FF.get_fstar(i+1)){
+      for(j=FF.get_fstar(i);j<FF.get_fstar(i+1);j++){
         e = FF.get_edge(j);
-        if ( _unify_mark[e] != e ) continue;
+        if ( _unifind.mark(e) != e ) continue;
         while (1){
 	        fp.print_int(e, c);
 	        fp.flush();
-          //FILE2_print_int (&fp, e, c);
-          //FILE2_flush (&fp);
           c = ' ';
-          if ( flag == 2 || _unify_set[e] == e ) break;
-          e = _unify_set[e];
+          if ( flag == 2 || _unifind.set(e) == e ) break;
+          e = _unifind.set(e);
         }
       }
     }
     fp.puts("\n");
 	  fp.flush();
-    //FILE2_puts (&fp, "\n");
-    //FILE2_flush (&fp);
   }
   fp.closew();
-  //FILE2_closew (&fp);
-  //FSTAR_end (&FF);
 
 }
 
@@ -249,7 +329,8 @@ int SIMSET::run (int argc ,char* argv[]){
 	char *f2  = "__tmp_out1__" ;
 	char *fn  = f1;
 	char ff  = 0;
-
+	vector<LONG> sspcrtn;
+	
   sprintf (s1, "%s__tmp__", _workdir);  // write commands to string variables
   sprintf (s2, "%s__tmp_out2__", _workdir);
 
@@ -285,7 +366,7 @@ int SIMSET::run (int argc ,char* argv[]){
 		);
 
 		comm_str_decompose();
-	  GRHFIL::mrun(_cmn_argc,_cmn_argv);
+	  KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
 
     goto GRAPH_POLISHING;
 
@@ -303,7 +384,7 @@ int SIMSET::run (int argc ,char* argv[]){
     );
 
 		comm_str_decompose();
-	  GRHFIL::mrun(_cmn_argc,_cmn_argv);
+	  KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
 
     sprintf (s4, "%s__tmp_edge__", _workdir);
     _infname = s4;
@@ -317,10 +398,10 @@ int SIMSET::run (int argc ,char* argv[]){
     _item_lb, _item_ub, _trsact_lb, _trsact_ub, _cores, _infname, _th1,  _workdir
   );
 	comm_str_decompose();
-	SSPC::mrun(_cmn_argc,_cmn_argv);
+	sspcrtn =  KGSSPC::mrun(_cmn_argc,_cmn_argv);
 
   unify_flag = 1; 
-  _nodes = internal_params.l3; //  stdlib2.cppにある
+  _nodes = sspcrtn[1];// internal_params.l3; //  stdlib2.cppにある
 
   // convert edge type to list type
   sprintf(
@@ -328,7 +409,7 @@ int SIMSET::run (int argc ,char* argv[]){
     _prog, _itemweight, s8, _nodes, _workdir, _workdir
   );
 	comm_str_decompose();
-	GRHFIL::mrun(_cmn_argc,_cmn_argv);
+	KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
   
   // phase 2: data polishing
   GRAPH_POLISHING:;
@@ -339,7 +420,7 @@ int SIMSET::run (int argc ,char* argv[]){
       _prog, _infname, _workdir
     );
 		comm_str_decompose();
-		GRHFIL::mrun(_cmn_argc,_cmn_argv);
+		KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
   }
 
   if ( _repeat < 0 ) goto FIND_CLIQUE;   // clique enumeration without polishing
@@ -350,7 +431,9 @@ int SIMSET::run (int argc ,char* argv[]){
   do {  // data polishing loop
 
     count ++;
-    if ( _mes ) print_err ("%dth-iter\n", count);
+    if ( _mes ){	
+    	fprintf(stderr,"%dth-iter\n", count);
+    }
     if ( _th4 > 0 && unify_flag ) unify (s1, s6, 1);
 
 		// neighbor similarity comparison
@@ -360,12 +443,15 @@ int SIMSET::run (int argc ,char* argv[]){
       _deg_lb, _deg_ub, _cores, _workdir, _th, _workdir, fn
     );
 		comm_str_decompose();
-		SSPC::mrun(_cmn_argc,_cmn_argv);
+		vector<LONG> sspcrtn = KGSSPC::mrun(_cmn_argc,_cmn_argv);
 
     unify_flag = 1; 
-    _nodes = internal_params.l3;
-    siz = internal_params.l1;
-    if ( siz == 0 ){ print_err (" no similar pair exists"); break; }
+    _nodes = sspcrtn[1];//internal_params.l3;
+    siz = sspcrtn[0];// internal_params.l1;
+    if ( siz == 0 ){ 
+    	fprintf(stderr,"no similar pair exists\n");
+    	break; 
+    }
 
     if ( _com != 'C' && siz == sizz && siz > 0 ){
 			sprintf(
@@ -374,26 +460,24 @@ int SIMSET::run (int argc ,char* argv[]){
 			);
     	// if  _REMAIN_DIFFS_ SIMSET_prog, SIMSET_com=='C'?"w":"", SIMSET_com=='C'?"w":"", W, s10, W, W, count
 			comm_str_decompose();
-			GRHFIL::mrun(_cmn_argc,_cmn_argv);
+			LONG rtn3 = KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
 
 
-      if ( internal_params.l1 == 0 ) break_flag = 1;  // no difference
-      if ( _mes ) fprintf (stderr, "#diff edges %lld\n", internal_params.l1);
+      if ( rtn3  == 0 ) break_flag = 1;  // internal_params.l1 no difference
+      if ( _mes ) fprintf (stderr, "#diff edges %lld\n", rtn3 ); //internal_params.l1
       
-      difff = internal_params.l1;
-      if ( internal_params.l1 == diff && break_flag == 0 ){
+      difff = rtn3; //internal_params.l1;
+      if ( rtn3 == diff && break_flag == 0 ){ //internal_params.l1
 
 				sprintf(
 					_cmn_comm , "grhfil dEe%s -dde%s \"%s__tmp_diff%d__\"%s \"%s__tmp_diff%d__\" \"%s__tmp_diff__\"", 
     	      _com=='C'?"w":"", _com=='C'?"w":"", _workdir, (ff+1)%2, s10, _workdir, ff, _workdir
       	);
 				comm_str_decompose();
-				GRHFIL::mrun(_cmn_argc,_cmn_argv);
-				//if _REMAIN_DIFFS_
-      	//EXECSUB (GRHFIL_main, SIMSET_mes, goto END, "grhfil dEe%s -dde%s \"%s__tmp_diff%d__\"%s \"%s__tmp_diff%d__\" \"%s__tmp_diff_%d__\"", 
-      	//  SIMSET_com=='C'?"w":"", SIMSET_com=='C'?"w":"", W, count-1, s10, W, count, W, count);
-        if ( internal_params.l1 == 0 ) break_flag = 1;  // no difference
-        if ( _mes ) fprintf (stderr, "#diff-diff edges %lld\n", internal_params.l1);
+				LONG rtn4 = KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
+
+        if ( rtn4 == 0 ) break_flag = 1;  // no difference internal_params.l1
+        if ( _mes ) fprintf (stderr, "#diff-diff edges %lld\n", rtn4 );//internal_params.l1
       }
       diff = difff; 
       ff = (ff+1)%2;
@@ -410,7 +494,7 @@ int SIMSET::run (int argc ,char* argv[]){
       _com=='C'?"w":"", _prog, s9, s8, _nodes, _workdir, fn, _workdir
     );
 		comm_str_decompose();
-		GRHFIL::mrun(_cmn_argc,_cmn_argv);
+		KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
 
     if ( _no_remove == 1 ){
 			sprintf(
@@ -418,7 +502,7 @@ int SIMSET::run (int argc ,char* argv[]){
 				_prog, _infname, _workdir, _workdir
 			);
     	comm_str_decompose();
-			GRHFIL::mrun(_cmn_argc,_cmn_argv);
+			KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
       rename (s2, s1);
     }
     if ( break_flag || !_repeat || _repeat == count || count>=5000 ) break;      // repeat until maximi iterations
@@ -432,7 +516,7 @@ int SIMSET::run (int argc ,char* argv[]){
       _prog, _cut, _workdir, _workdir, _workdir
 		);
     comm_str_decompose();
-		GRHFIL::mrun(_cmn_argc,_cmn_argv);
+		KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
 
     sprintf (s8, "%s__tmp_out2__", _workdir);
     sprintf (s7, "%s__tmp__", _workdir);
@@ -446,7 +530,7 @@ int SIMSET::run (int argc ,char* argv[]){
       _prog, _workdir, _outfname
 		);
     comm_str_decompose();
-		GRHFIL::mrun(_cmn_argc,_cmn_argv);
+		KGGRHFIL::mrun(_cmn_argc,_cmn_argv);
     goto END;
   }
 
@@ -459,9 +543,9 @@ int SIMSET::run (int argc ,char* argv[]){
      _prog, _sep, _th4>0?1:_lb, _workdir, _workdir
 	);
   comm_str_decompose();
-	MACE::mrun(_cmn_argc,_cmn_argv);
+	KGMACE::mrun(_cmn_argc,_cmn_argv);
 
-  if ( _th4 > 0 && _unify_mark ){ unify (s2, NULL, 0);}
+  if ( _th4 > 0 && !_unifind.empty() ){ unify (s2, NULL, 0);}
 
   // phase4: merge similar cliques
   if ( _th2 > 0.0 || _th3 > 0.0 ){
@@ -470,14 +554,14 @@ int SIMSET::run (int argc ,char* argv[]){
     	_prog, _com2, _sep, _cores, _workdir, _th2+_th3, _workdir
 		);
 		comm_str_decompose();
-		SSPC::mrun(_cmn_argc,_cmn_argv);
+		KGSSPC::mrun(_cmn_argc,_cmn_argv);
 
 		sprintf(
 			_cmn_comm ,"medset%s%s -l %d -%c \"%s__tmp2__\" \"%s__tmp_out2__\" 1 \"%s__tmp2__\"",
     	_mes2, _tpose=='t'?" -t":"", _lb, _th2>0.0? 'T': 'I', _workdir, _workdir, _workdir
 		);
 		comm_str_decompose();
-		MEDSET::mrun(_cmn_argc,_cmn_argv);
+		KGMEDSET::mrun(_cmn_argc,_cmn_argv);
 
     sprintf (_cmn_comm, "%s__tmp2__", _workdir);
     rename (_cmn_comm, s2);
@@ -491,7 +575,7 @@ int SIMSET::run (int argc ,char* argv[]){
       _hist?"-H ":"", _workdir, _infname, _vote_th, _outfname
     );
 		comm_str_decompose();
-		MEDSET::mrun(_cmn_argc,_cmn_argv);
+		KGMEDSET::mrun(_cmn_argc,_cmn_argv);
 	}
   else{
 	  rename (s2, _outfname);
@@ -507,7 +591,6 @@ int SIMSET::run (int argc ,char* argv[]){
   	 	"__tmp_unify__", "__tmp_diff__", "__tmp_diff0__", "__tmp_diff1__"
   	 );
   }
-	mfree (_unify_mark, _unify_set);
 
   return (_ERROR_MES?1:0);
 

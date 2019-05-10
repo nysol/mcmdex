@@ -5,6 +5,7 @@
 #include "stdlib2.hpp"
 #include "fstar.hpp"
 #include "problem.hpp"
+#include "unionfind.hpp"
 
 #define MEDSET_CC 4
 #define MEDSET_IND 8
@@ -13,17 +14,6 @@
 #define MEDSET_ALLNUM 64
 #define MEDSET_BELOW 128
 
-#ifndef UNIONFIND_ID
- #ifdef UNIONFIND_ID_LONG
-  #define UNIONFIND_ID LONG
-  #define UNIONFIND_ID_END LONGHUGE
-  #define UNIONFIND_IDF LONGF
- #else
-  #define UNIONFIND_ID int
-  #define UNIONFIND_ID_END INTHUGE
-  #define UNIONFIND_IDF "%d"
- #endif
-#endif
 
 class kgClusterForCC{
 

@@ -76,7 +76,10 @@ class KGGRHFIL{
 		_fname(NULL),_fname2(NULL),_wfname(NULL){}
 
 	int run(int argc ,char* argv[]);
-	static int mrun(int argc ,char* argv[]);
+	LONG iparam(){ return _ip_l1;}
+
+	static LONG mrun(int argc ,char* argv[]);
+
 
 };
 

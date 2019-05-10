@@ -265,7 +265,7 @@ void FSTAR::read_file (FILE2 *fp, FILE2 *wfp){
 void FSTAR::extract_subgraph()
 {
 
-  FSTAR_INT x, y, ii, i, nodes;
+  FSTAR_INT x, y, ii, i, nodes=0;
   int flag = 0;
   WEIGHT w=0;
 

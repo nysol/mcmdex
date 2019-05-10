@@ -17,11 +17,11 @@ LCMOBJ = cmd/mlcm.o mod/kglcm.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue
 
 LCMSEQOBJ = cmd/mlcmseq.o mod/kglcm_seq.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o 
 
-#SIMSETOBJS = cmd/msimset.o mod/simset.o mod/sspc.o mod/grhfil.o mod/mace.o mod/medset.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/fstar.o lib/sgraph.o
+SIMSETOBJS = cmd/msimset.o mod/simset.o mod/kgsspc.o mod/kggrhfil.o mod/kgmace.o mod/kgmedset.o lib/stdlib2.o lib/file2.o lib/trsact.o lib/queue.o lib/vec.o lib/base.o lib/itemset.o lib/fstar.o lib/sgraph.o
 
 #all : msspc mgrhfil mmace mmedset mlcm mlcmseq msspc4tra2gc msimset
 
-all : msspc mgrhfil mlcm mlcmseq mmace mmedset
+all : msspc mgrhfil mlcm mlcmseq mmace mmedset msimset
 
 msimset: $(SIMSETOBJS)
 	g++ -o msimset $^

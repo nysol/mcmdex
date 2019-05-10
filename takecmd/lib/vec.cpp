@@ -127,12 +127,14 @@ void SETFAMILY::sort (){
     delete [] p;
   }
 
+
   if (_flag&LOAD_RM_DUP){  // unify the duplicated edges
     //FLOOP (i, 0, _t){
     for(i=0;i<_t;i++){
 			_v[i].rm_dup_WEIGHT( _w?_w[i]:NULL);
 		}
   }
+
 }
 
 void SETFAMILY::SMAT_alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles){
@@ -207,7 +209,6 @@ void SETFAMILY::flie_load(FILE2 *fp){
       if ( fp->readNG() ) goto LOOP_END;
 
     }
-
     if ( y >= _clms || x >= _t ) continue;
 
     if ( flag ){
@@ -256,9 +257,9 @@ void SETFAMILY::load (int flag , char *fname)
   if (_wfname ) printMes(" ,weightfile %s", _wfname);
   printMes("\n");
  
-  sort ();
+  sort();
 
-	// end mark これいる？
+	// end mark
 	for(i=0;i<_t;i++){
 	  _v[i].set_v(_v[i].get_t(),_clms); 
 	}
@@ -269,7 +270,7 @@ void SETFAMILY::load (int flag , char *fname)
 		_v[i].set_v( _v[i].get_t() , _t);
 	}
 
-  sort(); //これいる？
+  sort(); //なくせる？
 
 }
 

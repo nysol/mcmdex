@@ -7,7 +7,7 @@ fi
 takemcmd=/Users/nain/work/git/mcmdex/takecmd/
 
 
-p0=/Users/nain/soft/uno/simset20/
+p0=/Users/nain/work/date/20190509/simset20/
 p1=/Users/nain/work/date/20181213/lcm53/
 p2=/Users/nain/work/date/20181213/lcm_seq21/
 p3=/Users/nain/work/date/20190407/mace22/
@@ -49,13 +49,12 @@ sample0=${sDPATH1}samp0.dat
 strain0=${sDPATH1}strain0.dat
 
 # OUTPUT
-rDPATH0=/Users/nain/work/git/mcmdex/takecmd/check//out/
+rDPATH0=/Users/nain/work/git/mcmdex/takecmd/check/out/
 
 rm -rf ${rDPATH0}
 mkdir ${rDPATH0}
 
 #function skip {
-
 
 ${preCMD} ${MLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outmsamp0c.dat 
 ${preCMD} ${TLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outtsamp0c.dat 
@@ -68,10 +67,14 @@ ${preCMD} ${TLCM} M ${sample0} 1 ${rDPATH0}outtsampM0.dat
 
 ${preCMD} ${MLCM} C ${sample0} 1 ${rDPATH0}outmsampC0.dat 
 ${preCMD} ${TLCM} C ${sample0} 1 ${rDPATH0}outtsampC0.dat 
+#}
 
 # テスト
 ${preCMD} ${MLCMSEQ} F ${smallSAMP} 1 ${rDPATH0}outmseqF.dat 
 ${preCMD} ${TLCMSEQ} F ${smallSAMP} 1 ${rDPATH0}outtseqF.dat 
+
+#function skip2 {
+
 
 ${preCMD} ${MLCM} F ${tra100} 1000 ${rDPATH0}outmlcmF.dat 
 #8.42 real         8.33 user         0.06 sys
@@ -117,20 +120,23 @@ ${preCMD} ${TGRHFIL} U -t 1 ${smallGSAMP} ${rDPATH0}outtgfil.dat
 
 ${preCMD} ${MMEDSET} -l 5 ${smallSAMP4} ${smallSAMP} 0.700000 ${rDPATH0}outmmed.dat 
 ${preCMD} ${TMEDSET} -l 5 ${smallSAMP4} ${smallSAMP} 0.700000 ${rDPATH0}outtmed.dat 
-#}
 
 ${preCMD} ${MMACE} M -l 2 ${smallSAMP3} ${rDPATH0}outmmaceM.dat 
 ${preCMD} ${TMACE} M -l 2 ${smallSAMP3} ${rDPATH0}outtmaceM.dat 
 
+
 ${preCMD} ${MMACE} C -l 2 ${smallSAMP3} ${rDPATH0}outmmaceC.dat 
 ${preCMD} ${TMACE} C -l 2 ${smallSAMP3} ${rDPATH0}outtmaceC.dat 
 
-#function skip2 {
-
-#${preCMD} ${MSIMSET} TM -v 0.7 ${smallSAMP} 0.0001 2 ${rDPATH0}outmsim.dat 
-#${preCMD} ${TSIMSET} TM -v 0.7 ${smallSAMP} 0.0001 2 ${rDPATH0}outtsim.dat 
-
 #}
+
+${preCMD} ${MSIMSET} T ${smallSAMP} 2 4 ${rDPATH0}outmsimT.dat 
+${preCMD} ${TSIMSET} T ${smallSAMP} 2 4 ${rDPATH0}outtsimT.dat 
+
+
+${preCMD} ${MSIMSET} TM -v 0.7 ${smallSAMP} 0.0001 2 ${rDPATH0}outmsim.dat 
+${preCMD} ${TSIMSET} TM -v 0.7 ${smallSAMP} 0.0001 2 ${rDPATH0}outtsim.dat 
+
 
 echo vvvvvvvv1
 
@@ -141,8 +147,12 @@ diff ${DIFFSIMPLE} ${rDPATH0}outmsampM0.dat ${rDPATH0}outtsampM0.dat
 diff ${DIFFSIMPLE} ${rDPATH0}outmsampC0.dat ${rDPATH0}outtsampC0.dat 
 
 diff ${DIFFSIMPLE} ${rDPATH0}outmsamp0c.dat ${rDPATH0}outtsamp0c.dat
+#}
 diff ${DIFFSIMPLE} ${rDPATH0}outmseqF.dat ${rDPATH0}outtseqF.dat 
+#function skip4 {
+
 diff ${DIFFSIMPLE} ${rDPATH0}outmlcmF.dat ${rDPATH0}outtlcmF.dat 
+
 
 diff ${DIFFSIMPLE} ${rDPATH0}outmlcmM.dat ${rDPATH0}outtlcmM.dat 
 
@@ -152,12 +162,15 @@ diff ${DIFFSIMPLE} ${rDPATH0}outmsspcC.dat ${rDPATH0}outtsspcC.dat
 
 diff ${DIFFSIMPLE} ${rDPATH0}outmgfil.dat ${rDPATH0}outtgfil.dat 
 diff ${DIFFSIMPLE} ${rDPATH0}outmmed.dat ${rDPATH0}outtmed.dat 
-#}
+
 
 diff ${DIFFSIMPLE} ${rDPATH0}outmmaceM.dat ${rDPATH0}outtmaceM.dat 
-diff ${DIFFSIMPLE} ${rDPATH0}outmmaceC.dat ${rDPATH0}outtmaceC.dat 
 
-#function skip4 {
+diff ${DIFFSIMPLE} ${rDPATH0}outmmaceC.dat ${rDPATH0}outtmaceC.dat 
+#}
+diff ${DIFFSIMPLE} ${rDPATH0}outmsimT.dat ${rDPATH0}outtsimT.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsim.dat ${rDPATH0}outtsim.dat 
+
 #}
 echo vvvvvvvv2
 

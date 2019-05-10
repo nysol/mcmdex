@@ -1,26 +1,12 @@
 //#include "trsact.hpp"
 //#include "problem.hpp"
 //#include "itemset.hpp"
+#pragma once
+
 #include "stdlib2.hpp"
+#include "unionfind.hpp"
 #define WEIGHT_DOUBLE
 
-
-/* remove many files */
-void mremove_ (char *x, ...){
-  va_list argp;
-  char *a;
-	char common_comm[1024];
-  va_start (argp, x);
-  while((a = va_arg(argp, char *))){
-    sprintf (common_comm, "%s%s", x, a);
-    remove (common_comm);
-  }
-  va_end (argp);
-}
-
-
-// remove a file on the specified directory
-#define MREMOV(dir,...) mremove_(dir, __VA_ARGS__, NULL, NULL)
 
 class SIMSET{
 
@@ -68,11 +54,11 @@ class SIMSET{
 	char  _cmn_comm[1024];
 	char* _cmn_argv[100];
 
-	UNIONFIND_ID _nodes;  // number of nodes in the graph to be posihed
-	UNIONFIND_ID *_unify_mark, *_unify_set ;  // mark for union finding (grouping)
 
-//	long _nodes;  // number of nodes in the graph to be posihed
-//	long *_unify_mark, *_unify_set ;  // mark for union finding (grouping)
+	// number of nodes in the graph to be posihed
+	// mark for union finding (grouping)
+	UNIONFIND _unifind;
+	UNIONFIND_ID _nodes;  
 
 	// decompose the string by separator, and set v[i] to each resulted string.
 	//  consecutive separators are regarded as one separator.
@@ -106,20 +92,18 @@ class SIMSET{
 	void unify (char *fname, char *fname2, int flag);
 
 	public :
+
 	SIMSET(void):
 		_ERROR_MES(NULL),
 		_th(0.0),_th1(0.0),_th2(0.0),_th3(0.0),_th4(0.0),_thk(0),
 		_nodes(0),_deg_ub(INTHUGE),_deg_lb(0),_outperm_fname(NULL),
 		_no_remove(0),_repeat(0),_intersection(0),_intgraph(0),
 		_ignore(0),_ignore2(0),_tpose(' '),_mes(1),_append(0),
-		_leave_tmp_files(0),_edge(' '),_mes2(NULL),
+		_leave_tmp_files(0),_edge(' '),_mes2(""),
 		_com1(0),_rm_dup(0),_hist(0),_vote_th(0.5),_ratio(0),
-		_unify_mark(0),_unify_set(0),_itemweight(NULL),_itemweight_file(NULL),
-		_multiply(0),_power(0),_cut(0.0),_cores(1)
-	{
-		_workdir="";
-		_itemweight="";
-	}
+		_itemweight(""),_itemweight_file(NULL),_f(""),
+		_multiply(0),_power(0),_cut(0.0),_cores(1),_workdir("")
+	{	}
 
 	int run(int argc ,char* argv[]);
 	

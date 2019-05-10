@@ -210,7 +210,7 @@ class QUEUE {
 	}
 
 	void show(){
-		std::cerr << "QUE ";
+		std::cerr << "QUE s=" << _s << ",_t=" << _t;
 		for(QUEUE_INT * x= begin() ; x < end(); x++){
 			std::cerr << " " << *x  ;
  		}
@@ -229,11 +229,17 @@ class QUEUE {
 	void setStopper(){ _v[_t] = -1; }
 
 
-	bool exist(){ return ( _t > _s ); }
+	bool exist(){ 
+		return ( _t > _s ); 
+	}
 	
-	void queSort(int flag){ qsort_<QUEUE_INT>( _v, _t , flag); }
+	void queSort(int flag){
+		 qsort_<QUEUE_INT>( _v, _t , flag); 
+	}
 
-	void queSortfromS(int flag){ qsort_<QUEUE_INT>( _v + _s, _t - _s , flag); }
+	void queSortfromS(int flag){ 
+		qsort_<QUEUE_INT>( _v + _s, _t - _s , flag); 
+	}
 
 	void rmDup(QUEUE_INT dmy){ 
 		if( _t > 1 ){

@@ -209,10 +209,11 @@ void KGMACE::extend (QUEUE_INT w){
 	for(x = _OQ[w].begin() ; x < _OQ[w].end() ;x++  ){ 
 		scan_vertex_list(*x, w);
 	}
+
+
   v = _OQ[w].get_v(0);
 
 	x = _SG.skipedge(v,w);
-
   // x := position of vertex w in the list Q[v(= head of K)] 
   for (x-- ; x>=_SG.edge_vv(v) ; x--){
     if ( _OQ[*x].get_t() == _OQ[w].get_t() ){
@@ -361,9 +362,6 @@ void KGMACE::iter (int v){
   LONG ii;
   QUEUE_INT u;
   QUEUE_ID js = _itemcand.get_s();
-  //QUEUE *Q = _OQ;
-
-
   _II.inc_iters();
 
   //_itemcand.setStartByEnd();
@@ -374,6 +372,7 @@ void KGMACE::iter (int v){
   extend(v);
 
 	_II.QueMemCopy(_OQ[v]);
+
   _II.output_itemset(0);
 
 	_itemcand.queSortfromS(-1);
@@ -401,6 +400,7 @@ void KGMACE::iter (int v){
     _OQ[u].set_t (0);
   }
   _itemcand.set_s(js);
+
   if ( _problem & PROBLEM_CLOSED ) VBM_reset_vertex (v);
 
 }
@@ -409,6 +409,7 @@ void KGMACE::iter (int v){
 void KGMACE::MACECORE (){
 
   QUEUE_INT v;
+
 
 	for( QUEUE_INT v=0 ; v < _SG.edge_t() ;v++ ){
 
@@ -467,18 +468,14 @@ int KGMACE::run (int argc, char *argv[]){
 
 	_OQ = new QUEUE[_SG.edge_t()+1];
 	char *cmn_pnt = _SG.initOQ( _OQ );
-	
+
 
 	// ここまで prerun
 	if( _ERROR_MES || _SG.edge_eles() <= 0 ){
 	  return (_ERROR_MES?1:0);
 	}
-	
-
-
   if ( _problem & PROBLEM_FREQSET ){
 	  QUEUE_INT v;
-    //FLOOP (v, 0, _SG.edge_t()){
 	  for(v=0;v< _SG.edge_t();v++){
 			clq_iter ( v, _SG.getp_v(v) );
     }
@@ -491,7 +488,7 @@ int KGMACE::run (int argc, char *argv[]){
     MACECORE();
   }
   _II.last_output();
-	
+
 	return (_ERROR_MES?1:0);
 
 }

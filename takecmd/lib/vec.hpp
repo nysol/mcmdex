@@ -52,8 +52,8 @@ class SETFAMILY{
 
 	//void end ();
 
-	void print (FILE *fp);
-	void print_weight (FILE *fp);
+	//void print (FILE *fp);
+	//void print_weight (FILE *fp);
 
 	void *getvec ( int i){ return &_v[i]; }
 
@@ -77,6 +77,12 @@ class SETFAMILY{
 		void alloc_w(void);
 		void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
 		void sort(void);
+
+		void show(){
+			for(int i=0;i<_end;i++){
+				_v[i].show();
+			}
+		}
 
 		void load(int flag , char *fname);
 

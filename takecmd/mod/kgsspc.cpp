@@ -17,6 +17,23 @@
 
 #include "kgsspc.hpp"
 
+// comment out if single-core mode
+//#define MULTI_CORE
+#define WEIGHT_DOUBLE
+typedef struct {
+
+#ifdef MULTI_CORE
+  pthread_t _thr; // thread identifier
+#endif
+  QUEUE_INT **_o;
+  WEIGHT *_w;
+  OFILE2 *_fp;
+  int _core_id;
+  int *_lock_i;
+
+} SSPC_MULTI_CORE;
+
+
 void KGSSPC::help(void){
 
   fprintf(stderr,"SSPC: [ISCfQq] [options] input-filename ratio/threshold [output-filename]\n\
@@ -66,7 +83,6 @@ w:load weight of each item in each row (with E command)\n\
   EXIT;
 
 }
-
 
 /***********************************************************************/
 /*  read parameters given by command line  */
@@ -207,27 +223,8 @@ int KGSSPC::setArgs(int argc, char *argv[]){
   _frq_lb = atof(argv[c+1]);
   if ( argc>c+2 ) _output_fname = argv[c+2];
 	return 0;
+
 }
-
-
-// comment out if single-core mode
-//#define MULTI_CORE
-
-#define WEIGHT_DOUBLE
-
-
-typedef struct {
-#ifdef MULTI_CORE
-  pthread_t _thr; // thread identifier
-#endif
-  //PROBLEM *_PP;
-  QUEUE_INT **_o;
-  WEIGHT *_w;
-  OFILE2 *_fp;
-  int _core_id;
-  int *_lock_i;
-} SSPC_MULTI_CORE;
-
 
 WEIGHT KGSSPC::comp ( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq)
 {
@@ -841,6 +838,7 @@ int KGSSPC::run (int argc ,char* argv[]){
  		_tFlag |= (LOAD_SIZSORT+LOAD_DECROWSORT);
  	}
 
+
   if( 
   	_TT.load(
 			_tFlag,_tFlag2,
@@ -873,7 +871,8 @@ int KGSSPC::run (int argc ,char* argv[]){
 	_TT.printMes("separated at "VEC_IDF"\n", _TT.get_sep());
 
   _buf_end = 2;
-  _position_fname = (char *)_II.get_perm(); _II.set_perm(NULL);
+  _position_fname = (char *)_II.get_perm();
+  _II.set_perm(NULL);
 
   if ( _TT.get_clms()>1 ){
 
@@ -900,6 +899,9 @@ int KGSSPC::run (int argc ,char* argv[]){
 
 }
 
-int KGSSPC::mrun(int argc ,char* argv[]){
-	return KGSSPC().run(argc,argv);
+vector<LONG> KGSSPC::mrun(int argc ,char* argv[]){
+
+	KGSSPC mod;
+	mod.run(argc,argv);
+	return mod.iparam();
 }

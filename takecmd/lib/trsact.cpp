@@ -47,7 +47,6 @@ int TRSACT::alloc(){
 
   ttt_max = ttt = _C.clms();
 
-
   if ( _flag2&TRSACT_SHRINK ) _flag |= LOAD_DBLBUF;
 
   // count valid columns/elements
@@ -310,10 +309,9 @@ void TRSACT::sortELE ( FILE_COUNT *C){
   VEC_ID t, *p;
   int f;
   int flag; //<<=これもうちょっと考える
-  // PERM pp;
+
   KGLCMSEQ_QUE Q;
   QUEUE_ID i;
-  // WEIGHT *ww;
 
 	_T.allvvInit();
 
@@ -321,7 +319,7 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 
   if ( flag ){   
   	// sort rows for the case that some columns are not read
-		//_T.setInvPermute( C->get_rperm(),_trperm,flag);
+		//_T.setInvPermute( C->get_rperm(),_trperm,flag); << = これでOK?
 		_T.qsort_perm(C->get_rperm(), flag);
 		_T.any_INVPERMUTE( C->get_rperm());
 		if ( _T.exist_w() ) {
@@ -349,14 +347,12 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 
   if ( _flag2&(TRSACT_ALLOC_OCC+TRSACT_SHRINK) ){
 
-    //calloc2 (p, _T.get_clms(), EXIT);
+    
     VECARY<VEC_ID> p;
-    p.calloc2(_T.get_clms());
+    p.calloc2(_T.get_clms()); //calloc2 (p, _T.get_clms(), EXIT);
 
-
-    // QUEUE_delivery (NULL, p, NULL, _T._v, NULL, _T._t, _T._clms);
-		//===================
-		VEC_ID iv, ev;
+		//===== QUEUE_delivery==============
+		VEC_ID iv, ev; 
 	  QUEUE_INT *x;
 		for (iv=0 ; iv<_T.get_t() ; iv++){
     	ev =  iv;
@@ -368,23 +364,18 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 
     Mque_allocELE(p);
 
-   	//QUEUE_alloc (&_OQ[_T._clms], MAX(_T._t, _clm_max));
 		_OQELE[_T.get_clms()].alloc( MAX(_T.get_t(), _clm_max));
 
 		// end is illegally set to 0, for the use in "TRSACT_find_same" 
-    //FLOOP (i, 0, _T.get_clms()+1) 
     for(i=0;i<_T.get_clms()+1 ;i++){
 	    _OQELE[i].set_end(0);   
   	}
 
     // initial occurrence := all transactions
-    // ARY_INIT_PERM (_OQ[_T.get_clms()].get_v(), _T.get_t());   
 		for(size_t i=0 ; i< _T.get_t(); i++){ 
 			_OQELE[_T.get_clms()].set_v(i,i);
 		}
     _OQELE[_T.get_clms()].set_t( _T.get_t());
-
-
   }
 
     // shrinking database
@@ -396,16 +387,10 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 
     find_same ( &Q, _T.get_clms());
 
-    //f = _flag2;  // preserve the flag
-    //BITRM (_flag2 ,TRSACT_MAKE_NEW +TRSACT_UNION +TRSACT_INTSEC);
-    //merge_trsact ( &_OQELE[_T.get_clms()], _T.get_clms()); // just remove duplicated trsacts
-    //_flag2 = f;  // recover flag
-
 		removeDupTrsacts(&_OQELE[_T.get_clms()]);
 
     _OQELE[_T.get_clms()].set_t(0);
 
-   // FLOOP (t, 0, _T.get_t()) {
     for(t=0;t<_T.get_t();t++){
     	if ( _mark[t]>0 ) _OQELE[_T.get_clms()].push_backt(t);  // make resulted occ
     }

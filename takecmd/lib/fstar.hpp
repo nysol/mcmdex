@@ -144,6 +144,12 @@ class FSTAR{
 			_edge_dir = edge_dir;
 		}
 
+		// simset
+		void setParams( char *fname)
+		{
+			_fname  = fname;
+		}
+
 		// grhfil
 		void setParams( int fsFlag, char *fname ,int edge_dir,char sep,FSTAR_INT rows)
 		{
@@ -250,7 +256,7 @@ class FSTAR{
 			if( _flag&1 ){
 				va_list ap;
 				va_start(ap,frm);
-				fprintf(stderr,frm,ap);
+				vfprintf(stderr,frm,ap);
 				va_end(ap);
 			}
 		}
@@ -273,6 +279,8 @@ class FSTAR{
 		
 		FSTAR_INT get_in_node_num(void){return _in_node_num;}
 		FSTAR_INT get_out_node_num(void){return _out_node_num;}
+		FSTAR_INT get_node_num(void){return _node_num;}
+		
 		FSTAR_INT get_fstar(LONG l){ return _fstar[l];}
 		FSTAR_INT get_edge(LONG l){ return _edge[l];}
 } ;

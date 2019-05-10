@@ -120,7 +120,7 @@ class FILE2 {
 	bool eof   (void){ return (_FILE_err&2)==0 ; } //<=noteof
 
 	bool getOK1(void){ return (_FILE_err&1); }
-	bool eofx  (void){ return (_FILE_err&2) ; } //<=noteof
+	bool eofx  (void){ return (_FILE_err&2) ; } //<=eof
 	bool getOK(void) { return (_FILE_err&3); }
 	bool readNG(void){ return (_FILE_err&4); }
 
@@ -245,24 +245,24 @@ class FILE2 {
 		}
 		fp.putc('\n');
 	}
-	/*simsetでいる？
+	//simsetでいる
 	static void copy(char *f1, char *f2){
 
-		FILE *fp, *fp2;
+		FILE *fp1, *fp2;
 		char buf[16384];
 		int s;
 
-		fopen2 (fp, f1, "r", EXIT);
-		fopen2 (fp2, f2, "w", EXIT);
+		if(!(fp1=fopen(f1,"r"))){ throw("file open error\n"); }
+		if(!(fp2=fopen(f2,"w"))){ throw("file open error\n"); }
 		
 		do {
-			s = fread (buf, 1, 16384, fp);
+			s = fread (buf, 1, 16384, fp1);
 			fwrite (buf, 1, s, fp2);
 		} while (s);
 
-		fclose (fp);
+		fclose (fp1);
 		fclose (fp2);
-	}*/
+	}
 
 	size_t ARY_Scan_INT(int d){
 
