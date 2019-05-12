@@ -229,7 +229,8 @@ void KGLCMSEQ::occ_delivery (KGLCMSEQ_QUE *occ, int flag){
   WEIGHT w;
   KGLCMSEQ_ELM *u, *uu, *u_end = occ->end() -1 ;
   
-  int f = _TT.get_flag2()&TRSACT_NEGATIVE;
+//  int f = _TT.get_flag2()&TRSACT_NEGATIVE;
+
   int fl = (!(_problem&PROBLEM_CLOSED)&&!flag) || (!(_problem&LCMSEQ_LEFTMOST)&&flag);
 
 	for( u =  occ->begin() ; u < occ->end() ; u++){
@@ -271,7 +272,7 @@ void KGLCMSEQ::occ_delivery (KGLCMSEQ_QUE *occ, int flag){
           }
           _TT.inc_OQendELE(e);
           _occ_w[e] += w;
-          if ( f && w>0 ) _occ_pw[e] += w;
+          if ( _TT.incNega() && w>0 ) _occ_pw[e] += w;
         }
       }
     }
@@ -597,11 +598,8 @@ int KGLCMSEQ::run(int argc, char *argv[]){
 	
 	if ( _ERROR_MES ) return (1);
 
-	
-	_tFlag2 |= 
-		TRSACT_MAKE_NEW + 
-		TRSACT_ALLOC_OCC + 
-		( (_iFlag & (ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ) ? 0 : (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
+	//TRSACT_ALLOC_OCC + 
+	_tFlag2 |=  TRSACT_MAKE_NEW +  ( (_iFlag & (ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ) ? 0 : (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
 
   _w_lb =  
   	(((_iFlag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) && (_problem & PROBLEM_FREQSET)) || (_iFlag&ITEMSET_RULE) || _gap_ub<INTHUGE || _len_ub<INTHUGE )? -WEIGHTHUGE: _frq_lb;

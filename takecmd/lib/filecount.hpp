@@ -42,10 +42,15 @@ class FILE_COUNT{
   FILE_COUNT_INT _clm_min , _clm_max;  // maximum/minimum size of column
   FILE_COUNT_INT _clm_end , _row_end;
   VEC_ID _end1; //2nd-trsact position
+
   // Limit 
-  WEIGHT _w_lb , _w_ub ;
-  VEC_ID _clm_lb , _clm_ub; 
-	QUEUE_ID _row_lb, _row_ub;
+  // lower/upper bound of #elements in a column/row. 
+  // colunmn or row of out of range will be ignored
+  WEIGHT   _w_lb , _w_ub ;
+  VEC_ID   _clm_lb , _clm_ub; 
+	QUEUE_ID _row_lb , _row_ub;
+	double   _row_lb_, _row_ub_;
+	double   _clm_lb_, _clm_ub_;
   
   
 
@@ -73,217 +78,12 @@ class FILE_COUNT{
 	size_t _r_clms;
 
 
-	QUEUE_INT weight_Scan(char *wf){
-
-	  FILE2 wfp;
-		WEIGHT w;
-		QUEUE_INT kk=0;
-
-		wfp.open(wf, "r");
-		#ifdef WEIGHT_DOUBLE
-			kk = wfp.ARY_Scan_DBL(1);
-		#else
-			kk = wfp.ARY_Scan_INT(1);
-		#endif
-
-	  kk += _rows_org;
-	  _rw.realloc2(kk+1);
-
-		wfp.reset();
-	  wfp.VARY_Read(_rw, kk);
-
-		w = _rw.min(0, kk);
-		
-		if ( w<0 ) { _negaFLG = true;}
-		wfp.close();
-		return kk;
-	
-	}
+	QUEUE_INT _weight_Scan(char *wf);
+	int _file_count_T (FILE2 *fp,char *wf);
+	int _file_count   (FILE2 *fp, char *wf);  // NOT LOAD_TPOSEの時
 
 
-	/*****************************************/
-	/* scan file "fp" with weight file wfp and count #items, #transactions in the file. */
-	/*   count weight only if wfp!=NULL                                      */
-	/* T->rows_org, clms_org, eles_org := #items, #transactions, #all items  */
-	/*   ignore the transactions of size not in range T->clm_lb - clm_ub     */ 
-	/* T->total_w, total_pw := sum of (positive) weights of transactions     */
-	/* C->clmt[i],C->cw[i] := the number/(sum of weights) of transactions including i  */
-	/****************************************/
-	// LOAD_TPOSEの時
-	int _file_count_T (FILE2 *fp,char *wf){
 
-	  QUEUE_INT i, item, kk=0, k, jump_end=0;
-	  WEIGHT w, s;
-	  VECARY<VEC_ID> jump;
-  	LONG jj;
-
-	  if ( wf ){ kk = weight_Scan(wf); }
-
-	  do {
-
-  	  s=0; k=0;
-
-    	w = wf? (_rows_org<kk? _rw[_rows_org]: TRSACT_DEFAULT_WEIGHT): 1;
-
-    	do {
-
-      	jj = fp->read_int();
-      	item = (QUEUE_INT)jj;
-
-      	//if ( (FILE_err&4)==0 && jj<TRSACT_MAXNUM && jj>=0 ){
-				if ( fp->readOK() && jj<TRSACT_MAXNUM && jj>=0 ){
-       		ENMAX (_clms_org, item+1);  // update #items
-        	//reallocx (jump, jump_end, k, 0, goto ERR);
-        	jump_end = jump.reallocx(jump_end, k, 0);
-
-      		jump[k] = item;
-        	k++;
-        	s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
-
-          // count/weight-sum for the transpose mode
-        	_clm_end = _clmt.reallocx(_clm_end, item, 0);
-
-        	_clmt[item]++;
-	      }
-
-  		} while ( fp->remain() );
-
-       // count/weight-sum for the transpose mode
-			_row_end = _rowt.reallocx(_row_end, _rows_org, 0);
-    	_rowt[_rows_org] = k;
-
-			// LOAD_TPOSEの時
-			_cw_end = _cw.reallocx(_cw_end, _rows_org, 0);
-
-      _cw[_rows_org] = s;    // sum up positive weights
-
-			if ( k==0 && fp->eofx() ) break;
-			_rows_org++;  // increase #transaction
-
-    	
-			if ( !wf ) s = k;   // un-weighted case; weighted sum is #included-items
-
-			_eles_org += k;
-
-			// LOAD_TPOSEの時はこの条件
-	    if ( !RANGE( _w_lb, s, _w_ub) || !RANGE (_clm_lb, k, _clm_ub)  ){
-				for(int i0 = 0 ; i0 < k ; i0++){
-					_clmt[jump[i0]]--; 
-				}
-      }
-
-
-		} while ( fp->eof() );
-
-		//delete [] jump
-
-    // swap the variables in transpose mode
-  	if ( _rw.empty() ){
-  		_total_w_org = _total_pw_org = _rows_org; 
-  		return 0; 
-  	} 
-
-		_clm_btm = MIN(kk, _rows_org);
-
-		kk = _rw.reallocx(kk,_rows_org, TRSACT_DEFAULT_WEIGHT);
-
-		for(int i0 = 0 ; i0 < _rows_org ; i0++){
-  	  _total_w_org  += _rw[i0];
-    	_total_pw_org += MAX(_rw[i0],0);
-	  }
-	  return 0;
-  
-	  ERR:;
-  	return 1;
-	}
-
-	// NOT LOAD_TPOSEの時
-	//int file_count (FILE2 *fp, QUEUE_ID row_lb, QUEUE_ID row_ub ,char *wf){
-
-	int _file_count (FILE2 *fp, char *wf){
-	
-	  QUEUE_INT i, item, kk=0, k, jump_end=0;
-	  WEIGHT w, s;
-	  VECARY<VEC_ID> jump;
-
-  	LONG jj;
-	  if ( wf ){ kk = weight_Scan(wf); }
-
-
-	  do {
-
-  	  s=0; k=0;
-
-    	w = wf? (_rows_org<kk? _rw[_rows_org]: TRSACT_DEFAULT_WEIGHT): 1;
-
-    	do {
-
-      	jj = fp->read_int();
-      	item = (QUEUE_INT)jj;
-
-      	if ( fp->readOK() && jj<TRSACT_MAXNUM && jj>=0 ){
-
-       		ENMAX (_clms_org, item+1);  // update #items
-        	// reallocx (jump, jump_end, k, 0, goto ERR);
-        	jump_end = jump.reallocx(jump_end, k, 0);
-
-      		jump[k] = item;
-        	k++;
-        	s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
-
-          // count/weight-sum for the transpose mode
-        	_clm_end = _clmt.reallocx(_clm_end, item, 0);
-        	_clmt[item]++;
-
-					// NOT TPOSE
-          _cw_end = _cw.reallocx(_cw_end, item, 0);
-          _cw[item] += MAX(w,0);    // sum up positive weights
-	      }
-
-  		} while ( fp->remain());
-
-       // count/weight-sum for the transpose mode
-			//reallocx (_rowt, _row_end, _rows_org, 0, goto ERR);
-			_row_end = _rowt.reallocx (_row_end, _rows_org, 0);
-
-    	_rowt[_rows_org] = k;
-
-			if ( k==0 && fp->eofx() ) break;
-
-			_rows_org++;  // increase #transaction
-    
-			if ( !wf ) s = k;   // un-weighted case; weighted sum is #included-items
-
-			_eles_org += k;
-
-			// NOT LOAD_TPOSEの時はこの条件
-	    if( !RANGE (_row_lb, k, _row_ub) ){
-	    	for(int i0=0 ; i0 < k ; i0++ ){
-      		_clmt[jump[i0]]--; 
-      	}
-      }
-		} while ( fp->eof() );
-
-
-    // swap the variables in transpose mode
-  	if ( _rw.empty() ){
-  		_total_w_org = _total_pw_org = _rows_org; 
-  		return 0; 
-  	} 
-		_clm_btm = MIN(kk, _rows_org);
-		kk = _rw.reallocx( kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
-
-
-	  for(int i0=0 ; i0 < _rows_org ; i0++ ){
-  	  _total_w_org += _rw[i0];
-    	_total_pw_org += MAX(_rw[i0],0);
-	  }
-	  return 0;
-  
-	  ERR:;
-		//wfp.close();
-  	return 1;
-	}
 
 	public :
 	
@@ -293,36 +93,29 @@ class FILE_COUNT{
 			_row_btm(0) , _clm_btm(0) , _row_min(0) , _row_max(0),
 			_clm_min(0) , _clm_max(0) , _total_rw(0), _total_cw(0),
 			_rw_end(0) , _cw_end(0) , _rperm(NULL) , _cperm(NULL),_negaFLG(false),
-			_w_lb(0) , _w_ub(0) ,_clm_lb(0) , _clm_ub(0), _row_lb(0), _row_ub(0),_end1(0),
-			_c_eles(0),_c_clms(0),_r_eles(0),_r_clms(0)
+			_w_lb(-WEIGHTHUGE) , _w_ub(WEIGHTHUGE) ,
+			_clm_lb(0) , _clm_ub(VEC_ID_END), 
+			_row_lb(0) , _row_ub(QUEUE_IDHUGE),
+		  _clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
+			_end1(0),_c_eles(0),_c_clms(0),_r_eles(0),_r_clms(0)
 			{}
+	
+		int file_count (int flg, FILE2 *fp, FILE2 *fp2, char *wf);
+
+		void count( 
+			FILE2 *rfp, int flag, int skip_rows,
+			int int_rows, int skip_clms, int int_clms, 
+	 		FILE_COUNT_INT row_limit);
+
 	
 		 // 仮
 		size_t c_clms(){ return _c_clms; }
 		size_t c_eles(){ return _c_eles; }
 		size_t r_clms(){ return _r_clms; }
 		size_t r_eles(){ return _r_eles; }
-		
-		
-		~FILE_COUNT(void){
-			//mfree (_rw, _cw, _clmt, _rowt);
-			//rowtは他でセットされる
-		}
 
-  	void setLimit(
-  		WEIGHT w_lb , WEIGHT w_ub ,
-  		VEC_ID clm_lb , VEC_ID clm_ub, 
-  		QUEUE_ID row_lb, QUEUE_ID row_ub )
-  	{
- 		 	_w_lb = w_lb;
- 		 	_w_ub = w_ub;
-	  	_clm_lb = clm_lb; 
-	  	_clm_ub = clm_ub; 
-			_row_lb = row_lb;
-			_row_ub = row_ub;
-  	};
-		
 		int  sumRow(size_t s,size_t e){ return _rowt.sum(s,e); }
+
 		bool rowEmpty(){ return _rowt.empty(); }
 
 		bool existNegative(){ return _negaFLG;}
@@ -333,6 +126,7 @@ class FILE_COUNT{
 		QUEUE_INT clms(void){return _clms_org; }
 		VEC_ID    rows(void){return _rows_org; }
 		size_t    eles(void){return _eles_org; }
+
 		VEC_ID    end1(void){return _end1; }
 
 		FILE_COUNT_INT get_clms(void){return _clms; }
@@ -342,8 +136,39 @@ class FILE_COUNT{
 		size_t get_clmt(VEC_ID tt){ return _clmt[tt]; }
     size_t get_rowt(VEC_ID tt){ return _rowt[tt]; }
 
-		//FILE_COUNT_INT * getp_rowt(){ return _rowt.getp(); }// たぶん NULLにした方がいい
+		
+		
+		~FILE_COUNT(void){
+			//mfree (_rw, _cw, _clmt, _rowt);
+			//rowtは他でセットされる
+		}
 
+  	void setLimit(
+  		WEIGHT w_lb , WEIGHT w_ub ,
+  		double clm_lb_  = 0.0 , double clm_ub_  = 0.0, 
+  		QUEUE_ID row_lb = 0   , QUEUE_ID row_ub = QUEUE_IDHUGE,
+  		double row_lb_  = 0.0 , double row_ub_  = 0.0
+  	){
+ 		 	_w_lb    = w_lb;
+ 		 	_w_ub    = w_ub;
+	  	_clm_lb_ = clm_lb_; 
+	  	_clm_ub_ = clm_ub_; 
+			_row_lb  = row_lb;
+			_row_ub  = row_ub;
+			_row_lb_ = row_lb_;
+			_row_ub_ = row_ub_;
+
+  	};
+
+		void setBoundsbyRate(){
+
+		  // set lower/upper bounds if it is given by the ratio
+	  	if ( _row_lb_ ) _row_lb = _rows_org * _row_lb_;
+  		if ( _row_ub_ ) _row_ub = _rows_org * _row_ub_;
+  		if ( _clm_lb_ ) _clm_lb = _clms_org * _clm_lb_;
+  		if ( _clm_ub_ ) _clm_ub = _clms_org * _clm_ub_;
+		
+		}
 
 		bool rPermGErows(VEC_ID t){
 			return _rperm[t] <= _rows_org;
@@ -364,12 +189,12 @@ class FILE_COUNT{
 
 
 		PERM *clmw_perm_sort(int flg){
-		
     	return _cw.qsort_perm(_clms_org, flg);
     }
     PERM *clmt_perm_sort(int flg){
       return _clmt.qsort_perm(_clms_org, flg);
     }
+
     PERM *roww_perm_sort(int flg){
     	if(_rw.empty()){
 	      return _rowt.qsort_perm(_rows_org, flg);
@@ -377,8 +202,8 @@ class FILE_COUNT{
 	    else{
 	      return _rw.qsort_perm( _rows_org, flg);
 	    }
-	    
     }
+
     PERM *rowt_perm_sort(int flg){
       return _rowt.qsort_perm( _rows_org, flg);
     }
@@ -407,60 +232,14 @@ class FILE_COUNT{
     	return sep;
     }
 
-		void initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag){
+		void initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag);
+		void initRperm(PERM *p , size_t base_clm, size_t base_ele);
 
-			_c_eles=0;
-			_c_clms=0;
-
-			// malloc2 (_cperm, _clms_org+1, exit(1));
-			_cperm = new PERM[_clms_org+1];
-			for(size_t i =0 ;i<_clms_org;i++){ 
-				_cperm[i] = _clms_org+1; 
-			}
-
-			VEC_ID tt =0 ;
-		  for(size_t t=0; t < ttt; t++){
-		    tt = p? p[t]: t;
-		    if ( tt >= _clms_org ) continue;
-		    
-		    if ( RangeChecnkC(tt) ){
-  		    _c_eles += _clmt[tt];
-		    	_cperm[tt] = flag ? t : _c_clms++ ;
-		    }else {
-    	 		_cperm[tt] = c_end ;
-    		}
-		  }
-		  return ;
-		}
-
-		
-		void initRperm(PERM *p , size_t base_clm, size_t base_ele){
-
-			_r_eles = base_ele;
-			_r_clms = base_clm;
-
-			//malloc2 (_rperm, _rows_org, exit(1));
-			_rperm = new PERM[_rows_org];
-			
-		  // compute #elements according to rowt, and set rperm
-			VEC_ID tt=0;
-			for( VEC_ID t=0 ; t<_rows_org ; t++){
-				tt = p? p[t]: t;
-		    if ( RangeChecnkR(tt)){
-			    _rperm[tt] = _r_clms++;
-    		  _r_eles += _rowt[tt];
-    		}
-    		else{
-					_rperm[tt] = _rows_org+1;
-    		}
-			}
-		}
 
 		bool CheckRperm(VEC_ID t){
-			if( _rperm[t] < _rows_org ){
-				if( _rperm[t] > 0 ){
-					return true;
-				}
+		
+			if( ( _rperm[t] < _rows_org ) && (  _rperm[t] > 0 ) ){
+				return true;
 			} 
 			return false;
 		}
@@ -489,190 +268,6 @@ class FILE_COUNT{
 		VECARY<FILE_COUNT_INT>::swap(_clmt,_rowt);
 
 	}
-	
-	int file_count (int flg, FILE2 *fp, FILE2 *fp2, char *wf){
-
-		if(flg){ // TPOSE
-			if( _file_count_T ( fp, wf) ) { return 1; }	
-		  _end1 = _rows_org;
-		  if(fp2){
-				if( _file_count_T ( fp2, NULL) ) { return 1; }
-			}
-
-		} 
-		else{
-			if( _file_count( fp, wf) ){ return 1;	}
-		  _end1 = _rows_org;
-		  if(fp2){
-				if( _file_count(fp2, NULL) ) { return 1;	}
-			}
-		}
-		return 0;
-	}
-
-	void count ( 
-		FILE2 *rfp,
-		int flag, int skip_rows,
-		int int_rows, int skip_clms, int int_clms, 
-	 	FILE_COUNT_INT row_limit)
-	{
-		
-	  FILE_COUNT_INT k=0, j, x, y, t=0;
-
-  	// flags for using rowt, and clmt, that counts elements in each row/column
-  	int fr = flag&FILE_COUNT_ROWT, fc = flag&FILE_COUNT_CLMT; 
-
-		// fe,ft: flag for ele mode, and transposition
-	  int fe = flag&LOAD_ELE, ft = flag&LOAD_TPOSE;  
-
-  	//_flag = flag;
-		for(int i0=0 ; i0 <skip_rows ; i0++){
-	  	 rfp->read_until_newline ();
-	  }
-
-	  if ( flag & (FILE_COUNT_NUM+FILE_COUNT_GRAPHNUM) ){
-
-  	  _clms = (FILE_COUNT_INT) rfp->read_int ();
-    	_rows = (flag & FILE_COUNT_NUM)? (FILE_COUNT_INT) rfp->read_int(): _clms;
-    	_eles = (FILE_COUNT_INT) rfp->read_int();
-
-	    if ( !(flag & (FILE_COUNT_ROWT + FILE_COUNT_CLMT)) ) return ;
-  	  rfp->read_until_newline ();
-		}
-
-	  do {
-	    if ( fe ){
-			
-				for(int i0=0 ; i0 <skip_clms ; i0++){
-					rfp->read_double (); 
-					//if ( FILE_err&3 ) goto ROW_END;  // ここあってる？
-					if ( rfp->getOK()) goto ROW_END;  // ここあってる？
-
-				}
-			
-				x = (FILE_COUNT_INT) rfp->read_int (); //printf ("%d\n", FILE_err);
-				//if ( FILE_err&3 ) goto ROW_END; // ここあってる？
-				if ( rfp->getOK() ) goto ROW_END; // ここあってる？
-			
-      	y = (FILE_COUNT_INT) rfp->read_int (); 
-      	//if ( FILE_err&4 ) goto ROW_END; // ここあってる？
-				if ( rfp->readNG() ) goto ROW_END; // ここあってる？
-
-      	rfp->read_until_newline ();
-    	}
-    	else 
-    	{
-      	if ( k==0 ) {
-					for(int i0=0 ; i0 <skip_clms ; i0++){
-      			rfp->read_double (); 
-      			//if (FILE_err&3) goto ROW_END; 
-      			if (rfp->getOK()) goto ROW_END; 
-      		}
-      	}
-				x = t;
-      	y = (FILE_COUNT_INT)rfp->read_int (); 
-      	//if (FILE_err&4 ) goto ROW_END;
-				if ( rfp->readNG() ) goto ROW_END; // ここあってる？
-
-				for(int i0=0 ; i0 <int_clms ; i0++){
-      		rfp->read_double (); 
-      		//if (FILE_err&3 ) break; 
-      		if ( rfp->getOK() ) break; 
-      	}
-				k++;
-    	}
-    	
-	    if ( ft ){
-	    	SWAP_<FILE_COUNT_INT>(&x, &y);
-	    }
-
-	    if ( y >= _clms ){
-  	    _clms = y+1;
-    	  if ( fc ) {
-    	  	_clm_end = _clmt.reallocx(_clm_end, _clms, 0);
-    	  }
-			}
-			
-			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && x >= _clms ){
-      	_clms = x+1;
-				if ( fc ) { 
-					_clm_end = _clmt.reallocx ( _clm_end, _clms, 0);
-				}
-	    }
- 
- 			if ( x >= _rows ){
-      	_rows = x+1;
-				if ( fr ) { 
-					_row_end = _rowt.reallocx(_row_end, _rows, 0);
-				}
-			}
-		
-			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && y >= _rows ){ // for undirected edge version
-      	_rows = y+1;
-	      if ( fr ) { 
-	      	_row_end = _rowt.reallocx(_row_end, _rows, 0);
-	      }
-    }
-    
-    if ( x < _clm_btm || _eles == 0 ) {  _clm_btm = x; }
-    if ( y < _row_btm || _eles == 0 ) {  _row_btm = y; }
-    if ( fc ) { _clmt[y]++; }
-    if ( fr ){ 
-    	_rowt[x]++; 
-    	if ( flag&LOAD_EDGE && x != y ){ _rowt[y]++; }
-    }	
-    
-    _eles++;
-
-    ROW_END:;
-
-    //if ( !fe && (FILE_err&1) ){
-    if ( !fe && rfp->getOK1() ){
-      t++;
-
-      if ( flag&(LOAD_RC_SAME+LOAD_EDGE) ){
-        ENMAX (_clms, t); ENMAX (_rows, t);
-      } 
-      else if ( ft ) {	
-      	_clms = t;
-      } 
-      else { 
-      	_rows = t;
-      }
-
-      ENMAX (_clm_max, k);
-      ENMIN (_clm_min, k);
-
-			for(int i0=0 ; i0 <int_rows ; i0++){
-      	rfp->read_until_newline ();
-      }
-      if ( row_limit>0 && t>=row_limit ) { break; }
-    } 
-    else if ( row_limit > 0 && _eles>=row_limit ) {
-    	break;
-    }
-
-  } while ( rfp->eof());
-
-  if ( fc ){ 
-  	_clm_end = _clmt.reallocx(_clm_end, _clms, 0); 
-  }
-  if ( fr ){
-    _row_end = _rowt.reallocx(_row_end, _rows, 0);
-    // 一緒にする？
-    _row_max = _rowt.max(0, _rows);
-		_row_min = _rowt.min(0, _rows);
-		
-  }
-  if ( fe && !_clmt.empty() ){
-    // 一緒にする？
-    _clm_max = _clmt.max(0, _clms);
-    _clm_min = _clmt.min(0, _clms);
-  }
-  END:;
-  // if ( ERROR_MES ) mfree (C.rowt, C.clmt);
-  return ;
-}
 
 };
 

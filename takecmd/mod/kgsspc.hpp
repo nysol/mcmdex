@@ -1,3 +1,16 @@
+/* SSPC: Similar Set Pair Comparison */
+/* 2007/11/30 Takeaki Uno,   e-mail:uno@nii.jp, 
+    homepage:   http://research.nii.ac.jp/~uno/index.html  */
+/* This program is available for only academic use, basically.
+   Anyone can modify this program, but he/she has to write down 
+    the change of the modification on the top of the source code.
+   Neither contact nor appointment to Takeaki Uno is needed.
+   If one wants to re-distribute this code, do not forget to 
+    refer the newest code, and show the link to homepage of 
+    Takeaki Uno, to notify the news about this code for the users.
+   For the commercial use, please make a contact to Takeaki Uno. */
+
+
 #pragma once
 
 #define SSPC_INCLUSION 1
@@ -51,7 +64,6 @@ class KGSSPC{
 
 	// _TT
   int _tFlag;
-  int _tFlag2;
 	double _row_lb_;
 	int _row_lb;
 	double _row_ub_;
@@ -154,7 +166,7 @@ class KGSSPC{
 		_outperm_fname(NULL),_table_fname(NULL),
 		_position_fname(NULL),_vecchr(NULL),
 		_occ_w(NULL),_itemary(NULL),
-		_buf_end(0),_i(0),_ERROR_MES(NULL),
+		_buf_end(0),_i(0),_ERROR_MES(NULL),_sep(0),
 		_row_lb_(0.0),_row_lb(0),
 		_row_ub_(0.0),_row_ub(QUEUE_IDHUGE),
 		_clm_lb_(0.0),_w_lb(-WEIGHTHUGE),

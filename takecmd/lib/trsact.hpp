@@ -27,12 +27,15 @@ using namespace std;
 #define TRSACT_UNION 1048576  // take union of transactions, at the database reduction
 #define TRSACT_INTSEC 2097152 // take intersection of transactions, at the database reduction
 #define TRSACT_MAKE_NEW 4194304  // make new transaction for each 
-#define TRSACT_ALLOC_OCC 8388608  // make new transaction for each 
 #define TRSACT_DELIV_SC 16777216  // look T->sc when delivery
 #define TRSACT_NEGATIVE 33554432  // flag for whether some transaction weights are negative or not 
-//#define TRSACT_INIT_SHRINK 65536  // allocate memory for database reduction
 #define TRSACT_WRITE_PERM 67108864  // write item-order to file
 #define TRSACT_1ST_SHRINK 134217728  // write item-order to file
+
+
+//#define TRSACT_ALLOC_OCC 8388608  // make new transaction for each 
+//#define TRSACT_INIT_SHRINK 65536  // allocate memory for database reduction
+
 
 #ifndef TRSACT_DEFAULT_WEIGHT
  #define TRSACT_DEFAULT_WEIGHT 0  // default weight of the transaction, for missing weights in weight file
@@ -56,11 +59,13 @@ class TRSACT {
 
   // lower/upper bound of #elements in a column/row. 
   // colunmn or row of out of range will be ignored
+  /*
   VEC_ID _clm_lb, _clm_ub; 
-  WEIGHT _w_lb, _w_ub;
-  double _clm_lb_, _clm_ub_;
+  WEIGHT   _w_lb, _w_ub;
+  double   _clm_lb_, _clm_ub_;
   QUEUE_ID _row_lb, _row_ub;
-  double _row_lb_, _row_ub_;  
+  double   _row_lb_, _row_ub_;  
+  */
 
   FILE_COUNT _C;
 	
@@ -181,14 +186,16 @@ class TRSACT {
 
 
 	public:
+
+  	//_clm_lb(0),_clm_ub(VEC_ID_END),_row_lb(0),_row_ub(QUEUE_IDHUGE),
+  	//_clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
+  	//_w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),
+
 	TRSACT(void):
   	_fname(NULL),_wfname(NULL),_item_wfname(NULL),_fname2(NULL),_pfname(NULL),
   	_flag(0),_flag2(0),_clms_org(0),_clm_max(0),_clms_end(0),
   	/*_rows_org(0),*/_row_max(0),_end1(0),_sep(0),
   	_perm(NULL), _trperm(NULL),_pw(NULL),
-  	_clm_lb(0),_clm_ub(VEC_ID_END),_row_lb(0),_row_ub(QUEUE_IDHUGE),
-  	_clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
-  	_w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),
   	_eles_org(0),_total_w(0),_total_pw(0),_str_num(0),
 		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0),_ERROR_MES(NULL)
 		{}
@@ -199,30 +206,46 @@ class TRSACT {
 	int loadMain(bool elef=false);
 
 	// load transaction file to TRSACT 
+	// use by sspc 
 	int load(
-		int flag ,int flag2 ,
+		int flag ,
 		char *fname,char *wfname,char *iwfname,char *fname2,
-		WEIGHT w_lb,WEIGHT w_ub,double clm_lb_ ,double clm_ub_ ,
-		QUEUE_ID row_lb,QUEUE_ID row_ub ,double row_lb_,double row_ub_,VEC_ID sep
+		WEIGHT w_lb,WEIGHT w_ub,
+		double clm_lb_  , double clm_ub_ ,
+		QUEUE_ID row_lb , QUEUE_ID row_ub ,
+		double row_lb_  , double row_ub_,
+		VEC_ID sep
 	){
 	  // パラメータセット
 		_flag = flag;
-		_flag2 = flag2;
 		_fname = fname;
 		_wfname = wfname;
 		_item_wfname = iwfname;
 		_fname2 = fname2; 
+		/*
 		_w_lb = w_lb;
 		_w_ub = w_ub; 
+		_clm_lb_ = clm_ub_; 
 		_clm_lb_ = clm_ub_; 
 		_row_lb = row_lb;
 		_row_ub = row_ub ;
 		_row_lb_ = row_lb_;
 		_row_ub_ = row_ub_;
+		*/
 		_sep = sep;
+
+	  _C.setLimit(
+	  	w_lb   , w_ub   ,
+	  	clm_lb_, clm_ub_,
+	  	row_lb , row_ub ,
+	  	row_lb_, row_ub_
+	  );
+
+
 		return loadMain();
 
 	}
+
 
 	int load(
 		int flag ,int flag2 ,
@@ -236,8 +259,14 @@ class TRSACT {
 		_wfname = wfname;
 		_item_wfname = iwfname;
 		_fname2 = fname2; 
+		/*
 		_w_lb = w_lb;
 		_w_ub = w_ub; 
+		*/
+
+	  _C.setLimit( w_lb , w_ub );
+
+
 
 		return loadMain(eleflg);
 		
@@ -255,6 +284,7 @@ class TRSACT {
 
 	// using only sspc 
 	void QUEINS(){
+
 		VEC_ID i, e;
  		QUEUE_INT *x;
 
@@ -326,10 +356,6 @@ class TRSACT {
 	QUEUE_INT * beginJump(){ return _jump.begin();} 
 	QUEUE_INT * endJump(){ return _jump.end();} 
 
-
-
-
-
 	void clrOQendELE(int i){ _OQELE[i].endClr(); }
 	void clrOQtELE(int i){ _OQELE[i].tClr(); }
 
@@ -359,8 +385,7 @@ class TRSACT {
 	int get_wblock(void){return _wbuf.get_block_num();} 
 	VEC_ID get_new_t(){ return _new_t;}
 
-	int get_flag(void){ return _flag;}
-	int get_flag2(void){ return _flag2;}
+	bool incNega(){ return (_flag2 & TRSACT_NEGATIVE); }
 
 	VEC_ID get_t(void){ return _T.get_t();}
 	VEC_ID get_sep(){ return _sep;}
@@ -430,7 +455,7 @@ class TRSACT {
 	QUEUE* getp_jump(){ return &_jump;} //再考？
 	QUEUE* getp_OQ(int i){ return  &_OQ[i];} 
 
-	 KGLCMSEQ_QUE* getp_OQELE(int i){ return  &_OQELE[i];} 
+	KGLCMSEQ_QUE* getp_OQELE(int i){ return  &_OQELE[i];} 
 
 
 	void set_bnum(int v){return _buf.set_num(v);}  
@@ -449,14 +474,9 @@ class TRSACT {
     _OQ[i].add_t ( _OQ[i].get_v() - o[i]);
     _OQ[i].set_v ( o[i]);
   }
-	
-	
-
-
 	void reallocW(void){
 		VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
 		_w.realloc2(size);
-		//_w.resize(size);
 		for(size_t i=0; i<size;i++){ _w[i] = 1;}
 	}
 
@@ -484,9 +504,9 @@ class TRSACT {
 	}
 
 	void calloc_sc(VEC_ID sise){
-		//calloc2 (_sc, sise, return);
-		_sc = new char[sise]();
+		_sc = new char[sise]();	//calloc2
 	}
+
 	void delivery( WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
 	void deliv( QUEUE *occ, QUEUE_INT m);
 

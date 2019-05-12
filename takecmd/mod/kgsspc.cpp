@@ -166,8 +166,7 @@ int KGSSPC::setArgs(int argc, char *argv[]){
  
       break; case 'c': 
 				_dir = 1; 
-				_root = atoi(argv[c+1]) ;
-				_sep = _root;
+				_sep = _root = atoi(argv[c+1]) ;
 
       break; case '2': 
       	_fname2 = argv[c+1];
@@ -330,6 +329,8 @@ void KGSSPC::comp2 (
 
 	// outputting intersection size
   _siz = c; 
+
+	// S R C T s P F  (i I 以外) 
   if ( _problem & (SSPC_INTERSECTION +SSPC_RESEMBLANCE +SSPC_INNERPRODUCT +SSPC_MAXINT +SSPC_MININT + SSPC_PMI + SSPC_FVALUE) ){
 
     frq = comp (c, wi, wx, sq);
@@ -349,8 +350,8 @@ void KGSSPC::comp2 (
   else {
 
 		// size of i and x
-    f1 = wi*_II.get_frq_lb(); 
-    f2 = wx*_II.get_frq_lb();  
+    f1 = wi * _II.get_frq_lb(); 
+    f2 = wx * _II.get_frq_lb();  
 
     if ( _output_fname2 ){ f1_ = wi*_th2; f2_ = wx*_th2; }
 
@@ -358,10 +359,12 @@ void KGSSPC::comp2 (
 
       if ( _output_fname2 ) f_ = ( (c >= f1_) && (c >= f2_) );
       else f = ( (c >= f1) && (c >= f2) );
+
       frq = MIN(c / wi, c / wx);
 
     }
   	else if( _problem & SSPC_INCLUSION ){
+
       if ( c >= f2 ){
         frq = c / wx;
         output ( cnt, x, i, itemset, frq, core_id);
@@ -380,7 +383,7 @@ void KGSSPC::comp2 (
       }
     }
     else{
-    	return;
+    	throw("non similrarity");
     }
 
     if ( f ) output ( cnt, i, x, itemset, frq, core_id);
@@ -406,18 +409,20 @@ void KGSSPC::list_comp(){
   OFILE2 fp2;
   
   int cnt=0;
-  PERM *p = _II.get_perm();
 
-  _II.set_perm(NULL); // for outputting usual numbers in ITEMSET_output_itemset, that are not items (o.w., will be permuted by II->perm)
+	// for outputting usual numbers in ITEMSET_output_itemset, 
+	// that are not items (o.w., will be permuted by II->perm)
+  PERM *p = _II.get_perm();
+  _II.set_perm(NULL); 
+
+
   if ( _output_fname2 ) fp2.open(_output_fname2);
 
   _II.set_itemset_t(2);
 
-  //calloc2 (w, _TT.get_t(), EXIT);
-  w = new WEIGHT[_TT.get_t()]();
+  w = new WEIGHT[_TT.get_t()]();  //calloc2
 
   if ( (_problem & SSPC_INNERPRODUCT) && !_TT.exist_Tw() ){
-   // FLOOP (i, 0, _TT.get_clms())  _TT.w_multipule(i);
 		_TT.multipule_w();
   }
 
@@ -487,13 +492,14 @@ void KGSSPC::list_comp(){
         y++; yw++;
       }
     } else {
-      // MQUE_FLOOP_CLS (_TT.get_Tv(i), x){ // for usual
+
 			for(x=_TT.beginTv(i);x<_TT.endTv(i) ; x++){
 
         while (*y < *x){
           y++; yw++;
           if ( y == yy ) goto END;
         }
+
         if ( *x == *y ){  
           if ( _TT.exist_Tw() ){
             if (_problem & SSPC_INNERPRODUCT){
@@ -510,7 +516,9 @@ void KGSSPC::list_comp(){
   } while ( fp.eof() );
   
   _II.set_perm(p);
+
 	delete [] w;
+
 }
 
 /* iteration for muticore mode */
@@ -552,6 +560,7 @@ void *KGSSPC::iter (void *p){
   while (1){
 
     if ( i == i_ ){
+
       i_ = 100000000 / (_TT.get_eles() / _TT.get_clms());
 			
       SPIN_LOCK (_II.get_multi_core(), _II.get_lock_counter());  // lock!!
@@ -832,7 +841,6 @@ int KGSSPC::run (int argc ,char* argv[]){
 	if( setArgs(argc, argv) ) return 1;
 
 	_tFlag  |= LOAD_INCSORT;
-	_tFlag2 |= TRSACT_ALLOC_OCC;
 
  	if ( _len_ub < INTHUGE || _len_lb > 0 ){	
  		_tFlag |= (LOAD_SIZSORT+LOAD_DECROWSORT);
@@ -841,8 +849,7 @@ int KGSSPC::run (int argc ,char* argv[]){
 
   if( 
   	_TT.load(
-			_tFlag,_tFlag2,
-			_fname,_wfname,_item_wfname,_fname2,
+			_tFlag, _fname,_wfname,_item_wfname,_fname2,
 			_w_lb,_w_ub,_clm_lb_,_clm_ub_,
 			_row_lb,_row_ub,_row_lb_,_row_ub_,_sep)
 	){ 

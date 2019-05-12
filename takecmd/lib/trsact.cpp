@@ -88,7 +88,9 @@ int TRSACT::alloc(){
 	}else{
      _T.set_clms(_C.c_clms()); 
 	}
-  delete [] p; p=NULL;
+  delete [] p; 
+  p=NULL;
+
   // ここまでのまとめたほうがいい cpemへのセット
 
 	if ( _T.get_clms() == 0 ) error ("there is no frequent item", exit(0));
@@ -106,13 +108,15 @@ int TRSACT::alloc(){
 	_T.set_eles(_C.r_eles());
 	_T.set_t(_C.r_clms());
 
-  delete [] p; p=NULL;
+  delete [] p; 
+  p=NULL;
 
   // ここまでのまとめたほうがいい rpemへのセット
 
   flag = (_T.get_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
 
   if ( flag ){ _T.set_eles(_C.c_eles()); }
+
 	_T.adjustEnd((_flag&LOAD_DBLBUF));
 
   _w.malloc2( _T.get_end());
@@ -126,8 +130,7 @@ int TRSACT::alloc(){
 
 	_T.allocBuffer(); 
 
-  //calloc2 (_perm, _T.get_clms()+1, EXIT0);
-  _perm = new PERM[_T.get_clms()+1]();
+  _perm = new PERM[_T.get_clms()+1](); //calloc2 
 
   _jump.alloc(_T.get_clms()+1);
 
@@ -138,9 +141,9 @@ int TRSACT::alloc(){
 
   if ( _flag2&TRSACT_SHRINK ){
     
-    _mark = new VEC_ID[_T.get_end()]; //malloc2 (_mark, _T.get_end(), EXIT0);
-    _shift = new QUEUE_INT *[_T.get_end()]; //malloc2 (_shift, _T.get_end(), EXIT0);
-    _sc = new char[_T.get_clms()](); //calloc2 (_sc, _T.get_clms(), EXIT0);
+    _mark = new VEC_ID[_T.get_end()];       //malloc2
+    _shift = new QUEUE_INT *[_T.get_end()]; //malloc2
+    _sc = new char[_T.get_clms()]();        //calloc2
 
   }
   if ( !_T.exist_w() && (_flag2&TRSACT_UNION)) {
@@ -149,7 +152,7 @@ int TRSACT::alloc(){
 	if ( !_T.exist_w() && _item_wfname ){
 		_T.alloc_weight ( _C );
 	}
-  _trperm = new PERM[_T.get_t()];   //malloc2 (_trperm, _T.get_t(), EXIT0);
+  _trperm = new PERM[_T.get_t()];   //malloc2 
 
   // set variables w.r.t rows
   tt=0 ;
@@ -183,7 +186,9 @@ int TRSACT::alloc(){
 
 	_sep = _C.adjust_sep(_sep,_end1,_flag&LOAD_TPOSE);
   _new_t = _T.get_t();
+
   return ( flag );
+
 }
 
 
@@ -208,10 +213,9 @@ void TRSACT::file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwf
     }
 
     x = *t;
-    FILE_err_ = fp->read_item (iwfname?&wfp:NULL, &x, &y, &w, fc, _flag);
+    FILE_err_ = fp->read_item(iwfname?&wfp:NULL, &x, &y, &w, fc, _flag);
 
-    //if ( FILE_err&4 ) goto LOOP_END;
-    if ( fp->readNG() ) goto LOOP_END;
+    if ( fp->readNG() ) goto LOOP_END; //FILE_err&4
 
     if ( C->get_rperm(x)<=C->rows() && C->get_cperm(y)<=_clms_end ){
 
@@ -222,16 +226,15 @@ void TRSACT::file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwf
 
     }
 
-    //if ( FILE_err&3 ){
-    if ( fp->getOK() ){
+    if ( fp->getOK() ){ //( FILE_err&3 )
 
       LOOP_END:;
       (*t)++;
-      // even if next weight is not written, it is the rest of the previous line
+      // even if next weight is not written, 
+      // it is the rest of the previous line
       fc = FILE_err_? 0: 1; FILE_err_=0; 
     }
-  //} while ( (FILE_err&2)==0 );
-	} while ( fp->eof() );
+	} while ( fp->eof() ); // (FILE_err&2)==0
 
 	_T.allvvInit();
 
@@ -276,9 +279,8 @@ void TRSACT::sort(FILE_COUNT *C){
 
 	_row_max = _T.RowMax();
 
-  if ( _flag2&(TRSACT_ALLOC_OCC+TRSACT_SHRINK) ){
-  	OccAlloc();
-  }
+	OccAlloc(); // _flag2 & TRSACT_ALLOC_OCC+TRSACT_SHRINK
+
 
 
 	// shrinking database
@@ -344,9 +346,8 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 
 	_row_max = _T.RowMax();
 
-
-  if ( _flag2&(TRSACT_ALLOC_OCC+TRSACT_SHRINK) ){
-
+	//if ( _flag2 & TRSACT_ALLOC_OCC+TRSACT_SHRINK ){
+	{
     
     VECARY<VEC_ID> p;
     p.calloc2(_T.get_clms()); //calloc2 (p, _T.get_clms(), EXIT);
@@ -413,9 +414,6 @@ int TRSACT::loadMain(bool elef){
   FILE2 fp , fp2 ;
 
   int f;
-
-  _C.setLimit(_w_lb , _w_ub ,_clm_lb , _clm_ub, _row_lb, _row_ub );
-
   fp.open( _fname, "r");
 
 	// PreRead for count
@@ -443,11 +441,7 @@ int TRSACT::loadMain(bool elef){
   if ( _flag & LOAD_TPOSE ){ _C.tpose(); }
 
   // set lower/upper bounds if it is given by the ratio
-  if ( _row_lb_ ) _row_lb = _C.rows() * _row_lb_;
-  if ( _row_ub_ ) _row_ub = _C.rows() * _row_ub_;
-  if ( _clm_lb_ ) _clm_lb = _C.clms() * _clm_lb_;
-  if ( _clm_ub_ ) _clm_ub = _C.clms() * _clm_ub_;
-
+  _C.setBoundsbyRate();
 
 	// f は 
   // flag = (_T.get_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
@@ -455,16 +449,13 @@ int TRSACT::loadMain(bool elef){
   // flagがセットさていない場合は
   // _T.setVBufferが動くのでバッファが_Tにセットされている？
   // 
-
   f = alloc();
 
   VEC_ID t=0;
-
   file_read( &fp, &_C, &t, f, _item_wfname);
   if ( _fname2 ){
 	  file_read ( &fp2, &_C, &t, f, NULL); 
 	}
-
   if(elef){ sortELE(&_C); }
 	else    { sort   (&_C); }
 
@@ -1034,8 +1025,9 @@ void TRSACT::print ( QUEUE *occ, PERM *p){
   VEC_ID i, t;
   QUEUE_ID j;
   QUEUE_INT e;
-	//FLOOP (i, 0, occ? occ->get_t(): _T.get_t()){
+
   for(i=0; i< ( occ? occ->get_t(): _T.get_t());i++){
+
     t = occ? *((QUEUE_INT *)occ->getp_v(i)): i;
     if ( occ ) printf (QUEUE_INTF "::: ", t);
     for (j=0; j<_T.get_vt(t) ; j++){

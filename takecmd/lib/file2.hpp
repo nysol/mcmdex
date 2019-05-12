@@ -127,6 +127,14 @@ class FILE2 {
 	FILE2():
 		_fp(NULL),_buf_org(NULL),_buf(NULL)
 		,_buf_end(NULL),_bit(0),_FILE_err(0){}
+
+	~FILE2(){
+  	_fclose2();
+		delete [] _buf_org;
+		_buf_org = NULL;
+	  _buf = _buf_end = 0;
+		
+	}
 		
 	void open(char *fname,char *rw) 
 	{
@@ -160,7 +168,6 @@ class FILE2 {
 	void clear(void){ 
 		delete [] _buf_org;
 		_buf_org = NULL;
-		//free2 (_buf_org);
 	}
 
 	bool needFlush(void){ return ( _buf-_buf_org ) > FILE2_BUFSIZ/2 ; }
@@ -360,8 +367,6 @@ class FILE2 {
  		//free2 (_buf_org);
 		delete [] _buf_org;
 		_buf_org = NULL;
-
-
 	  _buf = _buf_end = 0;
 	}
 

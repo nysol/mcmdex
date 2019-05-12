@@ -456,7 +456,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
     if ( *x<item && _II.get_itemflag(*x) == 0 ){
       _itemcand.push_back(*x);
       _occ_w2[*x] = _occ_w[*x];
-      if ( _TT.get_flag2() & TRSACT_NEGATIVE ) _occ_pw2[*x] = _occ_pw[*x];
+      if ( _TT.incNega() ) _occ_pw2[*x] = _occ_pw[*x];
 
     }
   }
@@ -538,7 +538,11 @@ int KGLCM::run (int argc, char *argv[]){
 	if( setArgs(argc, argv) ) return 1;
 
   _tFlag  |= (LOAD_PERM +LOAD_DECSORT +LOAD_RM_DUP);
-  _tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC +TRSACT_ALLOC_OCC + 
+  //_tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC +TRSACT_ALLOC_OCC + 
+  //							((_iFlag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
+
+
+  _tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC + 
   							((_iFlag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
 
 
