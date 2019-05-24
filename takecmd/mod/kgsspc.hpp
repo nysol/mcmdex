@@ -142,13 +142,11 @@ class KGSSPC{
 
 	  _II.alloc(_output_fname, perm, siz, 0);
 
-		_TT.set_perm(NULL); // これなに？
+		_TT.set_perm(NULL); // free対策？
 		
 		_TT.reallocW();
 
 	  return;
-
-  	EXIT;
 
 	}
 
@@ -173,7 +171,7 @@ class KGSSPC{
 		_clm_ub_(0.0),_w_ub(WEIGHTHUGE),
 		// _II
 		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0),
-		_len_ub(INTHUGE),_len_lb(0),
+		_len_ub(INTHUGE),_len_lb(0),_topk_k(0),
 		_multi_core(1),_max_solutions(0),_separator(' '),
 		_fname(NULL),_wfname(NULL),_item_wfname(NULL),
 		_fname2(NULL)

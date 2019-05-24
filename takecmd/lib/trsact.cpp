@@ -36,8 +36,59 @@ void TRSACT::prop_print (){
 
 }
 
-/* allocate memory, set permutation, and free C.clmt,rowt,rw,cw */
-int TRSACT::alloc(){
+// _OQ クラス化した方がいい?
+void TRSACT::_OccAlloc(void){
+
+    VEC_ID *p;
+    p = _T.counting();
+
+    _clm_max = p[0];
+		size_t cmmsize = p[0];
+		for(int cmm = 1 ; cmm < _T.get_clms() ;cmm++ ){
+			cmmsize += p[cmm];
+			if( _clm_max < p[cmm]){
+				_clm_max=p[cmm];
+			}
+		}
+			
+		_OQ = new QUEUE[_T.get_clms()+1]; 
+
+		QUEUE_INT *cmn_pnt;
+		size_t pos=0;
+		try{
+			cmn_pnt = new QUEUE_INT[cmmsize+_T.get_clms()+2]; //malloc2
+		}catch(...){
+			delete[] _OQ;
+			throw;
+		}
+
+		for(VEC_ID cmmv =0; cmmv < _T.get_clms() ; cmmv++){
+
+			_OQ[cmmv].alloc( p[cmmv],cmn_pnt+pos );
+
+			pos += p[cmmv]+1;
+
+		}
+		_OQ[_T.get_clms()].alloc( MAX(_T.get_t(), _clm_max));
+
+
+		// end is illegally set to 0, for the use in "TRSACT_find_same" 
+		for(size_t i=0 ; i < _T.get_clms()+1 ; i++ ){
+			_OQ[i].endClr();
+		}
+
+    // initial occurrence := all transactions
+    _OQ[_T.get_clms()].initVprem(_T.get_t());  //ARY_INIT_PERM
+
+    delete [] p;
+    
+}
+
+
+/* 
+	allocate memory, set permutation, and free C.clmt,rowt,rw,cw 
+*/
+void TRSACT::_alloc(){
 
   VEC_ID t, tt=0, ttt, ttt_max, h, flag, org;
   FILE_COUNT_INT *ct;
@@ -45,90 +96,21 @@ int TRSACT::alloc(){
   PERM *q, *p=NULL;
   char *buf;
 
-  ttt_max = ttt = _C.clms();
-
   if ( _flag2&TRSACT_SHRINK ) _flag |= LOAD_DBLBUF;
 
-  // count valid columns/elements
+	_clms_end = _C.c_end();
 
-  // -m 時 //read item permutation
-  if ( _pfname && !(_flag2&TRSACT_WRITE_PERM) ){ 
-
-		ttt = FILE2::ARY_Load (p, _pfname, 1);
-		ttt_max = p[0];
-		for(int i=1; i < ttt ; i++){
-			if(ttt_max < p[i]){ ttt_max = p[i]; }
-		}
-  }
-  else {
-  	// lcm場合は
-  	// LOAD_PERM TRSACT_FRQSORT  デフォルトでセットされる //この辺りも分ける？
-    // LOAD_INCSORTはセットされない(sgflagにセットされるかのうせいあり)
-
-    if ( _flag&LOAD_PERM ){ 
-      if ( _flag2&TRSACT_FRQSORT ){ 
-      	p = _C.clmw_perm_sort((_flag&LOAD_INCSORT)?1:-1);
-      }
-      else {
-      	p = _C.clmt_perm_sort((_flag&LOAD_INCSORT)?1:-1);
-      }
-    }
-    if ( _pfname ) { FILE2::ARY_Write(_pfname , p , _C.clms()); }
-
-  }
-
- // _clms_end = MAX(_C.clms(), _T.get_clms());
-	_clms_end = MAX(_C.clms(), ttt_max);
-	// 上ともまとめる
-
-	_C.initCperm(ttt , p ,_clms_end +1, (  _pfname && !(_flag2&TRSACT_WRITE_PERM) ) );
-	
-	if( _pfname && !(_flag2&TRSACT_WRITE_PERM) ){
-     _T.set_clms(ttt_max+1); 
-	}else{
-     _T.set_clms(_C.c_clms()); 
-	}
-  delete [] p; 
-  p=NULL;
-
-  // ここまでのまとめたほうがいい cpemへのセット
-
-	if ( _T.get_clms() == 0 ) error ("there is no frequent item", exit(0));
-
-  // ここから ================================
-	// count valid rows/elements
-  if ( _flag&(LOAD_SIZSORT+LOAD_WSORT) ){
-    if ( _flag&LOAD_WSORT ){
-    	p =_C.roww_perm_sort((_flag&LOAD_DECROWSORT)?-1:1);
-    }	else {
-      p =_C.rowt_perm_sort((_flag&LOAD_DECROWSORT)?-1:1);
-    }
-  }
-	_C.initRperm( p , _T.get_eles(), _T.get_t());
-	_T.set_eles(_C.r_eles());
-	_T.set_t(_C.r_clms());
-
-  delete [] p; 
-  p=NULL;
-
-  // ここまでのまとめたほうがいい rpemへのセット
-
-  flag = (_T.get_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
-
-  if ( flag ){ _T.set_eles(_C.c_eles()); }
-
-	_T.adjustEnd((_flag&LOAD_DBLBUF));
+	_T.setSize(_C,_flag); // _Tのバッファ _v _bufもセットされる
 
   _w.malloc2( _T.get_end());
 
   if ( _flag2&TRSACT_NEGATIVE ) { 	// たぶんこう？
-  	_pw = new WEIGHT[_T.get_end()]; //malloc2 (_pw, _T.get_end(), EXIT0);
+  	_pw = new WEIGHT[_T.get_end()]; //malloc2
   }
   else{
   	_pw = NULL;
   }
 
-	_T.allocBuffer(); 
 
   _perm = new PERM[_T.get_clms()+1](); //calloc2 
 
@@ -141,22 +123,23 @@ int TRSACT::alloc(){
 
   if ( _flag2&TRSACT_SHRINK ){
     
-    _mark = new VEC_ID[_T.get_end()];       //malloc2
-    _shift = new QUEUE_INT *[_T.get_end()]; //malloc2
-    _sc = new char[_T.get_clms()]();        //calloc2
+    _mark  = new VEC_ID[_T.get_end()];       //malloc2
+    _shift = new QUEUE_INT*[_T.get_end()]; //malloc2
+    _sc    = new char[_T.get_clms()]();        //calloc2
 
   }
-  if ( !_T.exist_w() && (_flag2&TRSACT_UNION)) {
-		_T.alloc_w();
-  }
-	if ( !_T.exist_w() && _item_wfname ){
-		_T.alloc_weight ( _C );
+
+  if ( !_T.exist_w() ) {
+  	if(_flag2&TRSACT_UNION){ _T.alloc_w();}
+		if( _item_wfname )     { _T.alloc_weight(_C); }
 	}
+
   _trperm = new PERM[_T.get_t()];   //malloc2 
 
   // set variables w.r.t rows
   tt=0 ;
   size_t pos = 0; 
+
 	for( VEC_ID t =0 ; t < _C.rows(); t++ ){
 
 		if ( _C.rPermGErows(t) ) {
@@ -166,12 +149,12 @@ int TRSACT::alloc(){
 			_C.set_rperm(t, tt);
 
       _w[tt] = _C.get_rw(t);
+
       if ( _pw ) {  _pw[tt] = MAX (_w[tt], 0); }
 
       if ( !flag ){
-        _T.setVBuffer(tt,pos);
+        _T.setVBuffer(tt,pos); // _T の_v ,_buf連動させる)
         pos += _C.get_rowt(t)+1;
-
       }
 			tt++;
 		}
@@ -184,16 +167,18 @@ int TRSACT::alloc(){
     }
   }
 
-	_sep = _C.adjust_sep(_sep,_end1,_flag&LOAD_TPOSE);
+	// _sep = _C.adjust_sep(_sep,_end1,_flag&LOAD_TPOSE);
   _new_t = _T.get_t();
 
-  return ( flag );
+  return ;
 
 }
 
 
 /* load the file to allocated memory according to permutation */
-void TRSACT::file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname){
+void TRSACT::_file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname){
+
+	// flag ( _C.r_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
 
   QUEUE_ID tt;
   LONG x, y;
@@ -204,7 +189,9 @@ void TRSACT::file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwf
   fp->reset ();
   if ( _flag&(LOAD_NUM+LOAD_GRAPHNUM) ) fp->read_until_newline ();
   if ( iwfname ) wfp.open ( iwfname, "r");
-  if ( flag ) { _T.set_vv(0, _T.get_buf()); }
+  if ( flag ) { 
+  	_T.setVBuffer(0, 0); 
+  }
 
   do {
 
@@ -232,7 +219,8 @@ void TRSACT::file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwf
       (*t)++;
       // even if next weight is not written, 
       // it is the rest of the previous line
-      fc = FILE_err_? 0: 1; FILE_err_=0; 
+      fc = FILE_err_? 0: 1; 
+      FILE_err_=0; 
     }
 	} while ( fp->eof() ); // (FILE_err&2)==0
 
@@ -244,7 +232,7 @@ void TRSACT::file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwf
 
 /* sort the transactions and items according to the flag, allocate OQ, and database reduction */
 /* causion! not adopt for itemweights!!!!! */
-void TRSACT::sort(FILE_COUNT *C){
+void TRSACT::_sort(){
 
   VEC_ID t, *p;
   int f;
@@ -258,10 +246,10 @@ void TRSACT::sort(FILE_COUNT *C){
 
   flag = (_flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE);
 
-  if ( flag ){   // sort rows for the case that some columns are not read
-
-		_T.setInvPermute( C->get_rperm(),_trperm,flag);
-
+	// sort rows for the case 
+	// that some columns are not read
+  if ( flag ){   
+		_T.setInvPermute( _C.get_rperm(),_trperm,flag);
   }
   //free2 (C->rperm); free2 (C->cperm);
 
@@ -279,9 +267,8 @@ void TRSACT::sort(FILE_COUNT *C){
 
 	_row_max = _T.RowMax();
 
-	OccAlloc(); // _flag2 & TRSACT_ALLOC_OCC+TRSACT_SHRINK
-
-
+	// _flag2 & TRSACT_ALLOC_OCC+TRSACT_SHRINK
+	_OccAlloc(); 
 
 	// shrinking database
   if ( _flag2&TRSACT_1ST_SHRINK ){
@@ -307,7 +294,7 @@ void TRSACT::sort(FILE_COUNT *C){
 
 /* sort the transactions and items according to the flag, allocate OQ, and database reduction */
 /* causion! not adopt for itemweights!!!!! */
-void TRSACT::sortELE ( FILE_COUNT *C){
+void TRSACT::_sortELE(){
   VEC_ID t, *p;
   int f;
   int flag; //<<=これもうちょっと考える
@@ -322,12 +309,12 @@ void TRSACT::sortELE ( FILE_COUNT *C){
   if ( flag ){   
   	// sort rows for the case that some columns are not read
 		//_T.setInvPermute( C->get_rperm(),_trperm,flag); << = これでOK?
-		_T.qsort_perm(C->get_rperm(), flag);
-		_T.any_INVPERMUTE( C->get_rperm());
-		if ( _T.exist_w() ) {
-			_T.any_INVPERMUTE_w(C->get_rperm());
-		}
-		_T.any_INVPERMUTE_(_trperm, C->get_rperm());
+		_T.qsort_perm(_C.get_rperm(), flag);
+		_T.any_INVPERMUTE( _C.get_rperm());
+
+		if ( _T.exist_w() ){ _T.any_INVPERMUTE_w(_C.get_rperm()); }
+
+		_T.any_INVPERMUTE_(_trperm, _C.get_rperm());
 		
   }
 
@@ -336,13 +323,9 @@ void TRSACT::sortELE ( FILE_COUNT *C){
   if ( _flag & LOAD_PERM ) flag = 1;
   else flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0);
 
-  if ( flag ){
-  	_T.queueSortALL(flag);
-  }
+  if ( flag ){ _T.queueSortALL(flag); }
   
-  if ( _flag & LOAD_RM_DUP ){
-  	_T.rmDup();
-  }
+  if ( _flag & LOAD_RM_DUP ){ _T.rmDup(); }
 
 	_row_max = _T.RowMax();
 
@@ -350,7 +333,7 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 	{
     
     VECARY<VEC_ID> p;
-    p.calloc2(_T.get_clms()); //calloc2 (p, _T.get_clms(), EXIT);
+    p.calloc2(_T.get_clms()); 
 
 		//===== QUEUE_delivery==============
 		VEC_ID iv, ev; 
@@ -379,8 +362,7 @@ void TRSACT::sortELE ( FILE_COUNT *C){
     _OQELE[_T.get_clms()].set_t( _T.get_t());
   }
 
-    // shrinking database
-
+	// shrinking database
   if ( _flag2&TRSACT_1ST_SHRINK ){
 
     Q = _OQELE[_T.get_clms()];
@@ -411,57 +393,48 @@ void TRSACT::sortELE ( FILE_COUNT *C){
 /*****************************************/
 int TRSACT::loadMain(bool elef){
 
-  FILE2 fp , fp2 ;
+  FILE2 fp(_fname) , fp2(_fname2) ;
 
   int f;
-  fp.open( _fname, "r");
 
-	// PreRead for count
-  if ( _fname2 ){
-  	fp2.open ( _fname2, "r");
-  	if( _C.file_count( _flag&LOAD_TPOSE , &fp ,&fp2 ,_wfname )) { 
-	  	fp.close ();
-  		fp2.close ();
-	  	fprintf(stderr,"file_count ERROR");
-  		return 1;
-
-  	}
-  }
-  else{
-  	if( _C.file_count( _flag&LOAD_TPOSE , &fp ,NULL ,_wfname ) ){ 
-	  	fp.close ();
-	  	fprintf(stderr,"file_count ERROR");
-	  	return 1;
-  	}
+	// PreRead for count  
+	// swap variables in the case of transpose
+	// set lower/upper bounds if it is given by the ratio
+  if( _C.file_count( _flag&LOAD_TPOSE , fp ,fp2 ,_wfname )) { 
+	  fprintf(stderr,"file_count ERROR");
+  	return 1;
   }
 
 	if( _C.existNegative()){ _flag2 |= TRSACT_NEGATIVE; }
+	
+	//_cPerm = _C.initCperm(_pfname ,_flag ,_flag2);
+	//_rPerm = _C.initRperm(_flag);
+	
+ 	_C.makePerm(_pfname ,_flag ,_flag2);
 
-  // swap variables in the case of transpose
-  if ( _flag & LOAD_TPOSE ){ _C.tpose(); }
-
-  // set lower/upper bounds if it is given by the ratio
-  _C.setBoundsbyRate();
-
+	
 	// f は 
   // flag = (_T.get_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
   // の内容　
   // flagがセットさていない場合は
   // _T.setVBufferが動くのでバッファが_Tにセットされている？
   // 
-  f = alloc();
+	f = ( _C.r_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
+  
+  _alloc();
 
   VEC_ID t=0;
-  file_read( &fp, &_C, &t, f, _item_wfname);
+
+	// _T.file_read(fp , _C, &t, f, _flag&(LOAD_NUM+LOAD_GRAPHNUM), _item_wfname);
+
+  _file_read( &fp, &_C, &t, f, _item_wfname);
+  
   if ( _fname2 ){
-	  file_read ( &fp2, &_C, &t, f, NULL); 
+	  _file_read( &fp2, &_C, &t, f, NULL); 
 	}
-  if(elef){ sortELE(&_C); }
-	else    { sort   (&_C); }
 
-
-  fp.close ();
-  fp2.close ();
+  if(elef){ _sortELE(); }
+	else    { _sort   (); }
 
 
   if (_ERROR_MES) end(); 

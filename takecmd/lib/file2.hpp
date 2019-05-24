@@ -128,6 +128,26 @@ class FILE2 {
 		_fp(NULL),_buf_org(NULL),_buf(NULL)
 		,_buf_end(NULL),_bit(0),_FILE_err(0){}
 
+	FILE2(char *fname,char *rw="r"){
+
+		if(fname){ 
+			_fopen2( fname,rw );
+			_buf_org = new char [FILE2_BUFSIZ+1];
+			_buf=_buf_org;
+			_buf_end=_buf_org-1;
+			_bit=0;
+			*_buf=0;
+		}
+		else { 
+			_fp=NULL;
+			_buf_org = NULL;
+			_buf = NULL;
+			_buf_end = NULL;
+			_bit = 0;
+			_FILE_err = 0;
+		}
+	}
+
 	~FILE2(){
   	_fclose2();
 		delete [] _buf_org;

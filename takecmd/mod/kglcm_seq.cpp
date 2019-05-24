@@ -473,7 +473,6 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
   _itemcand.set_t(_itemcand.get_s());
 
 	/************ recursive calls ***************/
-  //FLOOP (i, 0, cnt){
 	for(i=0;i<cnt;i++){
 
     _II.set_frq(w[i]);
@@ -489,7 +488,6 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
     if ( _II.get_itemset_t() == 0 ){    
       u = _TT.get_OQ_vELE(i);
 
-      //FLOOP (j, 0, _TT.get_OQ_tELE(i)/2){
       for(i=0;j<_TT.get_OQ_tELE(i)/2;j++){
         L = u[j]; u[j] = u[_TT.get_OQ_tELE(i)-j-1]; u[_TT.get_OQ_tELE(i)-j-1] = L;
       }
@@ -505,7 +503,6 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
   _TT.set_bnum(bnum);
   _TT.set_bblock(bblock);
 
-  //FLOOP (x, _itemcand.get_v()+cnt, _itemcand.get_v() + jt) {
  	for(x= _itemcand.get_v()+cnt ; x <  _itemcand.get_v() + jt ;x++){
 
 	  _TT.set_sc(*x,0); // clear infrequent markF

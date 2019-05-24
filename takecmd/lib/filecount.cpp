@@ -9,6 +9,7 @@
     refer the newest code, and show the link to homepage of 
     Takeaki Uno, to notify the news about the codes for the users. */
 
+#include "trsact.hpp"
 #include "filecount.hpp"
 
 
@@ -50,7 +51,7 @@ QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 /* C->clmt[i],C->cw[i] := the number/(sum of weights) of transactions including i  */
 /****************************************/
 // LOAD_TPOSEの時
-int FILE_COUNT::_file_count_T(FILE2 *fp,char *wf){
+int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
 
 	  QUEUE_INT i, item, kk=0, k, jump_end=0;
 	  WEIGHT w, s;
@@ -67,10 +68,10 @@ int FILE_COUNT::_file_count_T(FILE2 *fp,char *wf){
 
     	do {
 
-      	jj = fp->read_int();
+      	jj = fp.read_int();
       	item = (QUEUE_INT)jj;
 
-				if ( fp->readOK() && jj<TRSACT_MAXNUM && jj>=0 ){ //(FILE_err&4)==0
+				if ( fp.readOK() && jj<TRSACT_MAXNUM && jj>=0 ){ //(FILE_err&4)==0
 
 					// update #items
        		ENMAX (_clms_org, item+1);  
@@ -86,7 +87,7 @@ int FILE_COUNT::_file_count_T(FILE2 *fp,char *wf){
         	_clmt[item]++;
 	      }
 
-  		} while ( fp->remain() );
+  		} while ( fp.remain() );
 
        // count/weight-sum for the transpose mode
 			_row_end = _rowt.reallocx(_row_end, _rows_org, 0);
@@ -97,7 +98,7 @@ int FILE_COUNT::_file_count_T(FILE2 *fp,char *wf){
 
       _cw[_rows_org] = s;    // sum up positive weights
 
-			if ( k==0 && fp->eofx() ) break;
+			if ( k==0 && fp.eofx() ) break;
 			_rows_org++;  // increase #transaction
 
     	
@@ -113,10 +114,9 @@ int FILE_COUNT::_file_count_T(FILE2 *fp,char *wf){
       }
 
 
-		} while ( fp->eof() );
+		} while ( fp.eof() );
 
 		//delete [] jump
-
     // swap the variables in transpose mode
   	if ( _rw.empty() ){
   		_total_w_org = _total_pw_org = _rows_org; 
@@ -133,14 +133,12 @@ int FILE_COUNT::_file_count_T(FILE2 *fp,char *wf){
 	  }
 	  return 0;
   
-	  ERR:;
-  	return 1;
 }
 
 
 
 // NOT LOAD_TPOSEの時
-int FILE_COUNT::_file_count(FILE2 *fp, char *wf){
+int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 	
   QUEUE_INT i, item, kk=0, k, jump_end=0;
   WEIGHT w, s;
@@ -158,10 +156,10 @@ int FILE_COUNT::_file_count(FILE2 *fp, char *wf){
 
 		do {
 			
-			jj = fp->read_int();
+			jj = fp.read_int();
 			item = (QUEUE_INT)jj;
 
-			if ( fp->readOK() && jj<TRSACT_MAXNUM && jj>=0 ){
+			if ( fp.readOK() && jj<TRSACT_MAXNUM && jj>=0 ){
 
 				ENMAX (_clms_org, item+1);  // update #items
 				jump_end = jump.reallocx(jump_end, k, 0);
@@ -180,14 +178,14 @@ int FILE_COUNT::_file_count(FILE2 *fp, char *wf){
 
 			}
 
-		} while ( fp->remain());
+		} while ( fp.remain());
 
 		// count/weight-sum for the transpose mode
 		_row_end = _rowt.reallocx (_row_end, _rows_org, 0);
 
 		_rowt[_rows_org] = k;
 
-		if ( k==0 && fp->eofx() ) break;
+		if ( k==0 && fp.eofx() ) break;
 
 		_rows_org++;  // increase #transaction
     
@@ -202,7 +200,7 @@ int FILE_COUNT::_file_count(FILE2 *fp, char *wf){
 			}
 		}
 
-	} while ( fp->eof() );
+	} while ( fp.eof() );
 
 
 	// swap the variables in transpose mode
@@ -225,24 +223,34 @@ int FILE_COUNT::_file_count(FILE2 *fp, char *wf){
 }
 
 
-int FILE_COUNT::file_count(int flg, FILE2 *fp, FILE2 *fp2, char *wf){
+int FILE_COUNT::file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf){
 
-		if(flg){ // TPOSE
-			if( _file_count_T ( fp, wf) ) { return 1; }	
-		  _end1 = _rows_org;
-		  if(fp2){
-				if( _file_count_T ( fp2, NULL) ) { return 1; }
-			}
+	if(flg){ // TPOSE
 
-		} 
-		else{
-			if( _file_count( fp, wf) ){ return 1;	}
-		  _end1 = _rows_org;
-		  if(fp2){
-				if( _file_count(fp2, NULL) ) { return 1;	}
-			}
+		if( _file_count_T(fp, wf) ) { return 1; }	
+		_end1 = _rows_org;
+
+		if( fp2.exist() ){
+			if( _file_count_T ( fp2, NULL) ) { return 1; }
 		}
-		return 0;
+		// swap variables in the case of transpose
+		_tpose();
+
+	} 
+	else{
+		if( _file_count( fp, wf) ){ return 1;	}
+		_end1 = _rows_org;
+
+		if( fp2.exist() ){
+			if( _file_count(fp2, NULL) ) { return 1;	}
+		}
+
+	}
+
+	_setBoundsbyRate();
+
+	return 0;
+
 }
 
 
@@ -263,7 +271,7 @@ void FILE_COUNT::count(
 
   	//_flag = flag;
 		for(int i0=0 ; i0 <skip_rows ; i0++){
-	  	 rfp->read_until_newline ();
+	  	 rfp->read_until_newline();
 	  }
 
 	  if ( flag & (FILE_COUNT_NUM+FILE_COUNT_GRAPHNUM) ){
@@ -406,34 +414,160 @@ void FILE_COUNT::count(
 
 }
 
+//void FILE_COUNT::initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag){
 
+// pfname :filename
+// wflg : true:write to pfname file   false: read from pfname file
+
+// このクラス_crpermはいらない？
+void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
+
+	// ttt :perm Size 
+	VEC_ID ttt_max = _clms_org;
+	VEC_ID ttt = _clms_org;
+  PERM *p=NULL;
+ // PERM *cperm=NULL;
+
+	// この分岐を整理すること。わける
+  if ( pfname && !( tflag2&TRSACT_WRITE_PERM) ){ 
+
+		ttt = FILE2::ARY_Load(p, pfname, 1);
+		ttt_max = p[0];
+		for(int i=1; i < ttt ; i++){
+			if(ttt_max < p[i]){ ttt_max = p[i]; }
+		}
+  }
+  else {
+  	// LOAD_PERM TRSACT_FRQSORT  デフォルトでセットされる(LCM) //この辺りも分ける？
+    // LOAD_INCSORTはセットされない(sgflagにセットされるかのうせいあり)
+    if ( tflag&LOAD_PERM ){ 
+      if ( tflag2&TRSACT_FRQSORT ){ 
+      	p = clmw_perm_sort((tflag&LOAD_INCSORT)?1:-1);
+      }
+      else {
+      	p = clmt_perm_sort((tflag&LOAD_INCSORT)?1:-1);
+      }
+    }
+
+    if ( pfname ) { 
+    	FILE2::ARY_Write(pfname , p , _clms_org); 
+    }
+  }
+	
+	_clms_end = MAX(_clms_org, ttt_max);
+	_c_eles=0;
+	_c_clms=0;
+
+	_cperm = new PERM[_clms_org+1]; // malloc2
+	for(size_t i =0 ;i<_clms_org;i++){ 
+		_cperm[i] = _clms_org+1; 
+	}
+
+	VEC_ID tt =0 ;
+	for(size_t t=0; t < ttt; t++){
+		tt = p? p[t]: t;
+		if ( tt >= _clms_org ) continue;
+		    
+		if ( RangeChecnkC(tt) ){
+			_c_eles += _clmt[tt];
+			_cperm[tt] = (  pfname && !(tflag2&TRSACT_WRITE_PERM) )  ? t : _c_clms++ ;
+		}
+		else{
+			_cperm[tt] = _clms_end+1 ;
+		}
+	}
+
+	if( pfname && !(tflag2&TRSACT_WRITE_PERM) ){
+		_c_clms = ttt_max+1;
+	}
+	delete [] p;
+	return ;
+}
+
+
+//void FILE_COUNT::initRperm(PERM *p , size_t base_clm, size_t base_ele){
+void FILE_COUNT::initRperm(int tflag){
+
+  PERM *p=NULL;
+
+  if ( tflag&(LOAD_SIZSORT+LOAD_WSORT) ){
+    if ( tflag&LOAD_WSORT ){
+    	// p =_C.roww_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
+    	p = roww_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
+
+    }	else {
+      //p =_C.rowt_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
+      p = rowt_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
+    }
+  }
+ 
+	// _r_eles = base_ele;  _r_clms = base_clm;
+
+	_rperm = new PERM[_rows_org];//malloc2
+			
+	// compute #elements according to rowt, and set rperm
+	VEC_ID tt=0;
+	for( VEC_ID t=0 ; t<_rows_org ; t++){
+		tt = p? p[t]: t; 
+		if ( RangeChecnkR(tt)){
+			_rperm[tt] = _r_clms++;
+			_r_eles += _rowt[tt];
+		}
+		else{
+			_rperm[tt] = _rows_org+1;
+		}
+	}
+	return;
+}
+	
+void FILE_COUNT::makePerm(char *pfname,int tflag,int tflag2){
+
+//	PERM ** rtn = new PERM *[2]:
+
+	initCperm(pfname,tflag,tflag2);
+
+	if ( _c_clms == 0 ) throw ("there is no frequent item");
+
+	//複数回動くことを考えてる？ おそらく両方0
+	//initRperm( p , _T.get_eles(), _T.get_t()); 
+	initRperm( tflag ); 
+	
+	
+	return ;
+	
+
+}
+
+
+
+/*
 
 void FILE_COUNT::initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag){
 
-			_c_eles=0;
-			_c_clms=0;
+	_c_eles=0;
+	_c_clms=0;
 
-			_cperm = new PERM[_clms_org+1]; // malloc2
-			for(size_t i =0 ;i<_clms_org;i++){ 
-				_cperm[i] = _clms_org+1; 
-			}
+	_cperm = new PERM[_clms_org+1]; // malloc2
+	for(size_t i =0 ;i<_clms_org;i++){ 
+		_cperm[i] = _clms_org+1; 
+	}
 
-			VEC_ID tt =0 ;
-		  for(size_t t=0; t < ttt; t++){
-		    tt = p? p[t]: t;
-		    if ( tt >= _clms_org ) continue;
+	VEC_ID tt =0 ;
+	for(size_t t=0; t < ttt; t++){
+		tt = p? p[t]: t;
+		if ( tt >= _clms_org ) continue;
 		    
-		    if ( RangeChecnkC(tt) ){
-  		    _c_eles += _clmt[tt];
-		    	_cperm[tt] = flag ? t : _c_clms++ ;
-		    }else {
-    	 		_cperm[tt] = c_end ;
-    		}
-		  }
-		  return ;
+		if ( RangeChecnkC(tt) ){
+			_c_eles += _clmt[tt];
+			_cperm[tt] = flag ? t : _c_clms++ ;
 		}
+		else{
+			_cperm[tt] = c_end ;
+		}
+	}
+	return ;
+}
 
-		
 void FILE_COUNT::initRperm(PERM *p , size_t base_clm, size_t base_ele){
 
 			_r_eles = base_ele;
@@ -454,11 +588,10 @@ void FILE_COUNT::initRperm(PERM *p , size_t base_clm, size_t base_ele){
 					_rperm[tt] = _rows_org+1;
     		}
 			}
-		}
-	
+}
 
 
-
+*/
 
 
 

@@ -373,10 +373,10 @@ QUEUE_INT KGLCM::maximality_check (
 /*************************************************************************/
 void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
-  int bnum   = _TT.get_bnum();
-  int bblock = _TT.get_bblock();
-  int wnum   = _TT.get_wnum();
-  int wblock = _TT.get_wblock();
+  int bnum     = _TT.get_bnum();
+  int bblock   = _TT.get_bblock();
+  int wnum     = _TT.get_wnum();
+  int wblock   = _TT.get_wblock();
   VEC_ID new_t = _TT.get_new_t();
 
   QUEUE_INT cnt, f, *x, m, e;
@@ -514,6 +514,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   _TT.set_wnum(wnum);
   _TT.set_wblock(wblock);
 
+
  END:;
 
   while ( _II.iadd_get_t() > qt ) {
@@ -538,9 +539,9 @@ int KGLCM::run (int argc, char *argv[]){
 	if( setArgs(argc, argv) ) return 1;
 
   _tFlag  |= (LOAD_PERM +LOAD_DECSORT +LOAD_RM_DUP);
+
   //_tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC +TRSACT_ALLOC_OCC + 
   //							((_iFlag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
-
 
   _tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC + 
   							((_iFlag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));

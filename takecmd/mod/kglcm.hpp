@@ -107,12 +107,10 @@ class KGLCM{
 			_occ_pw2 = _occ_pw; 
 		}
 		else{
-  	  //calloc2 (_occ_w2, siz+2, goto ERR);
-  	 	_occ_w2 = new WEIGHT[siz+2]();
+  	 	_occ_w2 = new WEIGHT[siz+2](); //calloc2 
   	 	
     	if ( _tFlag2 & TRSACT_NEGATIVE ){
-    		 //calloc2 (_occ_pw2, siz+2, goto ERR);
-    		 _occ_pw2 =  new WEIGHT[siz+2]();
+    		 _occ_pw2 =  new WEIGHT[siz+2](); //calloc2
     	}
 			else{
 				_occ_pw2 = _occ_w2;
@@ -140,11 +138,11 @@ class KGLCM{
 		_II.alloc(_output_fname, perm, siz, 0);
 
  	 if ( _target < siz && _II.exist_perm() ){
-  	  //FLOOP (j, 0, _II.get_item_max()){ 
-    	for(j=0;j<_II.get_item_max();j++){
 
+    	for(j=0;j<_II.get_item_max();j++){
     		if ( _II.get_target() == _II.get_perm(j) ){ _II.set_target(j); break; } 
     	}
+
   	}
 	  return;
 	  ERR:;
@@ -177,7 +175,7 @@ class KGLCM{
 
 	  _TT.resizeOQ(_TT.get_clms(),0);
 
-		_TT.printMes( "separated at %d\n", _TT.get_sep());
+		// _TT.printMes( "separated at %d\n", _TT.get_sep());
 
 		if ( !(_TT.exist_sc()) ) _TT.calloc_sc( _TT.get_clms()+2);
 		

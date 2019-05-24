@@ -86,6 +86,7 @@ class SETFAMILY{
 
 		void load(int flag , char *fname);
 
+
 		void clrMark(int i,char* mark){
 			_v[i].clrMark(mark);
 		}
@@ -106,9 +107,7 @@ class SETFAMILY{
 
 		VEC_ID * counting(){
 
-			VEC_ID * p ;
-  	  // calloc2 (p, _clms, {exit(1);});
-  	  p = new VEC_ID[_clms]();
+			VEC_ID * p = new VEC_ID[_clms](); // calloc2
 
 			for (VEC_ID iv=0 ; iv< _t ; iv++){
 
@@ -241,11 +240,28 @@ class SETFAMILY{
 		  _buf = new QUEUE_INT[_eles+_end+1]; //malloc2 (buf,(_eles+_end+1)*_unit);
 
 		}
-		
-		void allocBuffer(){			
-		  _v   = new QUEUE[_end];  // _v = malloc2 (_v, _end );
-		  _buf = new QUEUE_INT[_eles+_end+1]; //malloc2( buf,(_eles+_end+1) * _unit);
+
+		void setSize(FILE_COUNT &_C,int flag){			
+
+ 			if ( _C.r_eles() > _C.c_eles() && !(flag & LOAD_TPOSE) ){
+ 				_eles = _C.c_eles();
+ 			}
+ 			else{
+ 				_eles = _C.r_eles();
+ 			}
+
+			_clms = _C.c_clms(); 
+			_t = _C.r_clms();
+			
+  		_ele_end = _eles;
+  		_end = _t * ( (flag&LOAD_DBLBUF) ? 2 : 1 ) + 1  ;
+
+			// allocBuffer()
+		  _v   = new QUEUE[_end];  // malloc2 
+		  _buf = new QUEUE_INT[_eles+_end+1]; //malloc2
+
 		  return ;
+
 		}
 
 
@@ -453,11 +469,6 @@ class SETFAMILY{
   	void set_buf(QUEUE_INT *buf){ _buf = buf; }
 
   	void dec_eles(){  _eles--; }
-
-  	void adjustEnd(int dblFlg){ 
-  		_ele_end = _eles;
-  		_end = _t * ( dblFlg ? 2 : 1 ) + 1  ;
-  	}
 
   	void set_w(int i,int j,WEIGHT w){ _w[i][j]=w;}
   	void set_w(int i,WEIGHT *w){ _w[i]=w;}

@@ -55,7 +55,7 @@ class TRSACT {
   char *_fname,*_fname2;      // input file name
 	char *_wfname;      //,*_wfname2 <-必要なら復活させる //weight file name 
 	char *_item_wfname; //, *_item_wfname2 <-必要なら復活させる // item-weight file name
-  char *_pfname; // item-permutation file name
+  char *_pfname; 			// item-permutation file name
 
   // lower/upper bound of #elements in a column/row. 
   // colunmn or row of out of range will be ignored
@@ -68,6 +68,7 @@ class TRSACT {
   */
 
   FILE_COUNT _C;
+  //PERM * _cPerm, * _rPerm;
 	
 	char * _ERROR_MES; 
 
@@ -81,7 +82,7 @@ class TRSACT {
   // VEC_ID _rows_org, _row_max; // #transactions in the original file
   VEC_ID  _row_max; // #transactions in the original file
 
-  VEC_ID _end1, _sep; // #trsact in 1st file, the ID of the last permed trsact of 1st file
+  // VEC_ID _end1 _sep #trsact in 1st file, the ID of the last permed trsact of 1st file
   size_t _eles_org;  // #elements in the original file
   WEIGHT _total_w, _total_pw; 
   WEIGHT _th;  // threshold for frequency of items
@@ -123,11 +124,12 @@ class TRSACT {
 	// デストラクタへ
 	void end (void){}
 
-	/* allocate memory, set permutation, and free C.clmt,rowt,rw,cw */
-	int alloc(void);
+	// allocate memory, set permutation, and free C.clmt,rowt,rw,cw 
+	void _alloc(void);
 
-	/* load the file to allocated memory according to permutation, and free C.rw, C.cw */
-	void file_read ( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
+	// load the file to allocated memory according 
+	// to permutation, and free C.rw, C.cw 
+	void _file_read( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
 
 
 
@@ -135,8 +137,11 @@ class TRSACT {
 	void copy ( VEC_ID tt, VEC_ID t, QUEUE_INT end);
 
 
-	void sort( FILE_COUNT *C);
-	void sortELE( FILE_COUNT *C);
+	void _sort(void);
+	void _sortELE(void);
+	void _OccAlloc(void);
+
+
 
 	/* occurrence deliver (only counting) */
 	/* WARNING: next cell of the last item of each transaction must be INTHUGE */
@@ -184,55 +189,53 @@ class TRSACT {
 	/* remove the unified transactions from occ (consider T->occ_unit) */
 	void reduce_occ (QUEUE *occ);
 
-
 	public:
 
   	//_clm_lb(0),_clm_ub(VEC_ID_END),_row_lb(0),_row_ub(QUEUE_IDHUGE),
   	//_clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
-  	//_w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),
+  	//_w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),	/*_rows_org(0),*/
+  	//_sep(0),_end1(0),
 
 	TRSACT(void):
   	_fname(NULL),_wfname(NULL),_item_wfname(NULL),_fname2(NULL),_pfname(NULL),
-  	_flag(0),_flag2(0),_clms_org(0),_clm_max(0),_clms_end(0),
-  	/*_rows_org(0),*/_row_max(0),_end1(0),_sep(0),
+  	_flag(0),_flag2(0),_clms_org(0),_clm_max(0),_clms_end(0), _row_max(0),
   	_perm(NULL), _trperm(NULL),_pw(NULL),
   	_eles_org(0),_total_w(0),_total_pw(0),_str_num(0),
 		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0),_ERROR_MES(NULL)
 		{}
 		
 		
-	~TRSACT(){ }
+	~TRSACT(){}
 
 	int loadMain(bool elef=false);
 
-	// load transaction file to TRSACT 
 	// use by sspc 
-	int load(
+	VEC_ID adjust_sep(VEC_ID sep){
+		return _C.adjust_sep(sep,_flag&LOAD_TPOSE);
+	}
+	int addjust_lenlb(int ub,int lb){
+
+	  for (VEC_ID i=0 ; i<_T.get_t() ; i++){
+    	if ( _T.get_vt(i) <= ub ){ lb = i; break; }
+    }
+    return lb;
+	}
+
+
+	// load transaction file to TRSACT 
+	int load( //sspc
 		int flag ,
 		char *fname,char *wfname,char *iwfname,char *fname2,
 		WEIGHT w_lb,WEIGHT w_ub,
 		double clm_lb_  , double clm_ub_ ,
 		QUEUE_ID row_lb , QUEUE_ID row_ub ,
-		double row_lb_  , double row_ub_,
-		VEC_ID sep
+		double row_lb_  , double row_ub_
 	){
-	  // パラメータセット
 		_flag = flag;
 		_fname = fname;
 		_wfname = wfname;
 		_item_wfname = iwfname;
 		_fname2 = fname2; 
-		/*
-		_w_lb = w_lb;
-		_w_ub = w_ub; 
-		_clm_lb_ = clm_ub_; 
-		_clm_lb_ = clm_ub_; 
-		_row_lb = row_lb;
-		_row_ub = row_ub ;
-		_row_lb_ = row_lb_;
-		_row_ub_ = row_ub_;
-		*/
-		_sep = sep;
 
 	  _C.setLimit(
 	  	w_lb   , w_ub   ,
@@ -240,14 +243,10 @@ class TRSACT {
 	  	row_lb , row_ub ,
 	  	row_lb_, row_ub_
 	  );
-
-
 		return loadMain();
-
 	}
 
-
-	int load(
+	int load( // lcm lcmseq
 		int flag ,int flag2 ,
 		char *fname,char *wfname,char *iwfname,char *fname2,
 		WEIGHT w_lb,WEIGHT w_ub,bool eleflg=false
@@ -259,41 +258,24 @@ class TRSACT {
 		_wfname = wfname;
 		_item_wfname = iwfname;
 		_fname2 = fname2; 
-		/*
-		_w_lb = w_lb;
-		_w_ub = w_ub; 
-		*/
 
 	  _C.setLimit( w_lb , w_ub );
-
-
 
 		return loadMain(eleflg);
 		
 	}
 
-
-	// addjust _lenlb
-	int addjust_lenlb(int ub,int lb){
-		VEC_ID i;	 
-	  for (i=0 ; i<_T.get_t() ; i++){
-    	if ( _T.get_vt(i) <= ub ){ lb = i; break; }
-    }
-    return lb;
-	}
-
 	// using only sspc 
-	void QUEINS(){
+	void initialQueSet(){
 
 		VEC_ID i, e;
  		QUEUE_INT *x;
 
 		QUEUE *occ = &_OQ[_T.get_clms()];
-		VEC_ID t   = _T.get_t();
 		QUEUE_INT M= _T.get_clms();
-		
-		for (i=0 ; i< (occ? occ->get_t(): t) ; (i)++){
-   		e = occ? occ->get_v(i): i;
+
+		for (i=0 ; i< occ->get_t() ; (i)++){ // occ? occ->get_t(): t
+   		e = occ->get_v(i);
 			for ( x=_T.get_vv(e) ; *x < M ; x++){ 
 				_OQ[*x].push_back(e);
 			}
@@ -362,14 +344,18 @@ class TRSACT {
 
 
 	//アクセッサ
+	//VEC_ID get_sep(){ return _sep;}
+
 	void set_perm(PERM * perm){ _perm = perm;}
 
 	PERM * get_perm(void){ return _perm;}
 	PERM   get_perm(int i){ return _perm[i];}
+
 	VEC_ID get_clms(void){ return _T.get_clms();}
 	size_t get_eles(void){ return _T.get_eles();}
 	QUEUE_INT get_clms_org(void){ return _C.clms();}// _clms_org;}
 	VEC_ID get_rows_org(void){ return _C.rows();}//_rows_org;}
+
 
 	PERM get_trperm(int i) { return _trperm[i]; }
 	PERM* get_trperm(void) { return _trperm; } //かり
@@ -383,12 +369,12 @@ class TRSACT {
 	int get_bblock(void){return _buf.get_block_num();} 
 	int get_wnum(void){return _wbuf.get_num();}  
 	int get_wblock(void){return _wbuf.get_block_num();} 
+
 	VEC_ID get_new_t(){ return _new_t;}
 
 	bool incNega(){ return (_flag2 & TRSACT_NEGATIVE); }
 
 	VEC_ID get_t(void){ return _T.get_t();}
-	VEC_ID get_sep(){ return _sep;}
 	WEIGHT get_w(int i){ return _w[i];}
 	
 	
@@ -402,22 +388,19 @@ class TRSACT {
 
 
 	QUEUE_INT * beginOQv(int i){ return _OQ[i].get_v();}
-	QUEUE_INT * endOQv(int i){ return _OQ[i].get_v()+ _OQ[i].get_t();}
+	QUEUE_INT * endOQv  (int i){ return _OQ[i].get_v()+ _OQ[i].get_t();}
 	QUEUE_INT * startOQv(int i){ return _OQ[i].get_v()+_OQ[i].get_s();}
-
-	KGLCMSEQ_ELM * beginOQvELE(int i){return _OQELE[i].get_v();}
-	KGLCMSEQ_ELM * endOQvELE(int i){  return _OQELE[i].get_v()+ _OQELE[i].get_t();}
 
 
 	void resizeOQ(int i,int v){ _OQ[i].resize(v); }
 
-	QUEUE_ID get_OQ_t(int i){ return _OQ[i].get_t(); }
-	QUEUE_ID get_OQ_s(int i){ return _OQ[i].get_s(); }
-	QUEUE_INT get_OQ_v(int i,int j){ return _OQ[i].get_v(j); }
 
-	QUEUE_ID get_OQ_tELE(int i){ return _OQELE[i].get_t(); }
 
 	//	==== use in seq	====
+	QUEUE_ID get_OQ_tELE(int i){ return _OQELE[i].get_t(); }
+	KGLCMSEQ_ELM * beginOQvELE(int i){return _OQELE[i].get_v();}
+	KGLCMSEQ_ELM * endOQvELE(int i){  return _OQELE[i].get_v()+ _OQELE[i].get_t();}
+
 	QUEUE_INT get_Tvv(int i,int j) { return _T.get_vv(i,j);}
 	void set_Tvv(int i,int j,QUEUE_INT v) { _T.set_vv(i,j,v);}
 	char  get_sc(int i){return _sc[i]; }
@@ -541,61 +524,6 @@ class TRSACT {
     reduce_occ(occ);
 	}
 
-
-	// _OQ クラス化した方がいい?
-	void OccAlloc(){
-
-    VEC_ID *p;
-    p = _T.counting();
-
-    _clm_max = p[0];
-		size_t cmmsize = p[0];
-		for(int cmm = 1 ; cmm < _T.get_clms() ;cmm++ ){
-			cmmsize += p[cmm];
-			if( _clm_max < p[cmm]){
-				_clm_max=p[cmm];
-			}
-		}
-			
-		_OQ = new QUEUE[_T.get_clms()+1];
-
-		QUEUE_INT *cmn_pnt;
-		size_t pos=0;
-		//malloc2 (cmn_pnt, 
-		//	(cmmsize+_T.get_clms()+2), 
-		//	{delete(_OQ); EXIT;}
-		//); 
-		// err処理 delete(_OQ)
-		try{
-			cmn_pnt = new QUEUE_INT[cmmsize+_T.get_clms()+2];
-		}catch(...){
-			delete[] _OQ;
-			throw;
-		}
-
-		for(VEC_ID cmmv =0; cmmv < _T.get_clms() ; cmmv++){
-
-			_OQ[cmmv].alloc( p[cmmv],cmn_pnt+pos );
-
-			pos += p[cmmv]+1;
-
-		}
-		_OQ[_T.get_clms()].alloc( MAX(_T.get_t(), _clm_max));
-
-
-		// end is illegally set to 0, for the use in "TRSACT_find_same" 
-		for(size_t i=0 ; i < _T.get_clms()+1 ; i++ ){
-			_OQ[i].endClr();
-		}
-
-    // initial occurrence := all transactions
-    // ARY_INIT_PERM (_OQ[_T.get_clms()].get_v(), _T.get_t());   
-    _OQ[_T.get_clms()].initVprem(_T.get_t());
-
-    delete [] p;
-    
-  }
-
 	void Mque_allocELE(VECARY<VEC_ID> &p){
 		size_t cmn_size_t = 0;
 
@@ -606,12 +534,7 @@ class TRSACT {
 		_OQELE = new KGLCMSEQ_QUE[_T.get_clms()+1];
 
 		char *cmn_pnt;
-
-		//malloc2 (cmn_pnt,
-		//(cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)), 
-		//	{delete(_OQELE); EXIT;}
-		//);
-		try{ 
+		try{ //malloc2
 			if(!( cmn_pnt = (char *)malloc(sizeof(char)* ((cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)))  ))){
 				throw("memory allocation error : malloc2");
 			}
@@ -619,8 +542,6 @@ class TRSACT {
 			delete[] _OQELE;
 			throw;
 		}
-		
-
 
 		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
 			_OQELE[cmm_vecid].set_end(p[cmm_vecid]);

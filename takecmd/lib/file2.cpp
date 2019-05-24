@@ -274,26 +274,41 @@ int FILE2::read_pair ( LONG *x, LONG *y, WEIGHT *w, int flag){
 /* read an item and its weight (auto-adjast when */
 int FILE2::read_item (FILE2 *wfp, LONG *x, LONG *y, WEIGHT *w, int fc, int flag){
   int f, ff=0;
+
   *y = read_int ();
+
   if ( flag & LOAD_ID1 ){ (*y)--; (*x)--; }
+
   if ( _FILE_err&4 ) return (0);
-  if ( flag & LOAD_EDGEW ) *w = read_double ();
+
+  if ( flag & LOAD_EDGEW ){
+  	*w = read_double ();
+  }
   else if ( wfp ){
-    f = _FILE_err; _FILE_err = 0;
+    f = _FILE_err; 
+    _FILE_err = 0;
+
     *w = wfp->read_WEIGHT ();
-    if ( (_FILE_err&4) && fc ) *w = wfp->read_double ();
+
+    if ( (_FILE_err&4) && fc ) *w = wfp->read_double ();  // << これおかしい？
+
     ff = _FILE_err;
     _FILE_err = f;
+
   }
-  if ( (flag & LOAD_TPOSE) || ((flag&LOAD_EDGE) && *x > *y) ) SWAP_<LONG>(x, y);
+
+  if ( (flag & LOAD_TPOSE) || ((flag&LOAD_EDGE) && *x > *y) ){
+  	SWAP_<LONG>(x, y);
+  }
+
   return (ff);
+
 }
 
 
 void FILE2::closew (){
   flush_last ();
   _fclose2();
-  //free2 (_buf_org);
   delete [] _buf_org;
   _buf_org = NULL;
   _buf = _buf_end = 0;
