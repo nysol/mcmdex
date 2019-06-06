@@ -33,12 +33,9 @@ using namespace std;
 #define TRSACT_1ST_SHRINK 134217728  // write item-order to file
 
 
-//#define TRSACT_ALLOC_OCC 8388608  // make new transaction for each 
-//#define TRSACT_INIT_SHRINK 65536  // allocate memory for database reduction
-
-
+// default weight of the transaction, for missing weights in weight file
 #ifndef TRSACT_DEFAULT_WEIGHT
- #define TRSACT_DEFAULT_WEIGHT 0  // default weight of the transaction, for missing weights in weight file
+ #define TRSACT_DEFAULT_WEIGHT 0  
 #endif
 
 #ifndef TRSACT_MAXNUM 
@@ -52,23 +49,12 @@ class TRSACT {
   int _flag;      
   int _flag2;  // <= いる？
 
-  char *_fname,*_fname2;      // input file name
-	char *_wfname;      //,*_wfname2 <-必要なら復活させる //weight file name 
-	char *_item_wfname; //, *_item_wfname2 <-必要なら復活させる // item-weight file name
-  char *_pfname; 			// item-permutation file name
-
-  // lower/upper bound of #elements in a column/row. 
-  // colunmn or row of out of range will be ignored
-  /*
-  VEC_ID _clm_lb, _clm_ub; 
-  WEIGHT   _w_lb, _w_ub;
-  double   _clm_lb_, _clm_ub_;
-  QUEUE_ID _row_lb, _row_ub;
-  double   _row_lb_, _row_ub_;  
-  */
+  char *_fname,*_fname2;	// input file name
+	char *_wfname;      		// weight file name 
+	char *_item_wfname;  		// item-weight file name
+  char *_pfname; 					// item-permutation file name
 
   FILE_COUNT _C;
-  //PERM * _cPerm, * _rPerm;
 	
 	char * _ERROR_MES; 
 
@@ -79,10 +65,8 @@ class TRSACT {
 
   QUEUE_INT _clms_org, _clm_max, _clms_end;  // #items in original file, max size of clms, and max of (original item, internal item)
 
-  // VEC_ID _rows_org, _row_max; // #transactions in the original file
   VEC_ID  _row_max; // #transactions in the original file
 
-  // VEC_ID _end1 _sep #trsact in 1st file, the ID of the last permed trsact of 1st file
   size_t _eles_org;  // #elements in the original file
   WEIGHT _total_w, _total_pw; 
   WEIGHT _th;  // threshold for frequency of items
@@ -122,14 +106,16 @@ class TRSACT {
 	void prop_print (void);
 
 	// デストラクタへ
-	void end (void){}
+	//void end (void){}
 
 	// allocate memory, set permutation, and free C.clmt,rowt,rw,cw 
 	void _alloc(void);
 
 	// load the file to allocated memory according 
 	// to permutation, and free C.rw, C.cw 
-	void _file_read( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
+	//void _file_read( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
+
+	void _file_read( FILE2 &fp,  FILE2 &fp2 , int flag);
 
 
 
@@ -191,11 +177,6 @@ class TRSACT {
 
 	public:
 
-  	//_clm_lb(0),_clm_ub(VEC_ID_END),_row_lb(0),_row_ub(QUEUE_IDHUGE),
-  	//_clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
-  	//_w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),	/*_rows_org(0),*/
-  	//_sep(0),_end1(0),
-
 	TRSACT(void):
   	_fname(NULL),_wfname(NULL),_item_wfname(NULL),_fname2(NULL),_pfname(NULL),
   	_flag(0),_flag2(0),_clms_org(0),_clm_max(0),_clms_end(0), _row_max(0),
@@ -211,8 +192,10 @@ class TRSACT {
 
 	// use by sspc 
 	VEC_ID adjust_sep(VEC_ID sep){
-		return _C.adjust_sep(sep,_flag&LOAD_TPOSE);
+		if(_flag&LOAD_TPOSE){ return _C.adjust_ClmSep(sep);}
+		else                { return _C.adjust_RowSep(sep);}
 	}
+
 	int addjust_lenlb(int ub,int lb){
 
 	  for (VEC_ID i=0 ; i<_T.get_t() ; i++){
@@ -344,7 +327,6 @@ class TRSACT {
 
 
 	//アクセッサ
-	//VEC_ID get_sep(){ return _sep;}
 
 	void set_perm(PERM * perm){ _perm = perm;}
 
@@ -564,6 +546,31 @@ class TRSACT {
 } ;
 
 
+//#define TRSACT_ALLOC_OCC 8388608  // make new transaction for each 
+//#define TRSACT_INIT_SHRINK 65536  // allocate memory for database reduction
+//PERM * _cPerm, * _rPerm;
+//,*_wfname2 <-必要なら復活させる 
+//, *_item_wfname2 <-必要なら復活させる // item-weight file name
+// VEC_ID _rows_org, _row_max; // #transactions in the original file
+
+// _clm_lb(0),_clm_ub(VEC_ID_END),_row_lb(0),_row_ub(QUEUE_IDHUGE),
+// _clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
+// _w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),	/*_rows_org(0),*/
+// _sep(0),_end1(0),
+
+	//VEC_ID get_sep(){ return _sep;}
 
 
+  // VEC_ID _end1 _sep #trsact in 1st file, the ID of the last permed trsact of 1st file
+
+
+  // lower/upper bound of #elements in a column/row. 
+  // colunmn or row of out of range will be ignored
+  /*
+  VEC_ID _clm_lb, _clm_ub; 
+  WEIGHT   _w_lb, _w_ub;
+  double   _clm_lb_, _clm_ub_;
+  QUEUE_ID _row_lb, _row_ub;
+  double   _row_lb_, _row_ub_;  
+  */
 

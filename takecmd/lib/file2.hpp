@@ -413,6 +413,8 @@ class FILE2 {
 	void read_until_newline ();
 	int  read_pair ( LONG *x, LONG *y, WEIGHT *w, int flag);
 	int  read_item (FILE2 *wfp, LONG *x, LONG *y, WEIGHT *w, int fc, int flag);
+	int  read_item (LONG *x, LONG *y, int flag);
+
 	void closew();
 	void print_int ( LONG n, char c);
 	void print_real (double n, int len, char c);

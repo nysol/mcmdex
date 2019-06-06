@@ -162,8 +162,8 @@ void TRSACT::_alloc(){
 
   // make the inverse perm of items
   for(VEC_ID t =0 ; t < _C.clms() ; t++ ){
-    if ( _C.get_cperm(t) <= _clms_end ){
-      _perm[_C.get_cperm(t)] = t;
+    if ( _C.cperm(t) <= _clms_end ){
+      _perm[_C.cperm(t)] = t;
     }
   }
 
@@ -176,60 +176,42 @@ void TRSACT::_alloc(){
 
 
 /* load the file to allocated memory according to permutation */
-void TRSACT::_file_read (FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname){
-
-	// flag ( _C.r_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
+// flag ( _C.r_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
+void TRSACT::_file_read (FILE2 &fp, FILE2 &fp2,  int flag)
+{ 
 
   QUEUE_ID tt;
-  LONG x, y;
-  FILE2 wfp;
-  WEIGHT w=0;
-  int fc=0, FILE_err_=0;
+  VEC_ID t=0;
 
-  fp->reset ();
-  if ( _flag&(LOAD_NUM+LOAD_GRAPHNUM) ) fp->read_until_newline ();
-  if ( iwfname ) wfp.open ( iwfname, "r");
-  if ( flag ) { 
-  	_T.setVBuffer(0, 0); 
+  if ( flag ) {  _T.setVBuffer(0, 0); }
+
+
+  fp.reset();
+  if(_flag&(LOAD_NUM+LOAD_GRAPHNUM)){
+  	fp.read_until_newline(); 
   }
+	  
+  if( _item_wfname ){ // sspcでitem weightを指定した時のみ
+	  FILE2 wfp(_item_wfname);
+		_T.file_read( fp , wfp, _C , &t , flag , _flag);
+  	
+  }
+  else{
+		_T.file_read( fp , _C , &t ,flag , _flag);
+	}
 
-  do {
+	// fp2にアイテムファイルは指定できないようになってたので
+	if( fp2.exist() ){
+		fp2.reset();
+	  if(_flag&(LOAD_NUM+LOAD_GRAPHNUM)){
+  		fp2.read_until_newline (); 
+  	}
+		_T.file_read( fp2 , _C , &t , flag , _flag);
+	}
 
-    if ( flag ){
-    	if ( C->CheckRperm(*t) ){ _T.setvvByPos( C->get_rperm(*t) ); }
-    }
-
-    x = *t;
-    FILE_err_ = fp->read_item(iwfname?&wfp:NULL, &x, &y, &w, fc, _flag);
-
-    if ( fp->readNG() ) goto LOOP_END; //FILE_err&4
-
-    if ( C->get_rperm(x)<=C->rows() && C->get_cperm(y)<=_clms_end ){
-
-      if ( iwfname ){
-      	 _T.setwByIW( C->get_rperm(x), w);
-      }
-      _T.push_back( C->get_rperm(x) ,C->get_cperm(y));
-
-    }
-
-    if ( fp->getOK() ){ //( FILE_err&3 )
-
-      LOOP_END:;
-      (*t)++;
-      // even if next weight is not written, 
-      // it is the rest of the previous line
-      fc = FILE_err_? 0: 1; 
-      FILE_err_=0; 
-    }
-	} while ( fp->eof() ); // (FILE_err&2)==0
-
-	_T.allvvInit();
-
-  if ( iwfname ) wfp.close ();
+	_T.initQUEUEs();
 
 }
-
 /* sort the transactions and items according to the flag, allocate OQ, and database reduction */
 /* causion! not adopt for itemweights!!!!! */
 void TRSACT::_sort(){
@@ -242,38 +224,32 @@ void TRSACT::_sort(){
   QUEUE_ID i;
   WEIGHT *ww;
 
-	_T.allvvInit();
+	// _T.allvvInit(); //これいる？
 
   flag = (_flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE);
 
 	// sort rows for the case 
 	// that some columns are not read
-  if ( flag ){   
-		_T.setInvPermute( _C.get_rperm(),_trperm,flag);
-  }
-  //free2 (C->rperm); free2 (C->cperm);
+  if ( flag ){  _T.setInvPermute( _C.get_rperm(), _trperm , flag); }
 
 
-  if ( _flag & LOAD_PERM ) flag = 1;
-  else flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0);
 
-  if ( flag ){
-  	_T.queueSortALL(flag);
-  }
+  if ( _flag & LOAD_PERM ) {  flag = 1; }
+  else{  flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0); }
 
-  if ( _flag & LOAD_RM_DUP ){
-   	_T.rmDup();
-  }
+  if ( flag ){ _T.queueSortALL(flag); }
+
+  if ( _flag & LOAD_RM_DUP ){	_T.rmDup(); }
 
 	_row_max = _T.RowMax();
 
-	// _flag2 & TRSACT_ALLOC_OCC+TRSACT_SHRINK
-	_OccAlloc(); 
+	_OccAlloc();  // _flag2 & TRSACT_ALLOC_OCC+TRSACT_SHRINK
 
 	// shrinking database
   if ( _flag2&TRSACT_1ST_SHRINK ){
 
     Q = _OQ[_T.get_clms()];
+
     _OQ[_T.get_clms()].tClr();
 
     find_same( &Q, _T.get_clms());
@@ -302,7 +278,7 @@ void TRSACT::_sortELE(){
   KGLCMSEQ_QUE Q;
   QUEUE_ID i;
 
-	_T.allvvInit();
+	//_T.allvvInit();
 
   flag = (_flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE); // QUEUEsでOK?
 
@@ -426,21 +402,25 @@ int TRSACT::loadMain(bool elef){
   VEC_ID t=0;
 
 	// _T.file_read(fp , _C, &t, f, _flag&(LOAD_NUM+LOAD_GRAPHNUM), _item_wfname);
+	//  _file_read( &fp, &_C, &t, f, _item_wfname);
+  //	if ( _fname2 ){
+	//	  _file_read( &fp2, &_C, &t, f, NULL); 
+	//	}
 
-  _file_read( &fp, &_C, &t, f, _item_wfname);
-  
-  if ( _fname2 ){
-	  _file_read( &fp2, &_C, &t, f, NULL); 
-	}
+  _file_read( fp , fp2 , f);
 
   if(elef){ _sortELE(); }
 	else    { _sort   (); }
 
 
-  if (_ERROR_MES) end(); 
-  else prop_print();
-  return 0;
+  if (_ERROR_MES){
+	  fprintf(stderr,"TRSACT::loadMain");
+		return 1;
+  } 
 
+  prop_print();
+
+  return 0;
 
 }
 

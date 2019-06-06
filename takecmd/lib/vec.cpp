@@ -168,8 +168,8 @@ void SETFAMILY::SMAT_alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles
   }
 }
 
-
-void SETFAMILY::flie_load(FILE2 *fp){
+// sgraphに移行
+void SETFAMILY::_flie_load(FILE2 *fp){
 
   WEIGHT z=0;
   VEC_ID t;
@@ -238,6 +238,7 @@ void SETFAMILY::flie_load(FILE2 *fp){
 
 
 /* scan file and load the data from file to SMAT structure */
+// call from sgraph.ccp loadEDGE// sgraphに移行
 void SETFAMILY::load (int flag , char *fname)
 {
 
@@ -247,7 +248,7 @@ void SETFAMILY::load (int flag , char *fname)
   _flag = flag;
 
   fp.open ( _fname, "r");
-	flie_load(&fp);
+	_flie_load(&fp);
   fp.close ();     
 
   if(_ERROR_MES) EXIT;
@@ -266,13 +267,105 @@ void SETFAMILY::load (int flag , char *fname)
 
   _eles = _ele_end;
 
-	for(int i=0 ; i< _t;i++){ // allvvInitByT();
+	// allvvInitByT();
+	for(int i=0 ; i< _t;i++){ 
 		_v[i].set_v( _v[i].get_t() , _t);
 	}
 
   sort(); //なくせる？
 
 }
+
+//from Trsact (Not use weight)
+void SETFAMILY::file_read(
+	FILE2 &fp, FILE_COUNT &C,
+	VEC_ID *pos ,
+	int flag, int tflag
+){ 
+
+
+  LONG x, y;
+
+	do{
+
+		if ( flag ){
+    	if ( C.CheckRperm(*pos) ){ 
+				_v[ C.rperm(*pos) ].set_v( _v[C.rperm(*pos)-1].end()+1 );
+    	}
+    }
+    x = *pos;
+
+	  y = fp.read_int(); // fp.read_item( &x, &y, tflag);
+
+    if ( fp.readNG() ) goto LOOP_END; //FILE_err&4
+
+  	if( tflag & LOAD_ID1 ){ y--; x--; }
+
+	  if ( (tflag & LOAD_TPOSE) || ((tflag&LOAD_EDGE) && x > y) ){
+  		SWAP_<LONG>(&x, &y);
+	  }
+
+    if ( C.rperm(x)<=C.rows() && C.cperm(y) <= C.c_end() ){
+      _v[ C.rperm(x) ].push_back( C.cperm(y) );
+    }
+
+    if ( fp.getOK() ){ //( FILE_err&3 )
+    	LOOP_END:;
+      (*pos)++;
+    }
+	} while ( fp.eof() ); // (FILE_err&2)==0
+
+	return;
+
+}
+
+//from Trsact (use weight)
+void SETFAMILY::file_read(
+	FILE2 &fp, FILE2 &wfp,FILE_COUNT &C, 
+	VEC_ID *pos ,
+	int flag, int tflag){ 
+
+
+  LONG x, y;
+  WEIGHT w=0;
+  int fc=0, FILE_err=0;
+
+	do{
+
+		if ( flag ){
+    	if ( C.CheckRperm(*pos) ){ 
+				_v[ C.rperm(*pos) ].set_v( _v[C.rperm(*pos)-1].end()+1 );
+    	}
+    }
+    x = *pos;
+    FILE_err = fp.read_item(&wfp, &x, &y, &w, fc, tflag);
+
+    if ( fp.readNG() ) goto LOOP_END; //FILE_err&4
+
+    if ( C.rperm(x)<=C.rows() && C.cperm(y) <= C.c_end() ){
+      // _T.push_back( C->get_rperm(x) ,C->get_cperm(y));
+      // _T.setwByIW( C->get_rperm(x), w);
+  		_w[ C.rperm(x) ][ _v[C.rperm(x)].get_t() ] = w;
+      _v[ C.rperm(x) ].push_back( C.cperm(y) );
+
+    }
+
+    if ( fp.getOK() ){ //( FILE_err&3 )
+    	LOOP_END:;
+      (*pos)++;
+      // even if next weight is not written, 
+      // it is the rest of the previous line
+      fc = FILE_err ? 0: 1; 
+      FILE_err = 0; 
+    }
+	} while ( fp.eof() ); // (FILE_err&2)==0
+
+	return;
+
+}
+
+
+
 
 void SETFAMILY::replace_index(PERM *perm, PERM *invperm)
 {

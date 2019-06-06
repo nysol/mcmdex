@@ -46,16 +46,17 @@ class SETFAMILY{
   
 	char *_ERROR_MES;
 
-	void flie_load(FILE2 *fp);
+	void _flie_load(FILE2 *fp);
 
 	void SMAT_alloc (VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
 
 	//void end ();
-
 	//void print (FILE *fp);
 	//void print_weight (FILE *fp);
-
-	void *getvec ( int i){ return &_v[i]; }
+	//void setvvByPos(PERM pos){ _v[pos].set_v( _v[pos-1].end() +1);}
+	//void setwByIW(PERM i,WEIGHT w){ _w[i][_v[i].get_t()]=w;}
+	//void *getvec ( int i){ return &_v[i]; }
+	//void allvvInitByT(void){ for(int i=0 ; i< _t;i++){ _v[i].set_v( _v[i].get_t() , _t);}}
 
 	public:
 
@@ -72,7 +73,6 @@ class SETFAMILY{
 			delete []  _v;
 		}
 
-
 		void alloc_weight (FILE_COUNT &fc);
 		void alloc_w(void);
 		void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
@@ -85,6 +85,10 @@ class SETFAMILY{
 		}
 
 		void load(int flag , char *fname);
+
+		// call from trsact.cpp
+		void file_read(FILE2 &fp,            FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
+		void file_read(FILE2 &fp,FILE2 &wfp, FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 
 
 		void clrMark(int i,char* mark){
@@ -139,21 +143,13 @@ class SETFAMILY{
 
 		void set_vt(int i,QUEUE_ID v){ _v[i].set_t(v); }
 
-		void allvvInit(void){
+		void initQUEUEs(void){
 			for(int i=0 ; i< _t;i++){
 				_v[i].set_v( _v[i].get_t() , _clms);
 			}
 		}
 
-		void allvvInitByT(void){
-			for(int i=0 ; i< _t;i++){
-				_v[i].set_v( _v[i].get_t() , _t);
-			}
-		}
 
-		void setvvByPos(PERM pos){
-			_v[pos].set_v( _v[pos-1].end() +1);
-		}
 
 
 		void setVBuffer(int i,size_t v){
@@ -263,8 +259,6 @@ class SETFAMILY{
 		  return ;
 
 		}
-
-
 
 		void queueSortALL(int flag){
 			for(size_t t=0 ; t < _t ; t++){
@@ -476,12 +470,6 @@ class SETFAMILY{
   	void set_rw(WEIGHT *w){ _rw=w;}
   	void set_rperm(PERM *rperm){ _rperm=rperm;}
 
-  	void setwByIW(PERM i,WEIGHT w){ 
-  		_w[i][_v[i].get_t()]=w;
-  	}
-
-
-
   	void union_flag(int flag){ _flag |= flag;}
 
 		void setInvPermute(PERM *rperm,PERM *trperm,int flag);
@@ -498,6 +486,8 @@ class SETFAMILY{
 		}
 
 };
+
+
 
 
 

@@ -17,7 +17,7 @@
 #define FILE_COUNT_INT VEC_ID
 #define FILE_COUNT_INTF VEC_IDF
 
-//どっかで定義せんとだめ
+//どっかで定義せんとだめ( lcmの時1 それ以外の時は0になる)
 #ifndef TRSACT_DEFAULT_WEIGHT
  #define TRSACT_DEFAULT_WEIGHT 0  // default weight of the transaction, for missing weights in weight file
 #endif
@@ -26,26 +26,23 @@
  #define TRSACT_MAXNUM 20000000LL
 #endif
 
+
 class FILE_COUNT{
 
-  //int _flag;
-
-   // #rows, #column, #elements, minimum elements
-  QUEUE_INT _clms_org;
+	// #rows, #column, #elements, minimum elements
   VEC_ID    _rows_org;
+  QUEUE_INT _clms_org;
   size_t    _eles_org;
 
-  WEIGHT _total_w_org,_total_pw_org;
-  FILE_COUNT_INT _clms , _rows , _eles;
-  FILE_COUNT_INT _row_btm , _clm_btm;
-  FILE_COUNT_INT _row_min , _row_max;
-  FILE_COUNT_INT _clm_min , _clm_max;  // maximum/minimum size of column
-  FILE_COUNT_INT _clm_end , _row_end; // <=たぶんこれいらん
+  WEIGHT    _total_w_org,_total_pw_org;
 
-	QUEUE_INT _clms_end; // trsact org
-	QUEUE_INT _clms_max; // trsact org
+  FILE_COUNT_INT _clms , _rows , _eles;
+  WEIGHT _total_rw, _total_cw;         // WEIGHTs for rows/columns ... reserved.
 
   VEC_ID _end1; //2nd-trsact position
+
+	QUEUE_INT _clms_end; // trsact org
+
 
   // Limit 
   // lower/upper bound of #elements in a column/row. 
@@ -55,12 +52,8 @@ class FILE_COUNT{
 	QUEUE_ID _row_lb , _row_ub;
 	double   _row_lb_, _row_ub_;
 	double   _clm_lb_, _clm_ub_;
-  FILE_COUNT_INT _rw_end, _cw_end;
   
   
-
-  WEIGHT _total_rw, _total_cw;  // WEIGHTs for rows/columns ... reserved.
-
   // size of each row/clmn
 	VECARY <FILE_COUNT_INT> _rowt;
 	VECARY <FILE_COUNT_INT> _clmt;
@@ -68,9 +61,8 @@ class FILE_COUNT{
 	VECARY <WEIGHT> _rw;
 	VECARY <WEIGHT> _cw;
 
-
-
   PERM *_rperm, *_cperm;   // permutation (original->internal) of rows and columns
+
 	bool _negaFLG;
 
 	// 仮
@@ -86,25 +78,21 @@ class FILE_COUNT{
 
 
 
-		PERM *clmw_perm_sort(int flg){
-    	return _cw.qsort_perm(_clms_org, flg);
-    }
-    PERM *clmt_perm_sort(int flg){
-      return _clmt.qsort_perm(_clms_org, flg);
-    }
+	PERM *_clmw_perm_sort(int flg){
+    return _cw.qsort_perm(_clms_org, flg);
+  }
+	PERM *_clmt_perm_sort(int flg){
+		return _clmt.qsort_perm(_clms_org, flg);
+	}
 
-    PERM *roww_perm_sort(int flg){
-    	if(_rw.empty()){
-	      return _rowt.qsort_perm(_rows_org, flg);
-	    }
-	    else{
-	      return _rw.qsort_perm( _rows_org, flg);
-	    }
-    }
-
-    PERM *rowt_perm_sort(int flg){
-      return _rowt.qsort_perm( _rows_org, flg);
-    }
+	PERM *_roww_perm_sort(int flg){
+		if(_rw.empty()){ return _rowt.qsort_perm(_rows_org, flg); }
+		else           { return _rw.qsort_perm( _rows_org, flg);  }
+	}
+	
+	PERM *_rowt_perm_sort(int flg){
+		return _rowt.qsort_perm( _rows_org, flg);
+	}
 
 
 	void _tpose(void){
@@ -117,9 +105,9 @@ class FILE_COUNT{
 
 	}
 	
+	// set lower/upper bounds if it is given by the ratio
 	void _setBoundsbyRate(){
 
-		// set lower/upper bounds if it is given by the ratio
 	  if ( _row_lb_ ) _row_lb = _rows_org * _row_lb_;
   	if ( _row_ub_ ) _row_ub = _rows_org * _row_ub_;
   	if ( _clm_lb_ ) _clm_lb = _clms_org * _clm_lb_;
@@ -128,21 +116,23 @@ class FILE_COUNT{
 	}
 
 	public :
-	
+
 		FILE_COUNT(void):
 			_clms_org(0) ,_rows_org(0) , _total_w_org(0) , _total_pw_org(0) ,_eles_org(0) ,
-			_clms(0) , _rows(0) , _eles(0), _clm_end(0) , _row_end(0),
-			_row_btm(0) , _clm_btm(0) , _row_min(0) , _row_max(0),
-			_clm_min(0) , _clm_max(0) , _total_rw(0), _total_cw(0),
-			_rw_end(0) , _cw_end(0) , _rperm(NULL) , _cperm(NULL),_negaFLG(false),
+			_clms(0) , _rows(0) , _eles(0),
+			 _total_rw(0), _total_cw(0),
+			 _rperm(NULL) , _cperm(NULL),_negaFLG(false),
 			_w_lb(-WEIGHTHUGE) , _w_ub(WEIGHTHUGE) ,
 			_clm_lb(0) , _clm_ub(VEC_ID_END), 
 			_row_lb(0) , _row_ub(QUEUE_IDHUGE),
-		  _clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
+		  _clm_lb_(0.0),_clm_ub_(0.0),
+		  _row_lb_(0.0),_row_ub_(0.0),
 			_end1(0),_c_eles(0),_c_clms(0),_r_eles(0),_r_clms(0)
 			{}
 	
-		int file_count (int flg, FILE2 &fp, FILE2 &fp2, char *wf);
+	
+		// call from trsact.cpp
+		int file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf,char *wf2=NULL);
 
 
 		void count( 
@@ -155,10 +145,8 @@ class FILE_COUNT{
 		size_t c_eles(){ return _c_eles; }
 		size_t r_clms(){ return _r_clms; }
 		size_t r_eles(){ return _r_eles; }
-		size_t c_max(){ return _clms_max; }
-		size_t c_end(){ return _clms_end; }
+		size_t c_end() { return _clms_end; }
 
-		int  sumRow(size_t s,size_t e){ return _rowt.sum(s,e); }
 
 		bool rowEmpty(){ return _rowt.empty(); }
 
@@ -216,73 +204,86 @@ class FILE_COUNT{
 
     void set_rperm(VEC_ID tt,PERM v){ _rperm[tt] = v; }
 
-    PERM  get_rperm(VEC_ID t){ return _rperm[t]; }
-    PERM  get_cperm(VEC_ID t){ return _cperm[t]; }
+    PERM  rperm(VEC_ID t){ return _rperm[t]; }
+    PERM  cperm(VEC_ID t){ return _cperm[t]; }
+
+
     PERM* get_rperm(void){ return _rperm; }
     PERM* get_cperm(void){ return _cperm; }
 
 
 		// _headとstrIDを使うなら再考
-    VEC_ID adjust_sep(VEC_ID sep,int flag){ 
+    VEC_ID adjust_ClmSep(VEC_ID sep){
     	size_t tt=0;
-    	if(flag){
-    		for(size_t t=0;t<_clms_org;t++){
-			    if ( _cperm[t] <= _clms_org ){
-			      if ( t == _end1 && sep==0 ) sep = tt;
-      			if ( t == sep && sep>0 )  sep = tt;
-			    	tt++;
-			    }
-    		}
-    	}
-    	else{
-    		for(size_t t=0;t<_rows_org;t++){
-			    if ( _rperm[t] <= _rows_org ){
-			      if ( t == _end1 && sep==0 ) sep = tt;
-      			if ( t == sep && sep>0 )  sep = tt;
-			    	tt++;
-			    }
-    		}
+    	for(size_t t=0;t<_clms_org;t++){
+				if ( _cperm[t] <= _clms_org ){
+					if ( t == _end1 && sep==0 ) sep = tt;
+					if ( t == sep && sep>0 )  sep = tt;
+					tt++;
+				}
+			}
+    	return sep;
+    } 
+
+    VEC_ID adjust_RowSep(VEC_ID sep){
+    	size_t tt=0;
+			for(size_t t=0;t<_rows_org;t++){
+				if ( _rperm[t] <= _rows_org ){
+					if ( t == _end1 && sep==0 ) sep = tt;
+					if ( t == sep && sep>0 )  sep = tt;
+					tt++;
+				}
     	}
     	return sep;
     }
 
 		void makePerm(char *pfname,int tflag,int tflag2);
-		void initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag);
 		void initCperm(char *pfname,int tflag,int tflag2);
-
-		void initRperm(PERM *p , size_t base_clm, size_t base_ele);
 		void initRperm(int tflag);
 
+		//以下 using vec.cpp
+		int  sumRow(size_t s,size_t e){ return _rowt.sum(s,e); }
 
-		bool CheckRperm(VEC_ID t){
-		
+		bool CheckRperm(VEC_ID t){ 
+			return ( ( _rperm[t] < _rows_org ) && (  _rperm[t] > 0 ) );
+		}
+/*		
 			if( ( _rperm[t] < _rows_org ) && (  _rperm[t] > 0 ) ){
 				return true;
 			} 
 			return false;
-		}
+*/
 		
-		bool RangeChecnkC(VEC_ID tt,WEIGHT w_lb ,WEIGHT w_ub , VEC_ID clm_lb ,VEC_ID clm_ub){
-			return  ( RANGE(w_lb, _cw[tt], w_ub) && RANGE (clm_lb, _clmt[tt], clm_ub) );
-		}
-		bool RangeChecnkC(VEC_ID tt){
-			return  ( RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) );
-		}
-
-		bool RangeChecnkR(VEC_ID tt,QUEUE_ID row_lb ,QUEUE_ID row_ub ){
-			return  RANGE(row_lb, _rowt[tt], row_ub);
-		}
-		bool RangeChecnkR(VEC_ID tt){
-			return  RANGE(_row_lb, _rowt[tt], _row_ub);
-		}
-	
-
 
 };
 
+// int _flag;
+//  FILE_COUNT_INT _row_btm , _clm_btm;
+// FILE_COUNT_INT _clm_end , _row_end; // <=たぶんこれいらん
+// FILE_COUNT_INT _rw_end, _cw_end;
+//  FILE_COUNT_INT _row_min , _row_max;
+//  FILE_COUNT_INT _clm_min , _clm_max;  // maximum/minimum size of column
+// 	QUEUE_INT _clms_max; // trsact org
 
-
-
+//			 _row_min(0) , _row_max(0),
+//			_clm_min(0) , _clm_max(0) ,
+// _clm_end(0) , _row_end(0),_rw_end(0) , _cw_end(0) 
+// _row_btm(0) , _clm_btm(0) ,
+//size_t c_max(){ return _clms_max; }
+//		bool RangeChecnkC(VEC_ID tt,WEIGHT w_lb ,WEIGHT w_ub , VEC_ID clm_lb ,VEC_ID clm_ub){
+//			return  ( RANGE(w_lb, _cw[tt], w_ub) && RANGE (clm_lb, _clmt[tt], clm_ub) );
+//		}
+//		bool RangeChecnkR(VEC_ID tt,QUEUE_ID row_lb ,QUEUE_ID row_ub ){
+//			return  RANGE(row_lb, _rowt[tt], row_ub);
+//		}
+//		bool RangeChecnkC(VEC_ID tt){
+//			return  ( RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) );
+//		}
+//		bool RangeChecnkR(VEC_ID tt){
+//			return  RANGE(_row_lb, _rowt[tt], _row_ub);
+//		}
+//		void initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag);
+//		void initRperm(PERM *p , size_t base_clm, size_t base_ele);
 
 
 

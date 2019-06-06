@@ -27,6 +27,7 @@ class SGRAPH {
 
   PERM   *_perm;    // node permutation (nodes->original)
 
+
   SETFAMILY _edge;      // setfamily for edge,
 
   QUEUE_INT *_itemary; // item Count ARRAY

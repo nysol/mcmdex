@@ -53,85 +53,78 @@ QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 // LOAD_TPOSEの時
 int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
 
-	  QUEUE_INT i, item, kk=0, k, jump_end=0;
-	  WEIGHT w, s;
-	  VECARY<VEC_ID> jump;
-  	LONG jj;
+	QUEUE_INT item, kk=0, k;
+	VECARY<VEC_ID> jump;
+	WEIGHT w, s;
 
-	  if ( wf ){ kk = _weight_Scan(wf); }
+	if ( wf ){ kk = _weight_Scan(wf); }
 
-	  do {
+	do {
 
-  	  s=0; k=0;
+		s=0; k=0;
 
-    	w = wf? (_rows_org<kk? _rw[_rows_org]: TRSACT_DEFAULT_WEIGHT): 1;
+		w = wf? (_rows_org<kk? _rw[_rows_org]: TRSACT_DEFAULT_WEIGHT): 1;
 
-    	do {
+		do {
+			
+			item = (QUEUE_INT)fp.read_int();
 
-      	jj = fp.read_int();
-      	item = (QUEUE_INT)jj;
+			if ( fp.readOK() && item < TRSACT_MAXNUM && item >= 0 ){ //(FILE_err&4)==0
 
-				if ( fp.readOK() && jj<TRSACT_MAXNUM && jj>=0 ){ //(FILE_err&4)==0
+				// update #items
+				ENMAX (_clms_org, item+1);  
+        	
+				jump.reallocx( k, 0); //これ0でOK？ 
+				jump[k] = item;
+				k++;
+				s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
 
-					// update #items
-       		ENMAX (_clms_org, item+1);  
-        	jump_end = jump.reallocx(jump_end, k, 0);
+	      // count/weight-sum for the transpose mode
+    	  _clmt.reallocx(item, 0); 
+      	_clmt[item]++;
+	    }
 
-      		jump[k] = item;
-        	k++;
-        	s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
+  	} while ( fp.remain() );
 
-          // count/weight-sum for the transpose mode
-        	_clm_end = _clmt.reallocx(_clm_end, item, 0);
+		// count/weight-sum for the transpose mode
+		_rowt.reallocx(_rows_org, 0); 
+		_rowt[_rows_org] = k;
 
-        	_clmt[item]++;
-	      }
+		// LOAD_TPOSEの時
+		_cw.reallocx( _rows_org, 0); 
+    _cw[_rows_org] = s;     // sum up positive weights
 
-  		} while ( fp.remain() );
+		if ( k==0 && fp.eofx() ) break;
+		_rows_org++;  // increase #transaction
 
-       // count/weight-sum for the transpose mode
-			_row_end = _rowt.reallocx(_row_end, _rows_org, 0);
-    	_rowt[_rows_org] = k;
+    // un-weighted case; weighted sum is #included-items
+		if ( !wf ) s = k; 
 
-			// LOAD_TPOSEの時
-			_cw_end = _cw.reallocx(_cw_end, _rows_org, 0);
+		_eles_org += k;
 
-      _cw[_rows_org] = s;    // sum up positive weights
+		// LOAD_TPOSEの時はこの条件
+		if ( !RANGE( _w_lb, s, _w_ub) || !RANGE (_clm_lb, k, _clm_ub) ){
+			for(int i0 = 0 ; i0 < k ; i0++){
+				_clmt[jump[i0]]--; 
+			}
+		}
 
-			if ( k==0 && fp.eofx() ) break;
-			_rows_org++;  // increase #transaction
+	} while ( fp.eof() );
 
-    	
-			if ( !wf ) s = k;   // un-weighted case; weighted sum is #included-items
+	// swap the variables in transpose mode
+	if ( _rw.empty() ){
+		_total_w_org = _total_pw_org = _rows_org; 
+		return 0; 
+	} 
 
-			_eles_org += k;
+	_rw.reallocx(kk,_rows_org, TRSACT_DEFAULT_WEIGHT);
 
-			// LOAD_TPOSEの時はこの条件
-	    if ( !RANGE( _w_lb, s, _w_ub) || !RANGE (_clm_lb, k, _clm_ub)  ){
-				for(int i0 = 0 ; i0 < k ; i0++){
-					_clmt[jump[i0]]--; 
-				}
-      }
+	for(int i0 = 0 ; i0 < _rows_org ; i0++){
+		_total_w_org  += _rw[i0];
+		_total_pw_org += MAX(_rw[i0],0);
+	}
 
-
-		} while ( fp.eof() );
-
-		//delete [] jump
-    // swap the variables in transpose mode
-  	if ( _rw.empty() ){
-  		_total_w_org = _total_pw_org = _rows_org; 
-  		return 0; 
-  	} 
-
-		_clm_btm = MIN(kk, _rows_org);
-
-		kk = _rw.reallocx(kk,_rows_org, TRSACT_DEFAULT_WEIGHT);
-
-		for(int i0 = 0 ; i0 < _rows_org ; i0++){
-  	  _total_w_org  += _rw[i0];
-    	_total_pw_org += MAX(_rw[i0],0);
-	  }
-	  return 0;
+	return 0;
   
 }
 
@@ -140,40 +133,41 @@ int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
 // NOT LOAD_TPOSEの時
 int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 	
-  QUEUE_INT i, item, kk=0, k, jump_end=0;
-  WEIGHT w, s;
+  // WEIGHT s;
+  // QUEUE_INT i,
+  
+  QUEUE_INT item, kk=0, k;
+  WEIGHT w;
   VECARY<VEC_ID> jump;
-
 	LONG jj;
 
 	if ( wf ){ kk = _weight_Scan(wf); }
 
-
 	do {
 
-		s=0; k=0;
+		// s=0; 
+		k=0;
 		w = wf? (_rows_org<kk? _rw[_rows_org]: TRSACT_DEFAULT_WEIGHT): 1;
 
 		do {
 			
-			jj = fp.read_int();
-			item = (QUEUE_INT)jj;
+			item = fp.read_int();
 
-			if ( fp.readOK() && jj<TRSACT_MAXNUM && jj>=0 ){
+			if ( fp.readOK() && item < TRSACT_MAXNUM && item >= 0 ){
 
 				ENMAX (_clms_org, item+1);  // update #items
-				jump_end = jump.reallocx(jump_end, k, 0);
 
+				jump.reallocx(k, 0); 
 				jump[k] = item;
+
 				k++;
-				s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
 
 				// count/weight-sum for the transpose mode
-				_clm_end = _clmt.reallocx(_clm_end, item, 0);
+				_clmt.reallocx(item, 0);
 				_clmt[item]++;
 
 				// NOT TPOSE
-				_cw_end = _cw.reallocx(_cw_end, item, 0);
+				_cw.reallocx(item, 0);
 				_cw[item] += MAX(w,0);    // sum up positive weights
 
 			}
@@ -181,15 +175,14 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 		} while ( fp.remain());
 
 		// count/weight-sum for the transpose mode
-		_row_end = _rowt.reallocx (_row_end, _rows_org, 0);
-
+		_rowt.reallocx (_rows_org, 0);
 		_rowt[_rows_org] = k;
 
 		if ( k==0 && fp.eofx() ) break;
 
 		_rows_org++;  // increase #transaction
     
-		if ( !wf ) s = k;   // un-weighted case; weighted sum is #included-items
+		//if ( !wf ) s = k;   // un-weighted case; weighted sum is #included-items
 
 		_eles_org += k;
 
@@ -209,7 +202,6 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 		return 0; 
 	} 
 
-	_clm_btm = MIN(kk, _rows_org);
 	kk = _rw.reallocx( kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
 
 
@@ -222,8 +214,9 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 
 }
 
-
-int FILE_COUNT::file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf){
+// call from trsact 
+// wf2は未実装
+int FILE_COUNT::file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf, char *wf2){
 
 	if(flg){ // TPOSE
 
@@ -264,10 +257,12 @@ void FILE_COUNT::count(
 	  FILE_COUNT_INT k=0, j, x, y, t=0;
 
   	// flags for using rowt, and clmt, that counts elements in each row/column
-  	int fr = flag&FILE_COUNT_ROWT, fc = flag&FILE_COUNT_CLMT; 
+  	int fr = flag&FILE_COUNT_ROWT;
+  	int fc = flag&FILE_COUNT_CLMT; 
 
 		// fe,ft: flag for ele mode, and transposition
-	  int fe = flag&LOAD_ELE, ft = flag&LOAD_TPOSE;  
+	  int fe = flag&LOAD_ELE; 
+	  int ft = flag&LOAD_TPOSE;  
 
   	//_flag = flag;
 		for(int i0=0 ; i0 <skip_rows ; i0++){
@@ -285,77 +280,76 @@ void FILE_COUNT::count(
 		}
 
 	  do {
+
 	    if ( fe ){
-			
+
+				// skip 
 				for(int i0=0 ; i0 <skip_clms ; i0++){
-
-					rfp->read_double (); 
+					rfp->read_double(); 
 					if ( rfp->getOK()) goto ROW_END;  // FILE_err&3 ここあってる？
-
 				}
 			
-				x = (FILE_COUNT_INT) rfp->read_int ();
+				x = (FILE_COUNT_INT)rfp->read_int ();
 				if ( rfp->getOK() ) goto ROW_END; //  FILE_err&3 ここあってる？
 			
       	y = (FILE_COUNT_INT) rfp->read_int (); 
 				if ( rfp->readNG() ) goto ROW_END; //  FILE_err&4 ここあってる？
 
       	rfp->read_until_newline ();
+
     	}
-    	else 
-    	{
+    	else{
+    	
       	if ( k==0 ) {
 					for(int i0=0 ; i0 <skip_clms ; i0++){
       			rfp->read_double (); 
       			if (rfp->getOK()) goto ROW_END;  //FILE_err&3
       		}
       	}
+
 				x = t;
       	y = (FILE_COUNT_INT)rfp->read_int (); 
+
 				if ( rfp->readNG() ) goto ROW_END; // FILE_err&4  ここあってる？
 
 				for(int i0=0 ; i0 <int_clms ; i0++){
       		rfp->read_double (); 
-      		if ( rfp->getOK() ) break; //FILE_err&3
+      		if ( rfp->getOK() ){  break; }//FILE_err&3
       	}
 				k++;
+
     	}
     	
-	    if ( ft ){
-	    	SWAP_<FILE_COUNT_INT>(&x, &y);
-	    }
+	    if ( ft ){ SWAP_<FILE_COUNT_INT>(&x, &y); }
 
 	    if ( y >= _clms ){
   	    _clms = y+1;
     	  if ( fc ) {
-    	  	_clm_end = _clmt.reallocx(_clm_end, _clms, 0);
+    	  	_clmt.reallocx(_clms, 0);
     	  }
 			}
 			
 			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && x >= _clms ){
       	_clms = x+1;
-				if ( fc ) { 
-					_clm_end = _clmt.reallocx ( _clm_end, _clms, 0);
-				}
+				if ( fc ) { _clmt.reallocx (_clms, 0); }
 	    }
  
  			if ( x >= _rows ){
       	_rows = x+1;
-				if ( fr ) { 
-					_row_end = _rowt.reallocx(_row_end, _rows, 0);
-				}
+				if ( fr ) {  _rowt.reallocx(_rows, 0); }
 			}
-		
-			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && y >= _rows ){ // for undirected edge version
+
+			// for undirected edge version	
+			if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && y >= _rows ){ 
       	_rows = y+1;
 	      if ( fr ) { 
-	      	_row_end = _rowt.reallocx(_row_end, _rows, 0);
+					_rowt.reallocx(_rows, 0);
 	      }
+
     }
-    
-    if ( x < _clm_btm || _eles == 0 ) {  _clm_btm = x; }
-    if ( y < _row_btm || _eles == 0 ) {  _row_btm = y; }
+
     if ( fc ) { _clmt[y]++; }
+
     if ( fr ){ 
     	_rowt[x]++; 
     	if ( flag&LOAD_EDGE && x != y ){ _rowt[y]++; }
@@ -365,8 +359,8 @@ void FILE_COUNT::count(
 
     ROW_END:;
 
-    //if ( !fe && (FILE_err&1) ){
-    if ( !fe && rfp->getOK1() ){
+    if ( !fe && rfp->getOK1() ){ // !fe && (FILE_err&1)
+
       t++;
 
       if ( flag&(LOAD_RC_SAME+LOAD_EDGE) ){
@@ -378,14 +372,12 @@ void FILE_COUNT::count(
       else { 
       	_rows = t;
       }
-
-      ENMAX (_clm_max, k);
-      ENMIN (_clm_min, k);
-
+      
 			for(int i0=0 ; i0 <int_rows ; i0++){
       	rfp->read_until_newline ();
       }
       if ( row_limit>0 && t>=row_limit ) { break; }
+
     } 
     else if ( row_limit > 0 && _eles>=row_limit ) {
     	break;
@@ -393,21 +385,10 @@ void FILE_COUNT::count(
 
   } while ( rfp->eof());
 
-  if ( fc ){ 
-  	_clm_end = _clmt.reallocx(_clm_end, _clms, 0); 
-  }
-  if ( fr ){
-    _row_end = _rowt.reallocx(_row_end, _rows, 0);
-    // 一緒にする？
-    _row_max = _rowt.max(0, _rows);
-		_row_min = _rowt.min(0, _rows);
-		
-  }
-  if ( fe && !_clmt.empty() ){
-    // 一緒にする？
-    _clm_max = _clmt.max(0, _clms);
-    _clm_min = _clmt.min(0, _clms);
-  }
+  if ( fc ){ _clmt.reallocx(_clms, 0); }
+
+  if ( fr ){ _rowt.reallocx( _rows, 0); }
+
   END:;
 
   return ;
@@ -426,7 +407,6 @@ void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
 	VEC_ID ttt_max = _clms_org;
 	VEC_ID ttt = _clms_org;
   PERM *p=NULL;
- // PERM *cperm=NULL;
 
 	// この分岐を整理すること。わける
   if ( pfname && !( tflag2&TRSACT_WRITE_PERM) ){ 
@@ -442,13 +422,12 @@ void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
     // LOAD_INCSORTはセットされない(sgflagにセットされるかのうせいあり)
     if ( tflag&LOAD_PERM ){ 
       if ( tflag2&TRSACT_FRQSORT ){ 
-      	p = clmw_perm_sort((tflag&LOAD_INCSORT)?1:-1);
+      	p = _clmw_perm_sort((tflag&LOAD_INCSORT)?1:-1);
       }
       else {
-      	p = clmt_perm_sort((tflag&LOAD_INCSORT)?1:-1);
+      	p = _clmt_perm_sort((tflag&LOAD_INCSORT)?1:-1);
       }
     }
-
     if ( pfname ) { 
     	FILE2::ARY_Write(pfname , p , _clms_org); 
     }
@@ -468,7 +447,7 @@ void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
 		tt = p? p[t]: t;
 		if ( tt >= _clms_org ) continue;
 		    
-		if ( RangeChecnkC(tt) ){
+		if ( RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) ){
 			_c_eles += _clmt[tt];
 			_cperm[tt] = (  pfname && !(tflag2&TRSACT_WRITE_PERM) )  ? t : _c_clms++ ;
 		}
@@ -490,26 +469,24 @@ void FILE_COUNT::initRperm(int tflag){
 
   PERM *p=NULL;
 
-  if ( tflag&(LOAD_SIZSORT+LOAD_WSORT) ){
-    if ( tflag&LOAD_WSORT ){
-    	// p =_C.roww_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
-    	p = roww_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
 
-    }	else {
-      //p =_C.rowt_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
-      p = rowt_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
-    }
+	/* LOAD_WSORTがセットされることがないので
+  if ( tflag&(LOAD_SIZSORT+LOAD_WSORT) ){
+    if ( tflag&LOAD_WSORT ){p = _roww_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);}	
+    else {p = _rowt_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);}
+  }
+  */
+  if( tflag& LOAD_SIZSORT){
+		p = _rowt_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
   }
  
-	// _r_eles = base_ele;  _r_clms = base_clm;
-
 	_rperm = new PERM[_rows_org];//malloc2
 			
 	// compute #elements according to rowt, and set rperm
 	VEC_ID tt=0;
 	for( VEC_ID t=0 ; t<_rows_org ; t++){
 		tt = p? p[t]: t; 
-		if ( RangeChecnkR(tt)){
+		if ( RANGE(_row_lb, _rowt[tt], _row_ub) ){
 			_rperm[tt] = _r_clms++;
 			_r_eles += _rowt[tt];
 		}
@@ -528,7 +505,7 @@ void FILE_COUNT::makePerm(char *pfname,int tflag,int tflag2){
 
 	if ( _c_clms == 0 ) throw ("there is no frequent item");
 
-	//複数回動くことを考えてる？ おそらく両方0
+	//複数回動くことを考えてる？ 
 	//initRperm( p , _T.get_eles(), _T.get_t()); 
 	initRperm( tflag ); 
 	
@@ -537,65 +514,6 @@ void FILE_COUNT::makePerm(char *pfname,int tflag,int tflag2){
 	
 
 }
-
-
-
-/*
-
-void FILE_COUNT::initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag){
-
-	_c_eles=0;
-	_c_clms=0;
-
-	_cperm = new PERM[_clms_org+1]; // malloc2
-	for(size_t i =0 ;i<_clms_org;i++){ 
-		_cperm[i] = _clms_org+1; 
-	}
-
-	VEC_ID tt =0 ;
-	for(size_t t=0; t < ttt; t++){
-		tt = p? p[t]: t;
-		if ( tt >= _clms_org ) continue;
-		    
-		if ( RangeChecnkC(tt) ){
-			_c_eles += _clmt[tt];
-			_cperm[tt] = flag ? t : _c_clms++ ;
-		}
-		else{
-			_cperm[tt] = c_end ;
-		}
-	}
-	return ;
-}
-
-void FILE_COUNT::initRperm(PERM *p , size_t base_clm, size_t base_ele){
-
-			_r_eles = base_ele;
-			_r_clms = base_clm;
-
-			//malloc2 (_rperm, _rows_org, exit(1));
-			_rperm = new PERM[_rows_org];
-			
-		  // compute #elements according to rowt, and set rperm
-			VEC_ID tt=0;
-			for( VEC_ID t=0 ; t<_rows_org ; t++){
-				tt = p? p[t]: t;
-		    if ( RangeChecnkR(tt)){
-			    _rperm[tt] = _r_clms++;
-    		  _r_eles += _rowt[tt];
-    		}
-    		else{
-					_rperm[tt] = _rows_org+1;
-    		}
-			}
-}
-
-
-*/
-
-
-
-
 
 
 

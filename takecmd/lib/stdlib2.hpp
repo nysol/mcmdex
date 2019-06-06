@@ -199,6 +199,7 @@
 template<typename T>
 void SWAP_(T *a,T *b){ T stmp = *a; *a=*b; *b=stmp; }
 
+
 /* macros for allocating memory with exiting if an error occurs */
 #define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
 
@@ -353,6 +354,24 @@ class VECARY{
 		}
 		return end;
 	}
+
+	void reallocx(size_t i,T e){
+		// _endのみでいけるはず
+		if( i >= _end ){
+
+			size_t end2 = MAX((_end)*2+16,i+1);
+
+			if(!( _v = (T *) realloc(  _v , sizeof(T) * end2 ) ) ){
+				fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
+			}
+			for(size_t j= _end ; j< end2  ; j++ ){
+				_v[j]=e;
+			}
+			_end=MAX((_end)*2,(i)+1); // << なぜ+16でない？
+		}
+		return;
+	}
+
 
 	size_t reallocSeq( size_t end ,size_t i){
 	
