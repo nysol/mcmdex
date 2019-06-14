@@ -14,15 +14,19 @@ void FSTAR::inc_deg (FSTAR_INT x, FSTAR_INT y)
   if ( ((_flag & FSTAR_CNT_DEG_ONLY) || _edge_dir==0) && _in_deg ) _in_deg[x]++;
 }
 
-/* remove edges adjacent to small/large degree vertices */
+/* 
+	remove edges adjacent to 
+	small/large degree vertices 
+*/
 void FSTAR::sort_adjacent_node (int flag){
 
   FSTAR_INT x, d=0, y, s = sizeof(FSTAR_INT)+sizeof(WEIGHT);
-  //char *p; //なぜchar*
-  FSTAR_INT *p; 
+  FSTAR_INT *p;  //char *p; //なぜchar*
   
   if ( _edge_w ){
-    // sort with weight; make array of (ID,weight) and sort it
+
+    // sort with weight; 
+    // make array of (ID,weight) and sort it
 		for(x=0;x<_out_node_num;x++){
     	ENMAX (d, _fstar[x+1]-_fstar[x]);
     }
@@ -32,19 +36,21 @@ void FSTAR::sort_adjacent_node (int flag){
     p = new FSTAR_INT [d * (sizeof(FSTAR_INT)+sizeof(WEIGHT))];
 
 		for(x=0;x<_out_node_num;x++){
+
 			for(y=0;y<_fstar[x+1]-_fstar[x];y++){
         *((FSTAR_INT *)(&p[y*s])) = _edge[y+_fstar[x]];
         *((WEIGHT *)(&p[y*s+sizeof(FSTAR_INT)])) = _edge_w[y+_fstar[x]];
       }
-      qsort_<FSTAR_INT> (p, _fstar[x+1]-_fstar[x], flag*s); //ここだいじょうぶ？
+      //ここだいじょうぶ？
+      qsort_<FSTAR_INT> (p, _fstar[x+1]-_fstar[x], flag*s); 
 
 			for(y=0;y<_fstar[x+1]-_fstar[x];y++){
-        _edge[y+_fstar[x]] = *((FSTAR_INT *)(&p[y*s]));
+        _edge[y+_fstar[x]]   = *((FSTAR_INT *)(&p[y*s]));
         _edge_w[y+_fstar[x]] = *((WEIGHT *)(&p[y*s+sizeof(FSTAR_INT)]));
       }
     }
-    //free2 (p);
-    delete [] p ;
+    delete [] p ;     //free2 (p);
+
   }
   else {
 		for(x=0;x<_out_node_num;x++){
@@ -53,42 +59,47 @@ void FSTAR::sort_adjacent_node (int flag){
   }
 }
 
-/* compute node_num's and allocate arrays for degree */
+/* 
+	compute node_num's and allocate arrays for degree 
+*/
 LONG FSTAR::alloc_deg (){
 
   LONG i = _out_node_num, j;
   _out_node_num = _xmax;
   _in_node_num = _ymax;
 
-  j = _out_node_num; ENMAX (_out_node_num, i);
+  j = _out_node_num; 
+  ENMAX (_out_node_num, i);
   _node_num = MAX (_out_node_num, _in_node_num);
   
-  if ( _edge_dir == 0 ) _in_node_num = _out_node_num = _node_num;
-  //_fstar = calloc2 (_fstar, _out_node_num+2);
-  _fstar = new FSTAR_INT[_out_node_num+2]();
+  if ( _edge_dir == 0 ){
+  	_in_node_num = _out_node_num = _node_num;
+  }
+
+  _fstar = new FSTAR_INT[_out_node_num+2](); // calloc2
 
   if ( _flag & LOAD_EDGE ) return j;
 
   if ( _flag & FSTAR_CNT_IN ){
     if ( _flag & FSTAR_CNT_DEG_ONLY ){
-      //_in_deg = calloc2 (_in_deg, _node_num+2);
-      _in_deg = new FSTAR_INT[_node_num+2]();
-      
+      _in_deg = new FSTAR_INT[_node_num+2](); //calloc2 
     } else {
-    	//_in_deg = calloc2 (_in_deg, _in_node_num+2);
-      _in_deg = new FSTAR_INT[ _in_node_num+2]();
+      _in_deg = new FSTAR_INT[ _in_node_num+2](); // calloc2
     }
   }
+
   if ( _flag & FSTAR_CNT_OUT ){
-    //_out_deg = calloc2 (_out_deg, _out_node_num+2);
-    _out_deg = new FSTAR_INT[_out_node_num+2]();
+    _out_deg = new FSTAR_INT[_out_node_num+2](); // calloc2
   }
 
   return j;
 
 }
 
-/* compute fstar from outdegree stored in fstar itself, and allocate edge array */
+/* 
+	compute fstar from outdegree stored in fstar itself, 
+	and allocate edge array 
+*/
 void FSTAR::calc_fstar (){
 
   FSTAR_INT i, j=0, jj;
@@ -98,17 +109,14 @@ void FSTAR::calc_fstar (){
     _fstar[i] = j;
     j = jj;
   }
+
   _fstar[i] = _edge_num = j;
-
-  //_edge = malloc2 (_edge, _edge_num +2);
-  _edge = new FSTAR_INT[_edge_num +2];
+  _edge = new FSTAR_INT[_edge_num +2]; // malloc2
   
-
 	for(size_t i =0 ;i<_edge_num +2 ;i++){ _edge[i] = _node_num+1; }
 
   if ( (_flag&LOAD_EDGEW) || _wfname ) {
-  	//_edge_w = malloc2 (_edge_w, _edge_num +2);
-  	_edge_w = new WEIGHT[_edge_num +2];
+  	_edge_w = new WEIGHT[_edge_num +2]; //malloc2
   }
 
 }
@@ -118,15 +126,16 @@ void FSTAR::calc_fstar (){
 int FSTAR::eval_edge (FSTAR_INT x, FSTAR_INT y, WEIGHT w){
 
   if ( x>_node_num || y>_node_num || x<0 || y<0 ) return (0);
+
   if ( ((_flag&LOAD_EDGEW) || _wfname) && !RANGE (_w_lb, w, _w_ub) ) return (0);
+
   if ( _flag & LOAD_EDGE ){
 
     if ( _fstar[_out_node_num] ){
-	    
       if ( !RANGE (_deg_lb, _fstar[x+1]-_fstar[x], _deg_ub) ) return (0);
       if ( !RANGE (_deg_lb, _fstar[y+1]-_fstar[y], _deg_ub) ) return (0);
-    } else {
-
+    }
+    else {
       if ( !RANGE (_deg_lb, _fstar[x], _deg_ub) ) return (0);
       if ( !RANGE (_deg_lb, _fstar[y], _deg_ub) ) return (0);
     }
@@ -150,7 +159,6 @@ int FSTAR::eval_edge (FSTAR_INT x, FSTAR_INT y, WEIGHT w){
     if ( !RANGE (_deg_lb, _in_deg[y], _deg_ub) ) return (0);
   } else if ( _in_deg && (_flag&FSTAR_IN_CHK) && !(_flag&FSTAR_CNT_DEG_ONLY) ){
     if ( (_flag&LOAD_BIPARTITE)==0 ){
-    
       if ( !RANGE (_in_lb, _in_deg[y], _in_ub) ) return (0);
     } else { if ( !RANGE (_in_lb, _in_deg[x], _in_ub) ) return (0); }
   }
@@ -160,14 +168,14 @@ int FSTAR::eval_edge (FSTAR_INT x, FSTAR_INT y, WEIGHT w){
 
 /* scan the file and count the degree, for edge listed file */
 /* if F->out_node_num is set ot a number larger than #nodes, set the node number to it, so that isolated vertices will be attached to the last */
-void FSTAR::scan_file (FILE2 *fp){
+void FSTAR::scan_file(FILE2 *fp){
 
   LONG i, j;
 
   FILE_COUNT C ;
 
   // count #pairs
-  C.count (
+  C.countFS (
   	fp,
   	(_flag&(LOAD_ELE+LOAD_TPOSE+LOAD_NUM+LOAD_GRAPHNUM+LOAD_EDGE)) | 
   	FILE_COUNT_ROWT | 
@@ -175,11 +183,9 @@ void FSTAR::scan_file (FILE2 *fp){
   	, 0, 0, 0, (_flag&LOAD_EDGEW)?1:0, 0
   );
 
-
   _xmax = C.get_rows(); 
   _ymax = C.get_clms(); 
   _edge_num_org = C.get_eles();
-  
 
   j = alloc_deg ();
 
@@ -193,7 +199,7 @@ void FSTAR::scan_file (FILE2 *fp){
 }
 
 /* load data from file to memory with allocation, (after the scan for counting) */
-void FSTAR::read_file (FILE2 *fp, FILE2 *wfp){
+void FSTAR::read_file(FILE2 *fp, FILE2 *wfp){
 
   LONG i, x, y;
   int fc=0, FILE_err_=0;
@@ -214,8 +220,7 @@ void FSTAR::read_file (FILE2 *fp, FILE2 *wfp){
       } else {
         x = i+((_flag&LOAD_ID1)?1:0);  // modified 5/2018 for v command in grhfil
         FILE_err_ = (FSTAR_INT)fp->read_item ( wfp, &x, &y, &w, fc, _flag);
-        //if ( FILE_err&4 ) goto LOOP_END;
-				if (fp->readNG()) goto LOOP_END;
+				if (fp->Null()) goto LOOP_END; //FILE_err&4 
       }
 			/////////////
 
@@ -240,7 +245,7 @@ void FSTAR::read_file (FILE2 *fp, FILE2 *wfp){
       if ( !(_flag&LOAD_ELE) ){
         fc = 0;
         //if ( FILE_err&3 ){
-        if ( fp->getOK() ){
+        if ( fp->EolOrEof() ){
           LOOP_END:;
           i++;
           fc = FILE_err_? 0: 1; FILE_err_=0; // even if next weight is not written, it is the rest of the previous line
@@ -248,9 +253,7 @@ void FSTAR::read_file (FILE2 *fp, FILE2 *wfp){
       }
 			/////////////////////
     } 
-    //while ( !(FILE_err&2) );
-    while ( fp->eof() );
-//    phase++;
+    while ( fp->NotEof() );// !(FILE_err&2)
   }
   _fstar[_out_node_num+1] = 0;
 
@@ -321,8 +324,10 @@ void FSTAR::extract_subgraph()
   
 }
 
+
+
 /* load graph from file */
-int FSTAR::load (){
+int FSTAR::load(){
 
   FILE2 fp , wfp;
 
@@ -366,6 +371,97 @@ int FSTAR::load (){
   if ( (_flag&LOAD_INCSORT)|| (_flag&LOAD_DECSORT) ) {
      sort_adjacent_node ((_flag&LOAD_DECSORT)?-1:1);
   }
+
+	printMes("forwardstar graph: %s ,#nodes "FSTAR_INTF"("FSTAR_INTF","FSTAR_INTF") ,#edges "FSTAR_INTF"\n", _fname, _node_num, _in_node_num, _out_node_num, _edge_num);
+
+	return 0;
+}
+
+
+
+/* load data from file to memory with allocation, (after the scan for counting) */
+void FSTAR::read_fileMED(FILE2 *fp ){
+
+  LONG i=0; 
+  LONG x, y;
+
+  fp->reset ();
+
+  calc_fstar ();
+
+	do{
+		
+		x = i;
+
+		fp->read_item ( &x, &y, _flag);
+
+		if (fp->Null()) goto LOOP_END; //( FILE_err&4 )
+
+    if ( _fstar[x+1]>_fstar[x] ){  _edge[_fstar[x]++] = y; }
+
+		if ( fp->EolOrEof() ){ //( FILE_err&3 )
+			LOOP_END:;
+			i++;
+    }
+
+	} 
+	while ( fp->NotEof() );
+
+  _fstar[_out_node_num+1] = 0;
+
+  for(i=_out_node_num;(i--)>0;){   
+  	_fstar[i+1] = _fstar[i];
+  }
+  _fstar[0] = 0;
+  
+}
+
+/* load graph from file */
+// load fstar for medset
+// int fsFlag (LOAD_TPOSE,LOAD_BIPARTITE), char *fname ,int edge_dir
+// FILE_COUNT_ROWT |  ( LOAD_TPOSE )
+int FSTAR::loadMed(){
+
+  LONG i, j;
+  FILE_COUNT C ;
+
+	FILE2 fp(_fname);
+  C.countFST(&fp, _flag&LOAD_TPOSE);
+
+  _xmax = C.get_rows();
+  _ymax = C.get_clms(); 
+
+  _edge_num_org = C.get_eles();
+
+  //j = alloc_deg ();
+  {
+
+	  _out_node_num = _xmax;
+  	_in_node_num  = _ymax;
+
+	  //j = _out_node_num; 
+  	
+  	_node_num = MAX (_out_node_num, _in_node_num);
+
+	  _fstar = new FSTAR_INT[_out_node_num+2](); // calloc2
+	
+	}
+
+  for(i=0 ; i<_out_node_num; i++){ _fstar[i] = C.get_rowt(i); }
+  
+	/*
+  for(i=0;i<j;i++){
+    _fstar[i] = C.get_rowt(i);
+  }
+  */
+
+  printMes("first & second scan end: %s\n", _fname);
+
+  read_fileMED(&fp);
+
+  printMes("file read end: %s\n", _fname);
+
+  extract_subgraph();
 
 	printMes("forwardstar graph: %s ,#nodes "FSTAR_INTF"("FSTAR_INTF","FSTAR_INTF") ,#edges "FSTAR_INTF"\n", _fname, _node_num, _in_node_num, _out_node_num, _edge_num);
 
@@ -530,7 +626,6 @@ LONG FSTAR::write_graph_operation (
   WEIGHT w=0, w1, w2;
 
 	bool end1,end2;
-	
 
 	F1->writeHeadInfo(fp);
  

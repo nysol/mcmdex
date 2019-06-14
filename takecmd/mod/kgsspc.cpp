@@ -514,7 +514,7 @@ void KGSSPC::list_comp(){
     }
     comp2( i, j, c, wi, wx, sqrt(w[i]), &cnt, &fp2, _II.getp_itemset(), 0);
 
-  } while ( fp.eof() );
+  } while ( fp.NotEof() );
   
   _II.set_perm(p);
 

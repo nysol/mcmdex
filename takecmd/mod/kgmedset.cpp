@@ -31,8 +31,9 @@ int KGMEDSET::setArgs (int argc, char *argv[]){
   int c=1;
 
   if ( argc < c+3 ){ help (); return 1; }
-  _dir = 1; 
+  
   _fsFlag |= SHOW_MESSAGE;
+
 
   while ( argv[c][0] == '-' ){
 
@@ -40,15 +41,14 @@ int KGMEDSET::setArgs (int argc, char *argv[]){
 
     switch ( argv[c][1] ){
       case 't': _fsFlag |= LOAD_TPOSE;
-      break; case '_': _fsFlag -= SHOW_MESSAGE;   // connected component clustering
-      break; case '%': _fsFlag |= SHOW_PROGRESS;   // connected component clustering
-      break; case 'T': _problem |= MEDSET_CC;   // connected component clustering
-      break; case 'I': _problem |= MEDSET_IND;   // independent set clustering
-      break; case 'H': _problem |= MEDSET_NO_HIST;   // do not use histgram
+      break; case '_': _fsFlag -= SHOW_MESSAGE;   
+      break; case '%': _fsFlag |= SHOW_PROGRESS;  
+      break; case 'T': _problem |= MEDSET_CC;      // connected component clustering
+      break; case 'I': _problem |= MEDSET_IND;     // independent set clustering
+      break; case 'H': _problem |= MEDSET_NO_HIST; // do not use histgram
       break; case 'V': _problem |= MEDSET_ALLNUM;   // output appearance ratio for all
       break; case 'l': _num = atoi(argv[c+1]); c++;   // minimum cluster size to be output
       break; case 'i': _problem |= MEDSET_RATIO;   // output included-ratio of items
-//      break; case 'c': _deg = atoi(argv[c+1]); c++;   // least degree
    }
     c++;
   }
@@ -68,30 +68,28 @@ int KGMEDSET::setArgs (int argc, char *argv[]){
 
 
 /* read file, output the histogram of each line */
-void KGMEDSET::read_file(){
+void KGMEDSET::_MedsetCore(){
 
   FSTAR_INT *cnt, *que, t, s, i, x;
 
-  //cnt = calloc2 (cnt, _FS.get_in_node_num());
-  //que = calloc2 (que, _FS.get_in_node_num()*2);
-
-  cnt = new FSTAR_INT[_FS.get_in_node_num()]();
-  que = new FSTAR_INT[_FS.get_in_node_num()*2]();
-
+  cnt = new FSTAR_INT[_FS.get_in_node_num()](); //calloc2
+  que = new FSTAR_INT[_FS.get_in_node_num()*2](); //calloc2
 
   do {
 
     s = t = 0;
     // count #out-going edges for each vertex
     do {   
+
       x = (FSTAR_INT)_fp.read_int();
 
-      //if ( FILE_err&4 ) break;
-      if ( _fp.readNG() ) break;
+      if( _fp.Null() ) break;// FILE_err&4
 
       if ( x<0 || x >= _FS.get_out_node_num() ){
+        delete [] cnt;
+			  delete [] que;
         fprintf(stderr,"set ID out of bound "FSTAR_INTF">"FSTAR_INTF"\n", x, _FS.get_out_node_num());
-        exit(0);
+        exit(1);
       }
 
 			for(i=_FS.get_fstar(x);i<_FS.get_fstar(x+1);i++){
@@ -102,8 +100,8 @@ void KGMEDSET::read_file(){
         }
       }
       s++;
-    //} while ( (FILE_err&3)==0 );
-    } while ( _fp.remain());
+
+    } while ( _fp.NotEol()); //(FILE_err&3)==0
 
     if ( _problem & MEDSET_ALLNUM ){
 
@@ -117,7 +115,6 @@ void KGMEDSET::read_file(){
     }
 
     if ( s>0 ){
-
 			for(i=0;i< t;i++){
       	que[i*2] = cnt[que[i*2+1]]; cnt[que[i*2+1]] = 0; 
       }
@@ -130,19 +127,18 @@ void KGMEDSET::read_file(){
         } 
         else if ( ((double)que[i*2])/(double)s < _th ) break;
 
-        if ( _problem & MEDSET_NO_HIST )    _ofp.print( ""FSTAR_INTF" ", que[i*2+1]);
-        else if ( _problem & MEDSET_RATIO ) _ofp.print( "("FSTAR_INTF":%.2f) ", que[i*2+1], ((double)que[i*2])/(double)s);
+        if      ( _problem & MEDSET_NO_HIST )_ofp.print( ""FSTAR_INTF" ", que[i*2+1]);
+        else if ( _problem & MEDSET_RATIO )  _ofp.print( "("FSTAR_INTF":%.2f) ", que[i*2+1], ((double)que[i*2])/(double)s);
         else _ofp.print(""FSTAR_INTF" ", que[i*2+1]);
       }
     }
     _ofp.print("\n");
 
-	// } while ( (FILE_err&2)==0 );
-  } while ( _fp.eof());
+  } while ( _fp.NotEof()); //(FILE_err&2)==0 
 
-  END:;
   delete [] cnt;
   delete [] que;
+
 }
 
 
@@ -153,45 +149,47 @@ int KGMEDSET::run (int argc, char *argv[]){
   if( setArgs ( argc, argv) ) return 1;
 
 	try{
-  _fp.open( _input_fname, "r");
-  //fopen2(_ofp, _output_fname, "w", goto END);
-	_ofp.open(_output_fname);
 
-	// うえ２つは別にしたほうが
-  if ( _problem & MEDSET_CC ){
-		/* read file, output the histogram of each line */
-		kgClusterForCC ccc;
-		ccc.read(&_fp);
-		ccc.print(_ofp,_num);
-  }
-  else if ( _problem & MEDSET_IND ){
-		kgClusterForCC ccc;
-		ccc.readWithCnt(&_fp);
-		ccc.print(_ofp,_num);
-  }
-  else{
-		_fsFlag |= LOAD_BIPARTITE;
-  	_FS.setParams(_fsFlag,_set_fname,1);
-  	if ( _FS.load() ) return 1;
+	  _fp.open (_input_fname, "r");
+		_ofp.open(_output_fname);
 
-		_FS.printMes("medset: cluster-file= %s set-file= %s threshold= %f output-file= %s\n", _input_fname, _set_fname, _th, _output_fname);
+		// うえ２つは別にしたほうが
+  	if ( _problem & MEDSET_CC ){
+			kgClusterForCC ccc;
+			ccc.read(&_fp);
+			ccc.print(_ofp,_num);
+	  }
+  	else if ( _problem & MEDSET_IND ){
+			kgClusterForCC ccc;
+			ccc.readWithCnt(&_fp);
+			ccc.print(_ofp,_num);
+	  }
+		else{
 
-  	read_file();
-  }
+  		_FS.setParams(_fsFlag|LOAD_BIPARTITE , _set_fname , 1);
 
-  END:;
+	  	if ( _FS.loadMed() ) return 1;
 
-  _fp.close();
-	}catch(const char *mm){
+			_printMes(
+				"medset: cluster-file= %s set-file= %s threshold= %f output-file= %s\n",
+				 _input_fname, _set_fname, _th, _output_fname
+			);
+
+  		_MedsetCore();
+
+	  }
+	  _fp.close();
+	}
+
+	catch(const char *mm){
 		printf("%s\n",mm);
+
 	}catch(...){
 		printf("unknown\n");
-		
 	}  
-
-
-  return (_ERROR_MES?1:0);
+  return 0;
 }
+
 int KGMEDSET::mrun (int argc, char *argv[]){
 	return KGMEDSET().run(argc,argv);
 }

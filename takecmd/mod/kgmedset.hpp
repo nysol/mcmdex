@@ -17,17 +17,17 @@
 
 class kgClusterForCC{
 
-	// cnt: cluster siz, if v is representative, and #vertices covering v, if v isn't representative 
-	//UNIONFIND_ID *_mark, *_set, *_cnt;
-	VECARY<UNIONFIND_ID> _mark,_set,_cnt;
-	
+	// cnt: cluster siz, if v is representative, 
+	// and #vertices covering v, if v isn't representative 
 
-
-	UNIONFIND_ID _end1, _end2, _end3;
 	FSTAR_INT _xmax;
+
+	VECARY<UNIONFIND_ID> _mark,_set,_cnt;
+	// _cnt以外は　class UNIONFINDと近い_mark => ID
 
 	// get the ID of belonging group, and flatten the ID tree 
 	UNIONFIND_ID _getID (UNIONFIND_ID v){
+
   	UNIONFIND_ID vv = v, vvv;
   	// trace parents until the root (ID[v] = v, if v is a root)
   	while (v  != _mark[v] ){ v = _mark[v]; }
@@ -56,52 +56,49 @@ class kgClusterForCC{
 
 	public:
 
-	kgClusterForCC():
-		_end1(0), _end2(0), _end3(0),_xmax(0){}
+	kgClusterForCC():_xmax(0){}
 
-	~kgClusterForCC(){
-	}
-		
+	~kgClusterForCC(){}
 
-	void read(FILE2 *fp){
+	void read(FILE2 *fp){ 
 
 		LONG x, y;
 
 		// merge the connponents to be connected by using spray tree
 		do {
 
-			if ( fp->read_pair( &x, &y, NULL, 0) ) continue;
+	    if ( fp->read_pair( &x, &y ) ) continue;
 
 			ENMAX(_xmax, MAX(x, y)+1);
 
-			_end1 = _mark.reallocSeq(_end1, _xmax);
-			_end2 = _set .reallocSeq(_end2, _xmax);
+			_mark.reallocSeq(_xmax);
+			_set .reallocSeq(_xmax);
 
 			_unify_set(x, y);
 
-		//} while ( (FILE_err&2)==0 );
-		} while ( fp->eof());
+		} while ( fp->NotEof() ); //(FILE_err&2)==0 
 		
 	}
 
 	void readWithCnt(FILE2 *fp){
 
 		LONG x, y, yy;
-		FSTAR_INT flag =0;
+		FSTAR_INT flag = 0;
 
     // merge the connponents to be connected by using spray tree
 	  do {
+
 	    flag = 0;
 
   	  do {
 
-	      if ( fp->read_pair ( &x, &y, NULL, 0) ) continue;
+	      if ( fp->read_pair( &x, &y ) ) continue;
 
   	    ENMAX (_xmax, MAX(x, y)+1);
 
-				_end1 = _mark.reallocSeq(_end1, _xmax);
-				_end2 = _set .reallocSeq(_end2, _xmax);
-		    _end3 = _cnt .reallocx  (_end3, _xmax, (UNIONFIND_ID)0);
+				_mark.reallocSeq(_xmax);
+				_set .reallocSeq(_xmax);
+		    _cnt .reallocx(_xmax, (UNIONFIND_ID)0);
 
 	      if ( _cnt[x] < _cnt[y] ) SWAP_<LONG> (&x, &y);
 
@@ -137,14 +134,12 @@ class kgClusterForCC{
   	    if ( _mark[x] == x ){ _cnt[y]++; }
 				else if ( _mark[y] == y ){ _cnt[x]++; }
 
-	    //} while ( (FILE_err&2)==0 );
-			} while ( fp->eof());
+			} while ( fp->NotEof()); //(FILE_err&2)==0 
 
 		} while (flag);	
 
 		return;
 	}
-
 	/* output clusters to the output file */
 	void print(OFILE2 &ofp, int num)
 	{
@@ -159,11 +154,9 @@ class kgClusterForCC{
   	  x = i;
 
 	    while (1){
-
   	    c++;
     	  if ( _set[x] == x ) break;
       	x = _set[x];
-
 	    }
 
    	 if ( c < num ) continue;
@@ -171,11 +164,9 @@ class kgClusterForCC{
 	    x = i;
 
   	  while (1){
-
     	  ofp.print(""FSTAR_INTF" ", x);
 				if ( _set[x] == x ) break;
 				x = _set[x];
-
 			}
 			ofp.putc('\n');
 		}
@@ -195,40 +186,39 @@ class KGMEDSET{
 	char *	_input_fname;
 	char *  _output_fname;
 
-	int _dir;
 	int _num;
   double _th ;
-	char *_ERROR_MES;
 	FSTAR _FS;
-
 
 	// _FS 
 	int _fsFlag;
 	char *_set_fname;
 
 
-	void help();
-
-
 	/* read commands and options from command line */
 	int setArgs(int argc, char *argv[]);
 
+	void help();
 
-	/* output clusters to the output file */
-	void print_clusters (FSTAR_INT *mark, FSTAR_INT *set, FSTAR_INT xmax);
+	/* read file , and output the histogram of each line */
+	void _MedsetCore();
 
-	/* read file, output the histogram of each line */
-	void cc_clustering();
-	void ind_clustering();
-	void read_file();
+	void _printMes(char *frm ,...){
 
+		if( _fsFlag&1 ){
+			va_list ap;
+			va_start(ap,frm);
+			vfprintf(stderr,frm,ap);
+			va_end(ap);
+		}
+	}
 
 
 	public:
 
 	KGMEDSET():
-		_problem(0),_fsFlag(0),_input_fname(NULL),_dir(0),_num(0),_th(0),
-		_output_fname(NULL),_set_fname(NULL),_ERROR_MES(NULL){}
+		_problem(0),_fsFlag(0),_input_fname(NULL),_num(0),_th(0),
+		_output_fname(NULL),_set_fname(NULL){}
 		
 	int run (int argc, char *argv[]);
 	static int mrun(int argc, char *argv[]);

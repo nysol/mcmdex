@@ -265,12 +265,14 @@ void KGSIMSET::unify (char *fname, char *fname2, int flag){
       if ( fp.read_pair( &x, &y, NULL, 0) ) continue;
       _unifind.unify_set(x,y);
 
-    } while ( !(fp.eofx()) );
+    } while ( fp.NotEof() );
     fp.close();
   }
 
 	FF.setParams(fname);
 	FF.load();
+
+
   wfp.open(fname, "w");
 
 	for(i=0;i<FF.get_node_num() ; i++){

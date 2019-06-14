@@ -127,7 +127,7 @@ class KGSSPC{
     // set outperm
 	  if ( _outperm_fname ){
 
-			int j = FILE2::ARY_Load(p,_outperm_fname,1);
+			int j = FILE2::ARY_Load(p,_outperm_fname);
 
 	  	if ( perm ){
       	for(int j =0 ;j < siz ; j++){

@@ -20,9 +20,9 @@ QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 	wfp.open(wf, "r");
 
 	#ifdef WEIGHT_DOUBLE
-		QUEUE_INT kk = wfp.ARY_Scan_DBL(1);
+		QUEUE_INT kk = wfp.ARY_Scan_DBL();
 	#else
-		QUEUE_INT kk = wfp.ARY_Scan_INT(1);
+		QUEUE_INT kk = wfp.ARY_Scan_INT();
 	#endif
 
 	kk += _rows_org;
@@ -69,7 +69,7 @@ int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
 			
 			item = (QUEUE_INT)fp.read_int();
 
-			if ( fp.readOK() && item < TRSACT_MAXNUM && item >= 0 ){ //(FILE_err&4)==0
+			if ( fp.NotNull() && item < TRSACT_MAXNUM && item >= 0 ){ //(FILE_err&4)==0
 
 				// update #items
 				ENMAX (_clms_org, item+1);  
@@ -84,7 +84,7 @@ int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
       	_clmt[item]++;
 	    }
 
-  	} while ( fp.remain() );
+  	} while ( fp.NotEol() );
 
 		// count/weight-sum for the transpose mode
 		_rowt.reallocx(_rows_org, 0); 
@@ -94,7 +94,7 @@ int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
 		_cw.reallocx( _rows_org, 0); 
     _cw[_rows_org] = s;     // sum up positive weights
 
-		if ( k==0 && fp.eofx() ) break;
+		if ( k==0 && fp.Eof() ) break;
 		_rows_org++;  // increase #transaction
 
     // un-weighted case; weighted sum is #included-items
@@ -109,7 +109,7 @@ int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
 			}
 		}
 
-	} while ( fp.eof() );
+	} while ( fp.NotEof() );
 
 	// swap the variables in transpose mode
 	if ( _rw.empty() ){
@@ -153,7 +153,7 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 			
 			item = fp.read_int();
 
-			if ( fp.readOK() && item < TRSACT_MAXNUM && item >= 0 ){
+			if ( fp.NotNull() && item < TRSACT_MAXNUM && item >= 0 ){
 
 				ENMAX (_clms_org, item+1);  // update #items
 
@@ -172,13 +172,13 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 
 			}
 
-		} while ( fp.remain());
+		} while ( fp.NotEol());
 
 		// count/weight-sum for the transpose mode
 		_rowt.reallocx (_rows_org, 0);
 		_rowt[_rows_org] = k;
 
-		if ( k==0 && fp.eofx() ) break;
+		if ( k==0 && fp.Eof() ) break;
 
 		_rows_org++;  // increase #transaction
     
@@ -193,7 +193,7 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 			}
 		}
 
-	} while ( fp.eof() );
+	} while ( fp.NotEof() );
 
 
 	// swap the variables in transpose mode
@@ -247,7 +247,7 @@ int FILE_COUNT::file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf, char *wf2){
 }
 
 
-void FILE_COUNT::count( 
+void FILE_COUNT::countFS( 
 		FILE2 *rfp,
 		int flag, int skip_rows,
 		int int_rows, int skip_clms, int int_clms, 
@@ -286,14 +286,14 @@ void FILE_COUNT::count(
 				// skip 
 				for(int i0=0 ; i0 <skip_clms ; i0++){
 					rfp->read_double(); 
-					if ( rfp->getOK()) goto ROW_END;  // FILE_err&3 ここあってる？
+					if ( rfp->EolOrEof()) goto ROW_END;  // FILE_err&3
 				}
 			
 				x = (FILE_COUNT_INT)rfp->read_int ();
-				if ( rfp->getOK() ) goto ROW_END; //  FILE_err&3 ここあってる？
+				if ( rfp->EolOrEof() ) goto ROW_END; //  FILE_err&3 
 			
       	y = (FILE_COUNT_INT) rfp->read_int (); 
-				if ( rfp->readNG() ) goto ROW_END; //  FILE_err&4 ここあってる？
+				if ( rfp->Null() ) goto ROW_END; //  FILE_err&4 ここあってる？
 
       	rfp->read_until_newline ();
 
@@ -302,19 +302,19 @@ void FILE_COUNT::count(
     	
       	if ( k==0 ) {
 					for(int i0=0 ; i0 <skip_clms ; i0++){
-      			rfp->read_double (); 
-      			if (rfp->getOK()) goto ROW_END;  //FILE_err&3
+      			rfp->read_double(); 
+      			if (rfp->EolOrEof()) goto ROW_END;  //FILE_err&3
       		}
       	}
 
 				x = t;
       	y = (FILE_COUNT_INT)rfp->read_int (); 
 
-				if ( rfp->readNG() ) goto ROW_END; // FILE_err&4  ここあってる？
+				if ( rfp->Null() ) goto ROW_END; // FILE_err&4  ここあってる？
 
 				for(int i0=0 ; i0 <int_clms ; i0++){
       		rfp->read_double (); 
-      		if ( rfp->getOK() ){  break; }//FILE_err&3
+      		if ( rfp->EolOrEof() ){  break; }//FILE_err&3
       	}
 				k++;
 
@@ -359,7 +359,7 @@ void FILE_COUNT::count(
 
     ROW_END:;
 
-    if ( !fe && rfp->getOK1() ){ // !fe && (FILE_err&1)
+    if ( !fe && rfp->NL() ){ // !fe && (FILE_err&1)
 
       t++;
 
@@ -383,13 +383,133 @@ void FILE_COUNT::count(
     	break;
     }
 
-  } while ( rfp->eof());
+  } while ( rfp->NotEof());
 
   if ( fc ){ _clmt.reallocx(_clms, 0); }
 
   if ( fr ){ _rowt.reallocx( _rows, 0); }
 
   END:;
+
+  return ;
+}
+
+
+// kgmedset.cpp   FILE_COUNT_ROWT + LOAD_TPOSE( t パラメータ)
+//ft : flag&LOAD_TPOSE; 
+// FILE_COUNT::countの特殊
+// on fr 
+// on or off ft
+// off fe fc
+void FILE_COUNT::countFST( FILE2 *rfp, int ft )
+{
+
+	FILE_COUNT_INT k=0, j, x, y, t=0;
+
+  // flags for using rowt, and clmt, that counts elements in each row/column
+	// fe,ft: flag for ele mode, and transposition
+  //int fc = flag&FILE_COUNT_CLMT; 
+	//int fe = flag&LOAD_ELE; 
+
+	do {
+
+		x = t;
+		y = (FILE_COUNT_INT)rfp->read_int (); 
+
+		if ( rfp->Null() ) goto ROW_END; // FILE_err&4  ここあってる？
+
+    	
+	  if ( ft ){ SWAP_<FILE_COUNT_INT>(&x, &y); }
+
+	  if ( y >= _clms ){ _clms = y+1; }
+		if ( x >= _rows ){
+    	_rows = x+1;
+			_rowt.reallocx(_rows, 0);
+		}
+
+		_rowt[x]++; 
+    _eles++;
+
+	  ROW_END:;
+
+  	if ( rfp->NL() ){ // !fe && (FILE_err&1)
+
+    	t++;
+      if ( ft ) { _clms = t; } 
+     	else { _rows = t; }
+	  } 
+
+  } while ( rfp->NotEof());
+
+ 	_rowt.reallocx( _rows, 0);
+
+  END:;
+
+  return ;
+}
+
+
+
+// kgmace.cpp FILE_COUNT_ROWT + LOAD_RC_SAME + LOAD_EDGE + LOAD_ELE( e パラメータ)
+// kglcm.cpp  FILE_COUNT_ROWT + LOAD_RC_SAME + LOAD_EDGE 
+// fe :flag&LOAD_ELE
+// FILE_COUNT::countの特殊
+// on fr
+// on or off fe
+// off  ft fc
+void FILE_COUNT::countSG(FILE2 *rfp,int fe)
+{
+
+	FILE_COUNT_INT x, y, t=0;
+
+	do{
+
+		if ( fe ){
+
+			x = (FILE_COUNT_INT)rfp->read_int ();
+			if ( rfp->EolOrEof() ) goto ROW_END; //  FILE_err&3 ここあってる？
+			
+			y = (FILE_COUNT_INT) rfp->read_int (); 
+			if ( rfp->Null() ) goto ROW_END; //  FILE_err&4 ここあってる？
+
+			rfp->read_until_newline ();
+
+		}
+		else{
+			x = t;
+			y = (FILE_COUNT_INT)rfp->read_int(); 
+			if ( rfp->Null() ) goto ROW_END; // FILE_err&4  ここあってる？
+		}
+
+		if ( y >= _clms ){ _clms = y+1; }
+		if ( x >= _clms ){ _clms = x+1; }
+ 
+		if ( x >= _rows ){
+			_rows = x+1;
+			_rowt.reallocx(_rows, 0);
+		}
+
+		if ( y >= _rows ){  // for undirected edge version	
+			_rows = y+1;
+			_rowt.reallocx(_rows, 0);
+		}
+		
+		_rowt[x]++; 
+		if ( x != y ){ _rowt[y]++; }
+
+		_eles++;
+
+		ROW_END:;
+
+		if ( !fe && rfp->NL() ){ // !fe && (FILE_err&1)
+			t++;
+			ENMAX (_clms, t); 
+			ENMAX (_rows, t);
+		} 
+
+	} while ( rfp->NotEof());
+
+	_rowt.reallocx( _rows, 0);
 
   return ;
 
@@ -411,7 +531,8 @@ void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
 	// この分岐を整理すること。わける
   if ( pfname && !( tflag2&TRSACT_WRITE_PERM) ){ 
 
-		ttt = FILE2::ARY_Load(p, pfname, 1);
+		ttt = FILE2::ARY_Load(p, pfname);
+
 		ttt_max = p[0];
 		for(int i=1; i < ttt ; i++){
 			if(ttt_max < p[i]){ ttt_max = p[i]; }

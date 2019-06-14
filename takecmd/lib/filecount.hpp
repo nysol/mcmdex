@@ -134,8 +134,14 @@ class FILE_COUNT{
 		// call from trsact.cpp
 		int file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf,char *wf2=NULL);
 
+		// call from sgraph.cpp 
+		void countSG( FILE2 *rfp, int flag);
 
-		void count( 
+		void countFST( 
+			FILE2 *rfp, int flag);
+
+		// call from fstar.cpp
+		void countFS( 
 			FILE2 *rfp, int flag, int skip_rows,
 			int int_rows, int skip_clms, int int_clms, 
 	 		FILE_COUNT_INT row_limit);
@@ -247,12 +253,6 @@ class FILE_COUNT{
 		bool CheckRperm(VEC_ID t){ 
 			return ( ( _rperm[t] < _rows_org ) && (  _rperm[t] > 0 ) );
 		}
-/*		
-			if( ( _rperm[t] < _rows_org ) && (  _rperm[t] > 0 ) ){
-				return true;
-			} 
-			return false;
-*/
 		
 
 };
@@ -284,7 +284,14 @@ class FILE_COUNT{
 //		}
 //		void initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag);
 //		void initRperm(PERM *p , size_t base_clm, size_t base_ele);
-
+//
+/* CheckRperm(VEC_ID t){ 		org
+			if( ( _rperm[t] < _rows_org ) && (  _rperm[t] > 0 ) ){
+				return true;
+			} 
+			return false;
+	}
+*/
 
 
 

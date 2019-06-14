@@ -194,7 +194,7 @@ class KGMACE{
 
     // set outperm
 		if ( _outperm_fname ){
-			FILE2::ARY_Load(p, _outperm_fname, 1);
+			FILE2::ARY_Load(p, _outperm_fname);
 	  }
 
   	_II.alloc(_output_fname, p, _SG.edge_t() , _SG.edge_eles());

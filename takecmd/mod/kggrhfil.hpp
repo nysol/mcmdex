@@ -25,8 +25,9 @@ class KGGRHFIL{
   // problem項目
   ITEMSET _II;
   int _problem,_problem2;
-  int _dir,_root;
-  
+  int _root;
+
+	bool _noTrans; //base _dir  
   double _ratio;
   double _th,_th2;
 
@@ -67,7 +68,7 @@ class KGGRHFIL{
 
 	KGGRHFIL():
 		_problem(0),_problem2(0),_fsFlag(0),_fsFlag2(0),
-  	_dir(0),_root(0),_ratio(0),_th(0),_th2(0),_rows(0),
+  	_noTrans(false),_root(0),_ratio(0),_th(0),_th2(0),_rows(0),
 		_deg_lb(0),_deg_ub(FSTAR_INTHUGE),_in_lb(0),_in_ub(FSTAR_INTHUGE),
 		_out_lb(0),_out_ub(FSTAR_INTHUGE),_w_lb(-WEIGHTHUGE),_w_ub(WEIGHTHUGE),
 		_edge_dir(0),_edge_dir2(0),_sep(' '),

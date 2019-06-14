@@ -388,8 +388,28 @@ class VECARY{
 			_end = end;
 		}
 		return end;
+	}
+
+	void reallocSeq( size_t i){
+	
+		if( i >= _end ){
+
+			size_t end2 = MAX((_end)*2+16,i+1);
+			if(!(  _v= (T *)realloc( _v ,sizeof(T)*end2 ) ) ){
+				fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
+			}
+			for(size_t j= _end ; j<end2 ; j++ ){
+				_v[j]=j;
+			}
+			_end = MAX((_end)*2,(i)+1);
+
+		}
+		return;
 
 	}
+
+
+
 
 	PERM* qsort_perm(size_t size,int flg){
     return qsort_perm_<T>(_v, size, flg);

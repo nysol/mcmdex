@@ -27,37 +27,42 @@ class SGRAPH {
 
   PERM   *_perm;    // node permutation (nodes->original)
 
+  FILE_COUNT _C;
 
   SETFAMILY _edge;      // setfamily for edge,
 
   QUEUE_INT *_itemary; // item Count ARRAY
 
-
+	void _printMes(char *frm ,...){
+		if( _flag&1 ){
+			va_list ap;
+			va_start(ap,frm);
+			vfprintf(stderr,frm,ap);
+			va_end(ap);
+		}
+	}
 	public:
+
 	SGRAPH():
 		_fname(NULL),_flag(0),
-		_itemary(NULL),_perm(NULL) {}
+		_itemary(NULL),_perm(NULL){}
 
-	~SGRAPH(){
-	  //mfree (_perm,_itemary);
+	~SGRAPH(){  //mfree (_perm,_itemary);
 	  delete [] _itemary;
 	  delete [] _perm;
 	}
 
 	int itemAlloc(size_t siz){
-		//calloc2(_itemary, siz+2, return 1); 
-		_itemary = new QUEUE_INT[siz+2](); 
+		_itemary = new QUEUE_INT[siz+2](); //calloc2
 		return 0;
 	}
 
 	void itemCntUp(QUEUE_INT item){
 
 		QUEUE_INT *x;
-
 		for( x=_edge.get_vv(item); *x < item ; x++){
 			_itemary[*x]++;
 		}
-
 	}
 
 	void itemCntDown(QUEUE_INT item){
@@ -107,11 +112,8 @@ class SGRAPH {
     delete [] sperm;
 
 		_perm = NULL;
-		
 
 	}
-
-
 	void edgeSetEnd(){
 
 		for(size_t i=0 ; i< _edge.get_t() ; i++){
@@ -134,16 +136,12 @@ class SGRAPH {
 		return _edge.get_vv(i,_edge.get_vt(i)-1); 
 	}
 
-
-	VEC_ID edge_t(){ return _edge.get_t(); }
-	void   edge_sort(){  _edge.sort(); }
+	VEC_ID edge_t()   { return _edge.get_t(); }
+	void   edge_sort(int flag ){ _edge.sort(flag); }
 	VEC_ID edge_eles(){ return _edge.get_eles(); }
-
 
 	QUEUE* getp_v(int i){ return _edge.getp_v(i); }
 
-	// これは再考
-	void edge_union_flag(int flag){ _edge.union_flag(flag);} 
 
 	int loadEDGE(int flag ,char* fname);
 
@@ -157,20 +155,22 @@ class SGRAPH {
 
 	}
 	char * initOQ(QUEUE *);
-	
-		void printMes(char *frm ,...){
-
-			if( _flag&1 ){
-				va_list ap;
-				va_start(ap,frm);
-				vfprintf(stderr,frm,ap);
-				va_end(ap);
-			}
-		}
-	
 
 } ;
 
+/*  initialization  */
+/*
+// これは再考
+//void edge_union_flag(int flag){ _edge.union_flag(flag);} 
+
+void SGRAPH::alloc(QUEUE_ID nodes, size_t edge_num){
+
+  if ( edge_num > 0 ){
+    _edge.alloc(nodes, NULL, nodes, edge_num);
+    if ( _flag&LOAD_EDGEW && (!ERROR_MES) ) _edge.alloc_weight ( NULL);
+  }
+}
+*/
 
 
 

@@ -51,41 +51,37 @@ class FSTAR{
   FSTAR_INT _edge_num, _edge_num_org, _reduced_node_num;  // #edges in file, in array
   FSTAR_INT _xmax, _ymax;  // maximum in 1st/2nd column
   FSTAR_INT *_table ;   // vertex permutation table 
-  WEIGHT *_edge_w;   // edge weights
+  WEIGHT    *_edge_w;   // edge weights
 
   int _edge_dir;
   
-  FSTAR_INT _deg_lb, _in_lb, _out_lb, _deg_ub, _in_ub, _out_ub;  // bounds for degrees
+  // bounds for degrees
+  FSTAR_INT _deg_lb, _in_lb, _out_lb, _deg_ub, _in_ub, _out_ub;
 
-  WEIGHT _w_lb, _w_ub; // bounds for edge weight
+	// bounds for edge weight
+  WEIGHT _w_lb, _w_ub; 
 
 	char *_ERROR_MES;
 
-		
-	void inc_deg(FSTAR_INT x, FSTAR_INT y);//privateでOK?
+	//privateでOK?
+	void inc_deg(FSTAR_INT x, FSTAR_INT y);
 		
 	void sort_adjacent_node (int flag);
-	LONG alloc_deg ();
-	void calc_fstar ();
+	LONG alloc_deg();
+	void calc_fstar();
 
+	//privateでOK?
 	void scan_file (FILE2 *fp);
-
-	void read_file (FILE2 *fp, FILE2 *wfp);//privateでOK?
+	void read_file (FILE2 *fp, FILE2 *wfp);
+	void read_fileMED (FILE2 *fp);
 
 	void extract_subgraph();
 
-
-	int  eval_edge ( FSTAR_INT x, FSTAR_INT y, WEIGHT w);
-
-
-	//FILE *  open_write_file ( char *fname);//privateでOK?
-		
-	void write_graph_ID (OFILE2 &fp, OFILE2 &fp2, FSTAR_INT ID);//privateでOK?
-	int  write_graph_item (FSTAR_INT x, FSTAR_INT y, WEIGHT w, OFILE2 &fp, OFILE2 &fp2, int *row, FSTAR_INT *prv);//privateでOK?
+	int  eval_edge( FSTAR_INT x, FSTAR_INT y, WEIGHT w);
 
 		
-	void edge_w_pow(LONG l,double ratio){
-		_edge_w[l] = pow (_edge_w[l], ratio);
+	void edge_w_pow(LONG l,double ratio){ 
+		_edge_w[l] = pow (_edge_w[l], ratio); 
 	}
 
 	void edge_w_mul_min(LONG l,double ratio,double th){
@@ -93,23 +89,27 @@ class FSTAR{
 		_edge_w[l] = (_edge_w[l]<th) ? _edge_w[l] : th ;
 	}
 
-	void edge_w_div(int x,double w){
-		_edge_w[x] /= w;
+	void edge_w_div(int x,double w){ _edge_w[x] /= w; }
+
+	double edge_w_mul(LONG l){
+		return _edge_w[l]* _edge_w[l];
 	}
 
-	double edge_w_mul(LONG l){ 
-		return _edge_w[l]* _edge_w[l]; 
-	}
-
-	double eWeight(LONG l){ 
-		if(_edge_w){
-			return _edge_w[l];
-		}
+	double eWeight(LONG l){ 		
+		if(_edge_w){ return _edge_w[l]; }
 		return 0;
 	}
 
-
+	//privateでOK?
 	void writeHeadInfo(OFILE2 &fp);
+	void write_graph_ID(OFILE2 &fp, OFILE2 &fp2, FSTAR_INT ID);
+
+	int  write_graph_item(
+		FSTAR_INT x, FSTAR_INT y, WEIGHT w, 
+		OFILE2 &fp, OFILE2 &fp2, 
+		int *row, FSTAR_INT *prv
+	);
+
 
 
 	public:
@@ -124,19 +124,17 @@ class FSTAR{
 			_deg_ub(FSTAR_INTHUGE),_in_ub(FSTAR_INTHUGE),_out_ub(FSTAR_INTHUGE),
 			_w_lb(-WEIGHTHUGE),_w_ub(WEIGHTHUGE),_ERROR_MES(NULL){}
 
-		~FSTAR(){
-			//mfree (_edge, _edge_w, _in_deg, _out_deg, _fstar, _table);
+		~FSTAR(){ //mfree
 			delete [] _edge; 
 			delete [] _edge_w; 
 			delete [] _in_deg; 
 			delete [] _out_deg; 
 			delete [] _fstar;
 			delete [] _table;
-
 		}
 
 	
-		// Medset
+		// Medset grhfil
 		void setParams( int fsFlag, char *fname ,int edge_dir)
 		{
 			_flag   = fsFlag;
@@ -195,9 +193,8 @@ class FSTAR{
 			if(!_edge_w) return 0;
 				
 			 // multiply & trancate
-
 		  if ( ratio != 0 ){
-		    //FLOOP (l, 0, _edge_num){ 
+
 		    for(l=0;l<_edge_num;l++){
 		      if ( th == DOUBLEHUGE ){
         		edge_w_pow (l, ratio);
@@ -209,15 +206,12 @@ class FSTAR{
   		}
 
 		  if ( norm ){
-    		//FLOOP (l, 0, _out_node_num){
 		    for(l=0;l<_out_node_num;l++){
 		      w = 0.0;
-		      //FLOOP (x, _fstar[l], _fstar[l+1]){
 			    for(x=_fstar[l];x<_fstar[l+1];x++){
 		      	w += edge_w_mul(x);
 		      }
 		      w = sqrt (w);
-    			//FLOOP (x, _fstar[l], _fstar[l+1]){
 			    for(x=_fstar[l];x<_fstar[l+1];x++){
     			 	edge_w_div(x,w);
     			}
@@ -247,7 +241,9 @@ class FSTAR{
 		}
 
 		int load();
-		//int  get_flag(void){ return _flag;}
+
+		int loadMed();
+
 		void set_flag(int flag){ _flag=flag;}
 
 
@@ -284,5 +280,9 @@ class FSTAR{
 		FSTAR_INT get_fstar(LONG l){ return _fstar[l];}
 		FSTAR_INT get_edge(LONG l){ return _edge[l];}
 } ;
+
+
+
+//FILE *  open_write_file ( char *fname);//privateでOK?
 
 

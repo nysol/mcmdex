@@ -12,23 +12,26 @@
  #endif
 #endif
 
-
-class UNIONFIND{
+// simsetで使ってる
+class UNIONFIND{ 
 
 	UNIONFIND_ID *_ID;
 	UNIONFIND_ID *_set;
 	UNIONFIND_ID _end;
 	
 	
-	/* get the ID of belonging group, and flatten the ID tree */
+	// get the ID of belonging group, and flatten the ID tree 
 	UNIONFIND_ID _getID (UNIONFIND_ID v){
+
   	UNIONFIND_ID vv = v, vvv;
-  	while (v != _ID[v]) v = _ID[v];  // trace parents until the root (ID[v] = v, if v is a root)
+  	// trace parents until the root (ID[v] = v, if v is a root)
+  	while (v != _ID[v]) v = _ID[v];  
   	while (vv != _ID[vv]){ vvv = vv; vv = _ID[vv]; _ID[vvv] = v; }
   	return v;
+
 	}
-	
 	public:
+
 		UNIONFIND():_ID(NULL),_set(NULL),_end(0){}
 
 		~UNIONFIND(){
@@ -66,5 +69,4 @@ class UNIONFIND{
     		}
 	  	}
 		}
-	
 };

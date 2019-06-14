@@ -77,18 +77,15 @@ int KGGRHFIL::setArgs(int argc, char *argv[]){
 	_edge_dir = 2;//_FS.set_edge_dir(2);  
 
   if ( !strchr (argv[c], '_') ){ _fsFlag |= SHOW_MESSAGE;   }
-	//これ使いたい場合は別途考える
-//  if ( strchr (argv[c], '+') ) { _iFlag  |= ITEMSET_APPEND; }
 
 	_fsFlag  |= setArgs_iter(argv[c], &_edge_dir);
-  // _FS.union_flag( read_param_iter (argv[c], _FS.getp_edge_dir()) );
-
+ 
   if ( strchr(argv[c], 'u') ){ _problem |= LOAD_EDGE; }
   if ( strchr(argv[c], 'E') ){ _problem |= LOAD_ELE; }
   if ( strchr(argv[c], 'N') ){ _problem |= LOAD_GRAPHNUM; }
   if ( strchr(argv[c], 'W') ){ _problem |= LOAD_EDGEW; }
   if ( strchr(argv[c], 'V') ){ _problem |= LOAD_ID1; }
-  if ( strchr(argv[c], 'q') ){ _dir = 1; _edge_dir=0; }
+  if ( strchr(argv[c], 'q') ){ _noTrans = true; _edge_dir=0; }
   if ( strchr(argv[c], '0') ){ _problem  |= FSTAR_INS_ROWID; }
   if ( strchr(argv[c], '9') ){ _problem  |= FSTAR_INS_ROWID_WEIGHT; }
   if ( strchr(argv[c], 'Z') ){ _problem2 |= GRHFIL_NORMALIZE; }
@@ -152,7 +149,7 @@ int KGGRHFIL::setArgs(int argc, char *argv[]){
 
       break; case 'Q': 
       	_table_fname = argv[c+1]; 
-      	_dir =1;
+      	_noTrans = true;
 
 
       break; case 'd': 
@@ -212,28 +209,6 @@ int KGGRHFIL::setArgs(int argc, char *argv[]){
   
   if ( _table_fname )_FS.printMes("permutation-table-file %s\n", _table_fname);
 
-
-
-/*
-  print_mesf (&_FS, "input-file %s, output-file %s\n", _fname, _output_fname);
-  print_mesf (&_FS, "degree threshold: ");
-
-  if ( _deg_lb>0 ) print_mesf (&_FS, FSTAR_INTF" <", _deg_lb);
-  if ( _deg_lb>0 || _deg_ub < FSTAR_INTHUGE) print_mesf (&_FS, " degree ");
-  if ( _deg_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _deg_ub);
-
-  if ( _in_lb > 0 ) print_mesf (&_FS, FSTAR_INTF" <", _in_lb);
-  if ( _in_lb > 0 || _in_ub <FSTAR_INTHUGE) print_mesf (&_FS, " in-degree ");
-  if ( _in_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _in_ub);
-  
-  if ( _out_lb > 0 ) print_mesf (&_FS, FSTAR_INTF" <", _out_lb);
-  if ( _out_lb > 0 || _out_ub < FSTAR_INTHUGE) print_mesf (&_FS, " out-degree ");
-  if ( _out_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _out_ub);
-
-  print_mesf (&_FS, "\n");
-  
-  if ( _table_fname ) print_mesf (&_FS, "permutation-table-file %s\n", _table_fname);
-*/
 	if ( _root > 0 ){ 
 	  _fsFlag |= LOAD_INCSORT ;
 	  _fsFlag2|= LOAD_INCSORT ;
@@ -252,7 +227,7 @@ int KGGRHFIL::replaceDATA()
 	FSTAR_INT *table=NULL;
 	
 	if(_table_fname){
-		FILE2::ARY_Load( table,_table_fname,1);
+		FILE2::ARY_Load(table,_table_fname);
 	}
 	
 	ifp.open( _fname , "r");
@@ -261,11 +236,10 @@ int KGGRHFIL::replaceDATA()
 	do{
 		i=0; x=0;
 		do {
-			l = ifp.read_int ();
 
-			//if ( (FILE_err&4)==0 ){
-			
-			if ( ifp.readOK() ){
+			l = ifp.read_int ();
+						
+			if ( ifp.NotNull() ){ //(FILE_err&4)==0
 
 				ofp.print_int( table ? table[l]: l , i);
 				i = _sep;
@@ -276,16 +250,12 @@ int KGGRHFIL::replaceDATA()
 				}
 				ofp.flush ();
 			}
-
 			x++;
-
-		//} while ( (FILE_err&3)==0 );
-		} while ( ifp.remain());
+		} while ( ifp.NotEol()); //(FILE_err&3)==0 
 
 		ofp.puts ( "\n");
 
-	//} while ( (FILE_err&2)==0 );
-	} while ( ifp.eof());
+	} while ( ifp.NotEof()); //(FILE_err&2)==0
 
 	ifp.close ();
 	ofp.closew ();
@@ -306,39 +276,47 @@ int KGGRHFIL::run (int argc ,char* argv[]){
 
 	if ( setArgs(argc, argv) ){ return 1; }
 
-	//ARY_LOAD (_FS.get_table(), int, l, _table_fname, 1, EXIT);
-  // no transformation (just replace the numbers and separators)
-  //これ別のほうがいい？
-  if ( _dir ) {
-		replaceDATA();
-  }
-  else{
 
+  // no transformation (just replace the numbers and separators)
+  if ( _noTrans ) { 
+		replaceDATA(); //これ別のほうがいい？
+	  return 0;
+  }
+  else
+  {
 	  _FS.setParams(
   		_fsFlag,_fname,_edge_dir,_wfname,
 			_deg_lb,_deg_ub,_in_lb,_in_ub,
 			_out_lb,_out_ub,_w_lb,_w_ub,
 			_sep,_rows
 		);
-
 	  _FS2.setParams(_fsFlag2,_fname2,_edge_dir2);
 
 		if( _FS.load() ) return 1;
 		if( _fname2 ){ if( _FS2.load() ) return 1; }
-		_FS.adjust_edgeW(_ratio,_th,_th2,_problem2 & GRHFIL_NORMALIZE,_problem2 & GRHFIL_DISCRETIZE);	
-		_FS.set_flag(_problem); // +(FS->flag&LOAD_EDGE); //なぜここで
 
-		if ( _table_fname ) _FS.write_table_file (_table_fname); 
+		_FS.adjust_edgeW(
+			_ratio , _th , _th2 ,
+			_problem2 & GRHFIL_NORMALIZE,
+			_problem2 & GRHFIL_DISCRETIZE
+		);	
+
+		// +(FS->flag&LOAD_EDGE); //なぜここで
+		_FS.set_flag(_problem);
+
+		if ( _table_fname ){
+			_FS.write_table_file (_table_fname);
+		} 
 
 	  if ( _root ){
 			_ip_l1 = FSTAR::write_graph_operation (
-  		 	&_FS, &_FS2, 
-	  	 	_output_fname, _weight_fname,
-  		 	_root, _th2
-  	 	);
+				&_FS, &_FS2,
+				_output_fname, _weight_fname,
+				_root, _th2
+			);
 	  }
   	else{
-  		 _ip_l1 = _FS.write_graph ( _output_fname, _weight_fname );
+			_ip_l1 = _FS.write_graph ( _output_fname, _weight_fname );
 	  }
 	}
 
@@ -351,3 +329,30 @@ LONG KGGRHFIL::mrun(int argc ,char* argv[]){
 	return mod.iparam();
 }
 
+
+/*
+	//ARY_LOAD (_FS.get_table(), int, l, _table_fname, 1, EXIT);
+
+	//これ使いたい場合は別途考える
+	//  if ( strchr (argv[c], '+') ) { _iFlag  |= ITEMSET_APPEND; }
+
+
+  print_mesf (&_FS, "input-file %s, output-file %s\n", _fname, _output_fname);
+  print_mesf (&_FS, "degree threshold: ");
+
+  if ( _deg_lb>0 ) print_mesf (&_FS, FSTAR_INTF" <", _deg_lb);
+  if ( _deg_lb>0 || _deg_ub < FSTAR_INTHUGE) print_mesf (&_FS, " degree ");
+  if ( _deg_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _deg_ub);
+
+  if ( _in_lb > 0 ) print_mesf (&_FS, FSTAR_INTF" <", _in_lb);
+  if ( _in_lb > 0 || _in_ub <FSTAR_INTHUGE) print_mesf (&_FS, " in-degree ");
+  if ( _in_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _in_ub);
+  
+  if ( _out_lb > 0 ) print_mesf (&_FS, FSTAR_INTF" <", _out_lb);
+  if ( _out_lb > 0 || _out_ub < FSTAR_INTHUGE) print_mesf (&_FS, " out-degree ");
+  if ( _out_ub < FSTAR_INTHUGE ) print_mesf (&_FS, "< "FSTAR_INTF"  ", _out_ub);
+
+  print_mesf (&_FS, "\n");
+  
+  if ( _table_fname ) print_mesf (&_FS, "permutation-table-file %s\n", _table_fname);
+*/

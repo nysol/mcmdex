@@ -169,21 +169,23 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max, size_t item_ma
 
 
 /* sum the counters computed by each thread */
+// _iters2 += _multi_iters2[i];
+// _iters3 += _multi_iters3[i];
 void ITEMSET::merge_counters (){
-  int i;
-  //FLOOP (i, 0, MAX(_multi_core,1)){
-	for(i=0;i<MAX(_multi_core,1);i++){
+
+	for(size_t i=0 ; i<MAX(_multi_core,1) ; i++){ // FLOOP 
 
     _iters += _multi_iters[i];
-    // _iters2 += _multi_iters2[i];
-    // _iters3 += _multi_iters3[i];
     _outputs += _multi_outputs[i];
     _outputs2 += _multi_outputs2[i];
     _solutions += _multi_solutions[i];
     _solutions2 += _multi_solutions2[i];
     if ( _multi_fp[i].exist_buf() ) _multi_fp[i].flush_last ();
   }
-	for(size_t i =0 ;i<MAX(_multi_core,1)*7 ;i++){ _multi_iters[i] = 0; }
+  
+	for(size_t i =0 ;i<MAX(_multi_core,1)*7 ;i++){ 
+		_multi_iters[i] = 0; 
+	}
 }
 
 /*******************************************************************/
@@ -620,7 +622,7 @@ void ITEMSET::solution (QUEUE *occ, int core_id){
 void ITEMSET::output_rule ( QUEUE *occ, double p1, double p2, size_t item, int core_id){
 
   FILE2 *fp = &_multi_fp[core_id];
-  if ( fp->exist_fp() && !(_topk.end()) ){
+  if ( fp->exist() && !(_topk.end()) ){
     fp->print_real ( p1, _digits, '(');
     fp->print_real ( p2, _digits, ',');
     fp->putc ( ')');
@@ -1011,7 +1013,7 @@ void ITEMSET::solution (KGLCMSEQ_QUE *occ, int core_id){
 void ITEMSET::output_rule ( KGLCMSEQ_QUE *occ, double p1, double p2, size_t item, int core_id){
 
   FILE2 *fp = &_multi_fp[core_id];
-  if ( fp->exist_fp() && !(_topk.end()) ){
+  if ( fp->exist() && !(_topk.end()) ){
     fp->print_real ( p1, _digits, '(');
     fp->print_real ( p2, _digits, ',');
     fp->putc ( ')');

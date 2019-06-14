@@ -125,7 +125,7 @@ class KGLCM{
 
 	   // set outperm
 	  if ( _outperm_fname ){
-  	  j = FILE2::ARY_Load (p,  _outperm_fname, 1);
+  	  j = FILE2::ARY_Load(p,_outperm_fname);
     	if ( perm ){
     		for(j=0;j<siz;j++){
 					perm[j] = p[perm[j]];
@@ -193,13 +193,11 @@ class KGLCM{
 	    }
 
   	  if ( _TT.exist_perm() ){
-
     		_SG.adaptPerm(_TT.get_t(), _TT.get_perm());
-
     	}
-    
-    	_SG.edge_union_flag(LOAD_INCSORT +LOAD_RM_DUP);
-  		_SG.edge_sort();
+    	// _SG.edge_union_flag(LOAD_INCSORT +LOAD_RM_DUP);
+  		// _SG.edge_sort();
+  		_SG.edge_sort(LOAD_INCSORT +LOAD_RM_DUP);
   	}
 
 	  _II.set_total_weight(_TT.get_total_w());
