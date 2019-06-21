@@ -212,7 +212,7 @@ void ITEMSET::last_output (){
 
       c = 0;
       //FLOOP (nn, 0, _itemtopk[n].end()){
-			for(nn=0;nn<_itemtopk[n].end();n++){
+			for(nn=0;nn<_itemtopk[n].end();nn++){
 
         i = _itemtopk[n].findmin_head();
         w = _itemtopk[n].H(i);
@@ -223,7 +223,6 @@ void ITEMSET::last_output (){
         fp->print_int (  _perm? _perm[_itemtopk_ary[n][i]]: _itemtopk_ary[n][i], c);
         c = _separator;
         if ( _flag & ITEMSET_FREQ ){ fp->print_real ( w, 8, c); c = _separator; }
-
 				_itemtopk[n].chg(i, WEIGHTHUGE);
 
       }
@@ -257,7 +256,7 @@ void ITEMSET::last_output (){
     if ( _sc[i] != 0 ) nn = i;
   }
 
-  if ( n!=0 ){
+  if ( n!=0 ){ //OK?
     printf (LONGF "\n", n);
     //FLOOP (i, 0, nn+1) 
 		for(i=0;i<nn+1;i++){
@@ -332,10 +331,10 @@ void ITEMSET::output_occ ( QUEUE *occ, int core_id)
 }
 
 /* output an itemset to the output file */
+
 void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id){
   QUEUE_ID i;
   QUEUE_INT e;
-
   int flush_flag = 0;
   FILE2 *fp = &_multi_fp[core_id];
   
@@ -359,6 +358,7 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *o
   if (_flag & ITEMSET_SC2) _sc2[(QUEUE_INT)frq]++;  // histogram for LAMP
   SPIN_UNLOCK(_multi_core, _lock_sc);
 
+
   if ( _itemtopk_end > 0 ){
 
     e = _itemtopk[itemtopk_item].findmin_head();
@@ -379,10 +379,10 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *o
       if ( frq * _topk_sign > _topk.H(e) ){
 
         SPIN_LOCK(_multi_core, _lock_sc);
-
         _topk.chg( e, frq * _topk_sign);
         e = _topk.findmin_head ();
-        _frq_lb = _topk.H(e) * _topk_sign;
+
+        _frq_lb =  _topk_sign* _topk.H(e);
 
         SPIN_UNLOCK(_multi_core, _lock_sc);
 
@@ -467,6 +467,7 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE_IN
 
   SPIN_UNLOCK(_multi_core, _lock_sc);
 
+
   if ( _itemtopk_end > 0 ){
 
     e = _itemtopk[itemtopk_item].findmin_head();
@@ -489,7 +490,6 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE_IN
       if ( frq * _topk_sign > _topk.H(e) ){
 
         SPIN_LOCK(_multi_core, _lock_sc);
-
         _topk.chg( e, frq * _topk_sign);
         e = _topk.findmin_head ();
         _frq_lb = _topk.H(e) * _topk_sign;
@@ -880,8 +880,8 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ
       if ( frq * _topk_sign > _topk.H(e) ){
 
         SPIN_LOCK(_multi_core, _lock_sc);
-
         _topk.chg( e, frq * _topk_sign);
+
         e = _topk.findmin_head ();
         _frq_lb = _topk.H(e) * _topk_sign;
 

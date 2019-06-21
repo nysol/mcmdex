@@ -118,8 +118,6 @@
  #endif
 #endif
 
-//extern char *common_pnt;
-//extern INT common_INT;
 
 /* lock&unlock for multi-core mode */
 #ifdef MULTI_CORE
@@ -162,8 +160,6 @@
 
 #define SHOW_MESSAGE 1   // not print messages
 #define SHOW_PROGRESS 2  // show progress of the computation
-//#define APPEND_OUTPUT 4  // append the output to existing file
-//#define NO_REMOVE 8      // do not remove the temporal files
 #define LOAD_PERM 64      // permute the nodes/items by something
 #define LOAD_RM_DUP 128   // duplicate items in each row, for loading data
 #define LOAD_INCSORT 256  // sort rows in increasing order, for loading data
@@ -174,11 +170,8 @@
 #define LOAD_WSORT 8192     // sort rows by their weights 
 #define LOAD_SIZSORT 16384     // sort rows by their sizes 
 #define LOAD_DECROWSORT 32768   // sort rows in decreasing order
-#define LOAD_NUM 65536   // read #columns, #rows and #elements from the 1st line of the file
 
 #define LOAD_EDGEW 131072     // read edge weight
-//#define LOAD_ARCW 262144     // read arc weight
-//#define LOAD_NODEW 524288     // read node weight
 #define LOAD_BIPARTITE 1048576     // read bipartite graph
 #define LOAD_EDGE 2097152     // read edge 
 #define LOAD_ARC 4194304     // read arc 
@@ -189,11 +182,18 @@
 
 #define FILE_COUNT_ROWT 32   // count size of each row
 #define FILE_COUNT_CLMT 64   // count size of each column
-#define FILE_COUNT_NUM LOAD_NUM   // read #columns, #rows and #elements
 #define FILE_COUNT_GRAPHNUM LOAD_GRAPHNUM   // read #vertices and #edges
 #define FILE2_BUFSIZ 16384
 #define FILE_COUNT_INT VEC_ID
 #define FILE_COUNT_INTF VEC_IDF
+
+//#define APPEND_OUTPUT 4  // append the output to existing file
+//#define NO_REMOVE 8      // do not remove the temporal files
+//#define LOAD_NUM 65536   // read #columns, #rows and #elements from the 1st line of the file
+//#define LOAD_ARCW 262144     // read arc weight
+//#define LOAD_NODEW 524288     // read node weight
+//#define FILE_COUNT_NUM LOAD_NUM   // read #columns, #rows and #elements
+
 
 // swap macro
 template<typename T>

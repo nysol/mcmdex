@@ -103,7 +103,9 @@ class AHEAP {
 
 
 
-		AHEAP_ID H(AHEAP_ID i){ return _v[(i+_base)%_end+_end-1];}
+		AHEAP_KEY H(AHEAP_ID i){ 
+			return _v[(i+_base)%_end+_end-1];
+		}
 
 		AHEAP_ID findmin_head (){ 
 		  if ( _end <= 0 ) return (-1);
@@ -152,10 +154,11 @@ class AHEAP {
 		/* print heap keys according to the structure of the heap */
 		void print (){
 		  AHEAP_ID i, j=1;
+		  printf("hend %d\n",_end);
   		while ( j<=_end*2-1 ){
     		//FLOOP (i, j-1, MIN(j, _end)*2-1) {
 				for(i = j-1 ; i <  MIN(j, _end)*2-1 ; i++){
-    			printf (AHEAP_KEYF ",", _v[i] );
+    			printf (AHEAP_KEYF ",%d", _v[i] ,i);
     		}
     		printf ("\n");
     		j = j*2;

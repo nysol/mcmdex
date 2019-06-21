@@ -71,7 +71,8 @@ class FSTAR{
 	void calc_fstar();
 
 	//privateでOK?
-	void scan_file (FILE2 *fp);
+	void _scan_file (FILE2 *fp);
+
 	void read_file (FILE2 *fp, FILE2 *wfp);
 	void read_fileMED (FILE2 *fp);
 

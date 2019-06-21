@@ -200,7 +200,7 @@ void SETFAMILY::_flie_load(FILE2 &fp){
   if ( flag ) flag2 = _flag | LOAD_EDGEW;
 
   fp.reset ();
-  if ( _flag&(LOAD_NUM+LOAD_GRAPHNUM) ) fp.read_until_newline ();
+  if ( _flag&(LOAD_GRAPHNUM) ) fp.read_until_newline ();
   t=0;
   do {
 

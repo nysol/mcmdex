@@ -324,6 +324,26 @@ class TRSACT {
 	void clrOQendELE(int i){ _OQELE[i].endClr(); }
 	void clrOQtELE(int i){ _OQELE[i].tClr(); }
 
+	PERM * convPerm(char* fname){ 
+
+		if ( fname ){ 
+
+			PERM *p = NULL;
+
+			FILE2::ARY_Load( p ,fname);
+
+			if ( _perm ){
+				for(int j =0 ;j < _T.get_clms() ; j++){
+					_perm[j] = p[_perm[j]];
+      	}
+	    	delete [] p;
+	    }
+		  else {
+    		_perm = p;
+    	}
+		}
+		return _perm;
+	}
 
 
 	//アクセッサ
@@ -332,6 +352,7 @@ class TRSACT {
 
 	PERM * get_perm(void){ return _perm;}
 	PERM   get_perm(int i){ return _perm[i];}
+
 
 	VEC_ID get_clms(void){ return _T.get_clms();}
 	size_t get_eles(void){ return _T.get_eles();}

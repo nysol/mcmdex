@@ -168,7 +168,7 @@ int FSTAR::eval_edge (FSTAR_INT x, FSTAR_INT y, WEIGHT w){
 
 /* scan the file and count the degree, for edge listed file */
 /* if F->out_node_num is set ot a number larger than #nodes, set the node number to it, so that isolated vertices will be attached to the last */
-void FSTAR::scan_file(FILE2 *fp){
+void FSTAR::_scan_file(FILE2 *fp){
 
   LONG i, j;
 
@@ -177,10 +177,9 @@ void FSTAR::scan_file(FILE2 *fp){
   // count #pairs
   C.countFS (
   	fp,
-  	(_flag&(LOAD_ELE+LOAD_TPOSE+LOAD_NUM+LOAD_GRAPHNUM+LOAD_EDGE)) | 
-  	FILE_COUNT_ROWT | 
-  	((_flag & FSTAR_CNT_IN)? FILE_COUNT_CLMT: 0)
-  	, 0, 0, 0, (_flag&LOAD_EDGEW)?1:0, 0
+  	(_flag&(LOAD_ELE+LOAD_TPOSE+LOAD_GRAPHNUM+LOAD_EDGE)) | 
+  	FILE_COUNT_ROWT | ((_flag & FSTAR_CNT_IN)? FILE_COUNT_CLMT: 0),
+  	(_flag&LOAD_EDGEW)?1:0 
   );
 
   _xmax = C.get_rows(); 
@@ -211,7 +210,7 @@ void FSTAR::read_file(FILE2 *fp, FILE2 *wfp){
   for (phase=flag?1:2 ; phase < 3 ; phase++){
     i=0;
     fp->reset ();
-    if ( _flag&(LOAD_NUM+LOAD_GRAPHNUM) ) fp->read_until_newline();
+    if ( _flag&(LOAD_GRAPHNUM) ) fp->read_until_newline();
     if ( phase == 2 ) calc_fstar ();
     do {
 			//////////////
@@ -324,9 +323,10 @@ void FSTAR::extract_subgraph()
   
 }
 
-
-
-/* load graph from file */
+/* 
+	load graph from file 
+	kggrhfil
+*/
 int FSTAR::load(){
 
   FILE2 fp , wfp;
@@ -354,7 +354,7 @@ int FSTAR::load(){
   fp.open ( _fname, "r");
   if ( _wfname ) wfp.open ( _wfname, "r");
 
-  scan_file(&fp);
+  _scan_file(&fp);
   printMes("first & second scan end: %s\n", _fname);
 
   read_file( &fp, _wfname? &wfp: NULL);
@@ -470,11 +470,8 @@ int FSTAR::loadMed(){
 
 void FSTAR::writeHeadInfo(OFILE2 &fp){
 
-	if ( _flag&(LOAD_NUM+LOAD_GRAPHNUM) ){
+	if ( _flag&(LOAD_GRAPHNUM) ){
 		fp.print(FSTAR_INTF"%c", _node_num, _sep);
-		if ( _flag&LOAD_NUM ){
-			fp.print(FSTAR_INTF"%c", _node_num, _sep); //なぜLOAD_NUMなに
-		}
 		fp.print(FSTAR_INTF"\n", _edge_num/((_flag&LOAD_EDGE)?2:1));
   }
 

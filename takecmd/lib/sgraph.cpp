@@ -25,7 +25,7 @@ int SGRAPH::loadEDGE(int flag ,char* fname){
   _fname = fname;
   _flag = flag;
 
-  _flag |= flag & (LOAD_ELE + LOAD_EDGEW + LOAD_EDGE + LOAD_RC_SAME + LOAD_ID1 + LOAD_NUM + LOAD_GRAPHNUM);
+  _flag |= flag & (LOAD_ELE + LOAD_EDGEW + LOAD_EDGE + LOAD_RC_SAME + LOAD_ID1 + LOAD_GRAPHNUM);
 	_flag |= LOAD_RC_SAME;
 
 

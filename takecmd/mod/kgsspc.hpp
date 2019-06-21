@@ -35,6 +35,32 @@
 #include "problem.hpp"
 #include "itemset.hpp"
 
+class TrsactParams{
+	// _TT
+  int _tFlag;
+	double _row_lb_;
+	int _row_lb;
+	double _row_ub_;
+	int _row_ub;
+	double _clm_lb_;
+	double _w_lb;
+	double _clm_ub_;
+	double _w_ub;
+};
+
+class ItemsetParams{
+	// _TT
+  int _tFlag;
+	double _row_lb_;
+	int _row_lb;
+	double _row_ub_;
+	int _row_ub;
+	double _clm_lb_;
+	double _w_lb;
+	double _clm_ub_;
+	double _w_ub;
+};
+
 class KGSSPC{
 
 	// receive parameter
@@ -79,14 +105,9 @@ class KGSSPC{
 	char *_fname;
   char *_fname2;
 
-	// gloval value in org
-	// LONG _ip_l2;
-	LONG _ip_l3;
-	LONG _ip_l1;
-
 	int _siz;
 
-	char *_position_fname;
+	PERM *_positPERM; // ( org _position_fname)
 	char  *_vecchr;
 	WEIGHT *_occ_w;
   QUEUE_INT *_itemary;
@@ -94,62 +115,26 @@ class KGSSPC{
 
   size_t _buf_end;
   QUEUE_ID _i;
-	char *_ERROR_MES;
-
 
 	ITEMSET _II;
 	TRSACT _TT;
 
 	void output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id);
+
 	void *iter (void *p);
 
 	WEIGHT comp ( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq);
-	void comp2 (QUEUE_ID i, QUEUE_ID x, WEIGHT c, WEIGHT wi, WEIGHT wx, double sq, QUEUE_INT *cnt, OFILE2 *fp, QUEUE *itemset, int core_id);
+	void   comp2 (QUEUE_ID i, QUEUE_ID x, 
+								WEIGHT c, WEIGHT wi, WEIGHT wx, 
+								double sq, QUEUE_INT *cnt, OFILE2 *fp, 
+								QUEUE *itemset, int core_id
+							);
 
 	void SSPCCORE();
-	void list_comp();
 
 	/* allocate arrays and structures */
-	void preALLOC(){
-
-		QUEUE_ID siz  = _TT.get_clms();
-		QUEUE_ID siz2 = _TT.get_t();
-	 	PERM *perm    = _TT.get_perm();
-	  PERM *p;
-
-		_occ_w = new WEIGHT[siz+2](); // calloc2
-		_vecchr = new char[siz2+2](); // calloc2
-
-		if(_problem&SSPC_POLISH2) {
-			_itemary = new QUEUE_INT[siz+2](); //calloc2
-		}
-
-    // set outperm
-	  if ( _outperm_fname ){
-
-			int j = FILE2::ARY_Load(p,_outperm_fname);
-
-	  	if ( perm ){
-      	for(int j =0 ;j < siz ; j++){
-      		perm[j] = p[perm[j]];
-      	}
-	      delete [] p;
-      }
-	    else {
-    		perm = p;
-    	}
-		}
-
-	  _II.alloc(_output_fname, perm, siz, 0);
-
-		_TT.set_perm(NULL); // free対策？
-		
-		_TT.reallocW();
-
-	  return;
-
-	}
-
+	void _preALLOC();
+	
 	int setArgs(int argc, char *argv[]);
 
  	void help();
@@ -162,9 +147,9 @@ class KGSSPC{
 		_th(0),_th2(0),
 		_output_fname(NULL),_output_fname2(NULL),
 		_outperm_fname(NULL),_table_fname(NULL),
-		_position_fname(NULL),_vecchr(NULL),
+		_positPERM(NULL),_vecchr(NULL),
 		_occ_w(NULL),_itemary(NULL),
-		_buf_end(0),_i(0),_ERROR_MES(NULL),_sep(0),
+		_buf_end(0),_i(0),_sep(0),
 		_row_lb_(0.0),_row_lb(0),
 		_row_ub_(0.0),_row_ub(QUEUE_IDHUGE),
 		_clm_lb_(0.0),_w_lb(-WEIGHTHUGE),
@@ -175,22 +160,25 @@ class KGSSPC{
 		_multi_core(1),_max_solutions(0),_separator(' '),
 		_fname(NULL),_wfname(NULL),_item_wfname(NULL),
 		_fname2(NULL)
-
 		{}
-
-
 
 	int run(int argc ,char* argv[]);
 	
 	vector<LONG> iparam(){ 
 		vector<LONG> rtn(2);
-		rtn[0] = _ip_l1;
-		rtn[1] = _ip_l3;
+		rtn[0] = _II.get_solutions(); 
+		rtn[1] = _TT.get_clms_org();
 		return rtn;
 	}
 	
 	static vector<LONG> mrun(int argc ,char* argv[]);
-	
-
 
 };
+
+//iparamで
+// gloval value in org
+// LONG _ip_l2;
+//LONG _ip_l3;
+//LONG _ip_l1;
+//	void list_comp();
+

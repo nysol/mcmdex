@@ -187,7 +187,7 @@ void TRSACT::_file_read (FILE2 &fp, FILE2 &fp2,  int flag)
 
 
   fp.reset();
-  if(_flag&(LOAD_NUM+LOAD_GRAPHNUM)){
+  if(_flag&(LOAD_GRAPHNUM)){
   	fp.read_until_newline(); 
   }
 	  
@@ -203,7 +203,7 @@ void TRSACT::_file_read (FILE2 &fp, FILE2 &fp2,  int flag)
 	// fp2にアイテムファイルは指定できないようになってたので
 	if( fp2.exist() ){
 		fp2.reset();
-	  if(_flag&(LOAD_NUM+LOAD_GRAPHNUM)){
+	  if(_flag&(LOAD_GRAPHNUM)){
   		fp2.read_until_newline (); 
   	}
 		_T.file_read( fp2 , _C , &t , flag , _flag);
@@ -400,12 +400,6 @@ int TRSACT::loadMain(bool elef){
   _alloc();
 
   VEC_ID t=0;
-
-	// _T.file_read(fp , _C, &t, f, _flag&(LOAD_NUM+LOAD_GRAPHNUM), _item_wfname);
-	//  _file_read( &fp, &_C, &t, f, _item_wfname);
-  //	if ( _fname2 ){
-	//	  _file_read( &fp2, &_C, &t, f, NULL); 
-	//	}
 
   _file_read( fp , fp2 , f);
 

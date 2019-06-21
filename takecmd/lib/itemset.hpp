@@ -79,7 +79,13 @@ class ITEMSET{
   int _len_ub, _len_lb;   // upper/lower bounds for the length of the pattern
   int _gap_ub, _gap_lb;   // upper/lower bounds for the gaps in the pattern
 
-  LONG  _itemtopk_item, _itemtopk_item2,_itemtopk_end; // the size of itemtopk heaps; specify topkheap to be used/the size of each in the initiaization
+	// the size of itemtopk heaps;
+	// specify topkheap to be used/the size of each in the initiaization
+	// for sspc (-k)
+  LONG  _itemtopk_item, _itemtopk_item2,_itemtopk_end; 
+
+
+
   LONG _topk_k, _topk_frq;   // counter for topk bucket and #remainings
 
   WEIGHT _frq, _pfrq, _frq_ub, _frq_lb;  // upper/lower bounds for the frequency
@@ -97,7 +103,7 @@ class ITEMSET{
   LONG *_patn;  // cardinarity of each patten group
 
 	VEC_ID _rows_org; // _Xのかわり
-	PERM *_trperm; // _Xのかわり 仮
+	PERM *_trperm;    // _Xのかわり 仮
 
   char *_itemflag;       // 1 if it is include in the pattern (and 2 if included in add)
   PERM *_perm;   // permutation array for output itemset: item => original item
@@ -141,10 +147,6 @@ class ITEMSET{
 	/* Output information about ITEMSET structure. flag&1: print frequency constraint */
 	void print (int flag);
 
-	/* topk.end>0 => initialize heap for topk mining */
-	/* all pointers will be set to 0, but not for */
-	/* if topK mining, set topk.end to "K" */
-	//void end ();
 
 	// ================================================
 	//  OUTPUT
@@ -243,9 +245,7 @@ class ITEMSET{
 		#endif
 
 	}
-	
-	
-	
+
 		// SSPC
 		void setParams(
 			int iFlag, WEIGHT frq_lb,int len_ub,int len_lb,
@@ -339,12 +339,6 @@ class ITEMSET{
 			_separator = separator;
 
 		}
-
-
-
-
-
-
 #ifdef MULTI_CORE
 	pthread_spinlock_t get_lock_counter(){return _lock_counter;}
 #else
@@ -444,6 +438,7 @@ class ITEMSET{
 
 	void set_itemset_t(QUEUE_ID v){ _itemset.set_t(v) ;}
 	void set_itemset_v(int i,QUEUE_INT v){ _itemset.set_v(i,v);}
+
 	QUEUE_ID get_itemset_t(){ return _itemset.get_t();}
 
 
@@ -451,39 +446,11 @@ class ITEMSET{
 	PERM* get_perm(){ return _perm;}
 	
 	FILE2* getp_multi_fp(int i){ return &_multi_fp[i]; }
- 
+
 	void set_target(QUEUE_INT v){ _target=v;}
-	void set_multi_core( int v) { _multi_core=v;}
-	void set_topk_k( LONG v){ _topk_k = v;}
-	void set_itemtopk_item( LONG v){_itemtopk_item=v;}
-	void set_itemtopk_item2( LONG v){_itemtopk_item2=v;}
-	void set_itemtopk_end( LONG v){_itemtopk_end=v;}
-	void set_len_lb(int v){ _len_lb =v; }
-	void set_len_ub(int v){ _len_ub =v; }
-	void set_max_solutions( LONG v){ _max_solutions=v;}
-	void set_separator(char v){ _separator = v;}
-	void set_frq_lb(WEIGHT v){ _frq_lb= v;}
-	void set_frq_ub(WEIGHT v){ _frq_ub= v;}
-	void set_prob_lb(double v){ _prob_lb= v;}
-	void set_prob_ub(double v){ _prob_ub= v;}
-	void set_ratio_lb(double v){ _prob_lb= v;}
-	void set_ratio_ub(double v){ _prob_ub= v;}
-
-	void set_rposi_lb(WEIGHT v){ _rposi_lb= v;}
-	void set_rposi_ub(WEIGHT v){ _rposi_ub= v;}
-
-	void set_gap_ub(int v){_gap_ub=v;}
-	void set_setrule_lb(WEIGHT v){_setrule_lb=v;}
-
-	void set_posi_lb(WEIGHT v){ _posi_lb= v;}
-	void set_posi_ub(WEIGHT v){ _posi_ub= v;}
-	void set_nega_lb(WEIGHT v){ _nega_lb= v;}
-	void set_nega_ub(WEIGHT v){ _nega_ub= v;}
-
-	void set_digits(int v){ _digits= v;}
-
 	void set_perm(PERM* v){_perm =v;}
-
+	void set_gap_ub(int v){_gap_ub=v;}
+	void set_len_ub(int v){ _len_ub =v; }
 	void set_ub(int v){_ub=v;}
 	void set_lb(int v){_lb=v;}
 	void set_th(double v){_th=v;}
@@ -507,26 +474,16 @@ class ITEMSET{
   void set_set_occ(QUEUE_ID i,QUEUE * v){ _set_occ[i]=v;}
   void set_set_occELE(QUEUE_ID i,KGLCMSEQ_QUE * v){ _set_occELE[i]=v;}
 
-	void union_flag(int flag){ _flag|=flag;}
-	void union_flag2(int flag){ _flag2|=flag;}
-	void sub_flag(int flag){ _flag-=flag;}
-
 	void add_sc(int i,LONG v){ _sc[i]+=v;}
 	void inc_iters(){ _iters++;}
 
-	// void bitrm(int){ BITRM (_flag, ITEMSET_PRE_FREQ);}
-
-
 	void set_total_weight(WEIGHT v) { _total_weight=v; }  
-	// _Xの代わり
 	void set_rows_org(VEC_ID v){ _rows_org = v; }
 	void set_trperm(PERM *v){ _trperm = v; }
 
 	void set_itemflag(char * v){ 
-		//free2 (_itemflag); 
-		delete [] _itemflag;
+		delete [] _itemflag; //free
 		_itemflag = v;
-
 	}
 
 	void set_itemflag(int i,char v){ _itemflag[i] = v; }
@@ -542,15 +499,18 @@ class ITEMSET{
 	/* output an itemset to the output file */
 	void output_itemset  (QUEUE *occ, int core_id);
 	void output_itemset  (int core_id);
+	void output_itemset  ( KGLCMSEQ_QUE *occ, int core_id);
 
 	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
+	//void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, int core_id);
 
 	// for sspc
 	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
+	//void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq,int core_id);
 
 
-	void output_itemset  ( KGLCMSEQ_QUE *occ, int core_id);
 	void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
+	//void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, int core_id);
 
 	/*******************************************************************/
 	/* output at the termination of the algorithm */
@@ -570,15 +530,44 @@ class ITEMSET{
 
 	void close(){
 
-	  if ( _multi_fp )
-	    // FLOOP (i, 0, MAX(_multi_core,1))
-	  	for( int i = 0 ; i <  MAX(_multi_core,1) ; i++){
-			 _multi_fp[i].closew();
-			}
+	  if( _multi_fp ){
+	  	for(int i = 0 ; i <  MAX(_multi_core,1) ; i++){ 
+	  		_multi_fp[i].closew(); 
+	  	}
 		}
+	}
 
 };
 
+/*
+	void set_itemtopk_item( LONG v){_itemtopk_item=v;}
+	void set_itemtopk_item2( LONG v){_itemtopk_item2=v;}
+	void set_multi_core( int v) { _multi_core=v;}
+	void set_topk_k( LONG v){ _topk_k = v;}
+	void set_itemtopk_end( LONG v){_itemtopk_end=v;}
+	void set_len_lb(int v){ _len_lb =v; }
+	void set_max_solutions( LONG v){ _max_solutions=v;}
+	void set_separator(char v){ _separator = v;}
+	void set_frq_lb(WEIGHT v){ _frq_lb= v;}
+	void set_frq_ub(WEIGHT v){ _frq_ub= v;}
+	void set_prob_lb(double v){ _prob_lb= v;}
+	void set_prob_ub(double v){ _prob_ub= v;}
+	void set_ratio_lb(double v){ _prob_lb= v;}
+	void set_ratio_ub(double v){ _prob_ub= v;}
+	void set_rposi_lb(WEIGHT v){ _rposi_lb= v;}
+	void set_rposi_ub(WEIGHT v){ _rposi_ub= v;}
+	void set_setrule_lb(WEIGHT v){_setrule_lb=v;}
+	void set_posi_lb(WEIGHT v){ _posi_lb= v;}
+	void set_posi_ub(WEIGHT v){ _posi_ub= v;}
+	void set_nega_lb(WEIGHT v){ _nega_lb= v;}
+	void set_nega_ub(WEIGHT v){ _nega_ub= v;}
+	void set_digits(int v){ _digits= v;}
+	void bitrm(int){ BITRM (_flag, ITEMSET_PRE_FREQ);}
+	void union_flag(int flag){ _flag|=flag;}
+	void union_flag2(int flag){ _flag2|=flag;}
+	void sub_flag(int flag){ _flag-=flag;}
+
+*/
 
 
 
