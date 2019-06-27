@@ -402,7 +402,6 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
   _TT.delivery( _occ_w, _occ_pw, occ, imax);
 
-
 	 // for ratio pruning when item target is set.
   if ( 
   	_II.get_target() < _II.get_item_max() && 
@@ -438,7 +437,8 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
   if ( !(_problem&PROBLEM_MAXIMAL) || f >= _TT.get_clms() || _occ_w[f] < _II.get_frq_lb() ){
 
     if ( !(_II.get_flag() & ITEMSET_POSI_RATIO) || 
-    			(rposi<=_II.get_rposi_ub() && rposi>=_II.get_rposi_lb()) ){
+    			(rposi<=_rposi_ub && rposi>=_rposi_lb) ){
+    			
       _II.check_all_rule ( _occ_w, occ, _TT.getp_jump(), _TT.get_total_pw_org(), 0);     
 
     }
@@ -560,7 +560,8 @@ int KGLCM::run (int argc, char *argv[]){
 	  _TT.load(
 			_tFlag,_tFlag2,
 			_fname,_wfname,NULL,NULL,
-			_w_lb,WEIGHTHUGE)
+			_w_lb,WEIGHTHUGE
+		)
 	){
 		return 1;
 	}
@@ -582,8 +583,7 @@ int KGLCM::run (int argc, char *argv[]){
 	_II.setParams(
 		_iFlag,_frq_lb,_frq_ub,_lb,_ub,_target,
 		_ratio_lb,_ratio_ub,_prob_lb,_prob_ub,
-		_rposi_lb,_rposi_ub,_nega_lb,_nega_ub,
-		_posi_lb,_posi_ub,
+		_nega_lb,_nega_ub,_posi_lb,_posi_ub,
 		_topk_k,_max_solutions,_separator,_digits
 	);
  

@@ -130,7 +130,9 @@ class SETFAMILY{
   		QUEUE_INT *x;
 
 		  if ( _w!=NULL ){  y = _w[t]; }
+
 		  _v[t].delivery_iter( w, pw, t, m ,jmp,oq,tw,tpw,y,f);
+
 		  
 		}
 
@@ -449,7 +451,6 @@ class SETFAMILY{
   	void set_rw(int i,WEIGHT w){ _rw[i]=w;}
   	void set_rw(WEIGHT *w){ _rw=w;}
   	void set_rperm(PERM *rperm){ _rperm=rperm;}
-
 
 		void setInvPermute(PERM *rperm,PERM *trperm,int flag);
 		void replace_index(PERM *perm, PERM *invperm);

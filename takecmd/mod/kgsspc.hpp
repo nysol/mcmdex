@@ -121,16 +121,16 @@ class KGSSPC{
 
 	void output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id);
 
-	void *iter (void *p);
+	void *iter(void *p);
 
-	WEIGHT comp ( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq);
-	void   comp2 (QUEUE_ID i, QUEUE_ID x, 
+	WEIGHT comp( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq);
+	void   comp2( QUEUE_ID i, QUEUE_ID x, 
 								WEIGHT c, WEIGHT wi, WEIGHT wx, 
 								double sq, QUEUE_INT *cnt, OFILE2 *fp, 
 								QUEUE *itemset, int core_id
 							);
 
-	void SSPCCORE();
+	void _SspcCore();
 
 	/* allocate arrays and structures */
 	void _preALLOC();

@@ -95,7 +95,7 @@ class KGLCM{
 		//calloc2 (_occ_w, siz+2, goto ERR);
 		_occ_w = new WEIGHT[siz+2]();
 
-		if ( _tFlag2 & TRSACT_NEGATIVE){
+		if ( _TT.incNega()){
 			//calloc2 (_occ_pw, siz+2, goto ERR);
 			_occ_pw = new WEIGHT[siz+2]();
 		}else{
@@ -109,7 +109,7 @@ class KGLCM{
 		else{
   	 	_occ_w2 = new WEIGHT[siz+2](); //calloc2 
   	 	
-    	if ( _tFlag2 & TRSACT_NEGATIVE ){
+    	if ( _TT.incNega() ){
     		 _occ_pw2 =  new WEIGHT[siz+2](); //calloc2
     	}
 			else{
@@ -200,7 +200,10 @@ class KGLCM{
   		_SG.edge_sort(LOAD_INCSORT +LOAD_RM_DUP);
   	}
 
-	  _II.set_total_weight(_TT.get_total_w());
+	  //_II.set_total_weight(_TT.get_total_w());
+	  _II.set_total_weight(0); //get_total_w_org?
+
+
 		_II.set_rows_org(_TT.get_rows_org());
 		_II.set_trperm(_TT.get_trperm());
  

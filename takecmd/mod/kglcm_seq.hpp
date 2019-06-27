@@ -37,8 +37,6 @@ class KGLCMSEQ{
 	char *_ERROR_MES;
 	QUEUE _itemjump,_itemcand;
 
-
-
 	int _problem;
 	char *_output_fname;
 	char *_outperm_fname;
@@ -67,22 +65,24 @@ class KGLCMSEQ{
 	char *_wfname;
 	double _w_lb;
 
-	
-	
 	void help ();
 	
 	void occ_delivery (KGLCMSEQ_QUE *occ, int flag);
-	void rm_infreq ();
+	void rm_infreq();
 	void reduce_occ ( KGLCMSEQ_QUE *occ, QUEUE_INT item);
 	void _init (KGLCMSEQ_QUE *occ);
 
 	void LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ);
 
 	/* allocate arrays and structures */
-	void preALLOC (QUEUE_ID siz, QUEUE_ID siz2, size_t siz3, PERM *perm ){
+	void preALLOC(){
 
 	  PERM *p;
   	int j;
+  	
+  	QUEUE_ID siz = _TT.get_clms();
+  	QUEUE_ID siz2 = _TT.get_t();
+  	PERM *perm = _TT.get_perm();
 		//int f	= PROBLEM_ITEMCAND +((_tFlag2&TRSACT_NEGATIVE)?PROBLEM_OCC_PW: PROBLEM_OCC_W) +PROBLEM_ITEMJUMP
 
   	//if ( f&(PROBLEM_OCC_W+PROBLEM_OCC_PW) ) 
@@ -93,17 +93,14 @@ class KGLCMSEQ{
 	  //if ( f&PROBLEM_OCC_PW ) calloc2 (_occ_pw, siz+2, goto ERR);
 	  //else _occ_pw = _occ_w;
 	  
-	  if(_tFlag2&TRSACT_NEGATIVE){
-		  //calloc2 (_occ_pw, siz+2, goto ERR);
-		  _occ_pw = new WEIGHT[siz+2]();
+	  if(_TT.incNega()){
+		  _occ_pw = new WEIGHT[siz+2](); //calloc2
 	  }else{
 		  _occ_pw = _occ_w;
 	  }
 
-		//if ( f&PROBLEM_ITEMJUMP ) _itemjump.alloc (siz+2);
-	  //if ( f&PROBLEM_ITEMCAND ) _itemcand.alloc ( siz+2);
-		_itemjump.alloc(siz+2);
-		_itemcand.alloc(siz+2);
+		_itemjump.alloc(siz+2); //( f&PROBLEM_ITEMJUMP )
+		_itemcand.alloc(siz+2); //( f&PROBLEM_ITEMCAND ) 
 	
     // set outperm
 	  if ( _outperm_fname ){
@@ -120,7 +117,8 @@ class KGLCMSEQ{
 				perm = p;
 			}
   	}
-		_II.alloc(_output_fname, perm, siz, siz3);
+
+		_II.alloc(_output_fname, perm, siz2, _TT.get_row_max());
 
 	  if ( _target < siz && _II.get_perm() ){
      	for(j=0;j<_II.get_item_max();j++){
@@ -138,7 +136,6 @@ class KGLCMSEQ{
 
 	int setArgs(int argc, char *argv[]);
   
-
 	public:
 
 	KGLCMSEQ():
@@ -162,3 +159,5 @@ class KGLCMSEQ{
 
 
 
+// _II.alloc(_output_fname, perm, siz, siz3);
+// siz3 : _TT.get_row_max

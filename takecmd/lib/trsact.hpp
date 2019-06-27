@@ -68,7 +68,7 @@ class TRSACT {
   VEC_ID  _row_max; // #transactions in the original file
 
   size_t _eles_org;  // #elements in the original file
-  WEIGHT _total_w, _total_pw; 
+  WEIGHT _total_pw; 
   WEIGHT _th;  // threshold for frequency of items
   PERM *_perm, *_trperm; // original item permutation loaded from permutation file (and inverse)
 
@@ -117,17 +117,12 @@ class TRSACT {
 
 	void _file_read( FILE2 &fp,  FILE2 &fp2 , int flag);
 
-
-
 	/*  copy transaction t to tt (only items i s.t. pw[i]>=th)                 **/
 	void copy ( VEC_ID tt, VEC_ID t, QUEUE_INT end);
-
 
 	void _sort(void);
 	void _sortELE(void);
 	void _OccAlloc(void);
-
-
 
 	/* occurrence deliver (only counting) */
 	/* WARNING: next cell of the last item of each transaction must be INTHUGE */
@@ -175,13 +170,14 @@ class TRSACT {
 	/* remove the unified transactions from occ (consider T->occ_unit) */
 	void reduce_occ (QUEUE *occ);
 
+
 	public:
 
 	TRSACT(void):
   	_fname(NULL),_wfname(NULL),_item_wfname(NULL),_fname2(NULL),_pfname(NULL),
   	_flag(0),_flag2(0),_clms_org(0),_clm_max(0),_clms_end(0), _row_max(0),
   	_perm(NULL), _trperm(NULL),_pw(NULL),
-  	_eles_org(0),_total_w(0),_total_pw(0),_str_num(0),
+  	_eles_org(0),_total_pw(0),_str_num(0),
 		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0),_ERROR_MES(NULL)
 		{}
 		
@@ -364,7 +360,6 @@ class TRSACT {
 	PERM* get_trperm(void) { return _trperm; } //かり
 
 	char * get_sc(){return _sc; }
-	WEIGHT get_total_w(void){ return _total_w;}
 	WEIGHT get_total_w_org(void){ return _C.get_total_w_org();}
 	WEIGHT get_total_pw_org(void){ return _C.get_total_pw_org();}
 
@@ -430,8 +425,9 @@ class TRSACT {
 
 	void swap_Tvv(int i,int j){ _T.swap_vv(i,j); }
 
-
 	//	==== use in seq	====
+
+
 
 	//再考
 	bool exist_Tw(void)	{ return _T.exist_w();} 
@@ -466,11 +462,9 @@ class TRSACT {
 		for(size_t i=0; i<size;i++){ _w[i] = 1;}
 	}
 
-
-
 	// normalize the vectors for inner product
 	void normalize(WEIGHT *w){
-	//  org ARY_FILL
+		// org ARY_FILL
 	  for(QUEUE_INT i=0; i<_T.get_clms() ; i++){ w[i] = 0; } 
 		
 		for (VEC_ID i=0 ; i < _T.get_t();i++){
@@ -581,9 +575,12 @@ class TRSACT {
 
 	//VEC_ID get_sep(){ return _sep;}
 
-
   // VEC_ID _end1 _sep #trsact in 1st file, the ID of the last permed trsact of 1st file
 
+// _total_w使ってない
+// WEIGHT _total_w, 
+//_total_w(0),
+//	WEIGHT get_total_w(void){ return _total_w;}
 
   // lower/upper bound of #elements in a column/row. 
   // colunmn or row of out of range will be ignored

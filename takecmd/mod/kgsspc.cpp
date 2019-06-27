@@ -273,8 +273,8 @@ void KGSSPC::output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset,
   }
   else {
     if ( _problem & SSPC_OUTPUT_INTERSECT ){
-	    _II.getp_multi_fp(core_id)->print_int( _siz, 0);
-      _II.getp_multi_fp(core_id)->putc(' ');
+	    _II.print_int(core_id, _siz, 0);
+      _II.putc(core_id,' ');
     }
 
     if ( _table_fname ){ 
@@ -433,10 +433,12 @@ void *KGSSPC::iter (void *p){
       i_ = 100000000 / (_TT.get_eles() / _TT.get_clms());
 			
       SPIN_LOCK (_II.get_multi_core(), _II.get_lock_counter());  // lock!!
+
       if ( (i = *(SM->_lock_i)) >= _TT.get_clms() ){
         SPIN_UNLOCK (_II.get_multi_core(), _II.get_lock_counter());  // unlock!!
         break;
       }
+
       i_ = MIN(_TT.get_clms(), i + 100);
       (*(SM->_lock_i)) = i_;
 
@@ -445,6 +447,7 @@ void *KGSSPC::iter (void *p){
             fprintf (stderr, "%d%%\n", (int)(i*100/_TT.get_clms()));
       }
       SPIN_UNLOCK (_II.get_multi_core(), _II.get_lock_counter());  // unlock!!
+
     }
 
     if ( (_problem & SSPC_INNERPRODUCT) && !_TT.exist_Tw() ) sq = sqrt (w[i]);
@@ -467,10 +470,9 @@ void *KGSSPC::iter (void *p){
 
     }
 
-		//for(int ii = _TT.get_OQ_s(i);ii< _TT.get_OQ_t(i); ii++ ){
-		for(QUEUE_INT * ii = _TT.startOQv(i); ii< _TT.endOQv(i); ii++ ){
+		for(QUEUE_INT * iix = _TT.startOQv(i); iix< _TT.endOQv(i); iix++ ){
 
-      t = *ii;
+      t = *iix;
 
 			// get item weight of current vector
       if ( _TT.exist_Tw() && (_problem & SSPC_INNERPRODUCT)){ 
@@ -570,13 +572,13 @@ void *KGSSPC::iter (void *p){
 					}
         }
         if ( ff ){
-          _II.getp_multi_fp(core_id)->print_int( *iq , f);
+          _II.print_int(core_id, *iq , f);
           f = _II.get_separator();
         }
       }
 
-     	_II.getp_multi_fp(core_id)->putc('\n');
-			_II.getp_multi_fp(core_id)->flush();
+     	_II.putc(core_id,'\n');
+			_II.flush(core_id);
 
       jump.clrMark( _vecchr );
 
@@ -601,14 +603,15 @@ void *KGSSPC::iter (void *p){
 		_TT.clrOQend(i);
 
     if ( _problem & SSPC_COUNT ){
-      while ( ii<_II.get_perm(i) ){
-				_II.getp_multi_fp(core_id)->putc('\n');
-				_II.getp_multi_fp(core_id)->flush();
+      //while ( ii<_II.get_perm(i) ){
+      while ( ii < _positPERM[i] ){
+				_II.putc(core_id,'\n');
+				_II.flush(core_id);
         ii++;
       }
-      _II.getp_multi_fp(core_id)->print_int(cnt, 0);
-      _II.getp_multi_fp(core_id)->putc('\n');
-      _II.getp_multi_fp(core_id)->flush();
+      _II.print_int(core_id,cnt, 0);
+      _II.putc(core_id,'\n');
+      _II.flush(core_id);
       _II.add_sc(2,cnt);
       ii++;
     }
@@ -623,7 +626,7 @@ void *KGSSPC::iter (void *p){
 /*************************************************************************/
 /* SSPC main routine */
 /*************************************************************************/
-void KGSSPC::SSPCCORE(){
+void KGSSPC::_SspcCore(){
 
 	#ifdef MULTI_CORE
   	void *tr;
@@ -699,9 +702,11 @@ void KGSSPC::SSPCCORE(){
     	_TT.sizSort(i,o);
     }
   }
+
   delete [] w;
   delete [] o;
 	delete SM;
+
 }
 
 void KGSSPC::_preALLOC(){
@@ -736,6 +741,7 @@ int KGSSPC::run (int argc ,char* argv[]){
 	if( setArgs(argc, argv) ) return 1;
 
 	_tFlag  |= LOAD_INCSORT;
+
  	if ( _len_ub < INTHUGE || _len_lb > 0 ){	
  		_tFlag |= (LOAD_SIZSORT+LOAD_DECROWSORT);
  	}
@@ -758,7 +764,8 @@ int KGSSPC::run (int argc ,char* argv[]){
 
 	_II.setParams(
 		_iFlag,_frq_lb,_len_ub,_len_lb,
-		_topk_k,_itemtopk_item,_itemtopk_item2,_itemtopk_end,
+		_topk_k,
+		_itemtopk_item,_itemtopk_item2,_itemtopk_end,
 		_multi_core,_max_solutions,_separator
 	);
 
@@ -767,10 +774,10 @@ int KGSSPC::run (int argc ,char* argv[]){
 	_TT.printMes("separated at "VEC_IDF"\n", _sep);
 
   _buf_end = 2;
-  _positPERM= _II.get_perm();
+  _positPERM = _II.get_perm();
   _II.set_perm(NULL);
 
-  if ( _TT.get_clms()>1 ){  SSPCCORE(); }
+  if ( _TT.get_clms()>1 ){  _SspcCore(); }
 
   _II.set_perm(_positPERM);
 

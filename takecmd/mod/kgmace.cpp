@@ -48,7 +48,7 @@ int KGMACE::setArgs (int argc, char *argv[]){
   if ( strchr (argv[c], '%') ) _iFlag |= SHOW_PROGRESS;
   if ( strchr (argv[c], '+') ) _iFlag |= ITEMSET_APPEND;
 
-  if ( strchr (argv[c], 'M') ) _problem = PROBLEM_MAXIMAL;
+  if ( strchr (argv[c], 'M') )     _problem = PROBLEM_MAXIMAL;
   else if ( strchr (argv[c], 'C') ) _problem = PROBLEM_FREQSET;
   else error ("M or C command has to be specified", EXIT);
 
@@ -100,7 +100,6 @@ void KGMACE::clq_iter ( QUEUE_INT v, QUEUE *occ){
   _II.output_itemset(0);
 
   if ( _II.get_itemset_t() >= _II.get_ub() ) goto END;  // upper bound of clique
-
 
 	for ( y = occ->get_v() ; *y < v ; y++){
 
@@ -468,16 +467,15 @@ int KGMACE::run (int argc, char *argv[]){
 
 	_OQ = new QUEUE[_SG.edge_t()+1];
 	char *cmn_pnt = _SG.initOQ( _OQ );
-
-
 	// ここまで prerun
 	if( _ERROR_MES || _SG.edge_eles() <= 0 ){
 	  return (_ERROR_MES?1:0);
 	}
+
   if ( _problem & PROBLEM_FREQSET ){
 	  QUEUE_INT v;
 	  for(v=0;v< _SG.edge_t();v++){
-			clq_iter ( v, _SG.getp_v(v) );
+			clq_iter( v, _SG.getp_v(v) );
     }
   } 
   else{

@@ -34,12 +34,14 @@ int FILE2::getc(){
   return (c);
 }
 
-/* Read an integer/a double from the file and return it,
+/*
+ Read an integer/a double from the file and return it,
     with read through the non-numeric letters.
    If it reaches to the end-of-file just after reading a number, then set FILE_err=2,
    if it reads a newline just after reading a number, then set FILE_err=1.
    If read either the end-of-file or newline before reading an integer,
-   return 5, and 6 */
+   return 5, and 6 
+*/
 FILE_LONG FILE2::read_int(){
   FILE_LONG item;
   int sign=1, ch;
@@ -143,7 +145,7 @@ WEIGHT FILE2::read_WEIGHT (){
 	#endif
 }
 
-void FILE2::flush_last (){
+void FILE2::flush_last(){
   if ( _buf > _buf_org ){
     fwrite (_buf_org, _buf-_buf_org, 1, _fp);
     _buf = _buf_org;
@@ -196,10 +198,9 @@ static void STR_print_real (char **s, double n, int len, char c){
   else {
     while ( n > (1LL<<60) ){ d++; n /= (1000000000000000000LL);}
     nn = n; STR_print_int (s, nn, 0);
-    //BLOOP (d, d, 0){
-    	//FLOOP (dd, 0, 18){ 
-		for(d=d;(d--)>0;){
-			for(dd=0 ;dd < 18 ;dd++){
+
+		for(d=d;(d--)>0;){ //BLOOP 
+			for(dd=0 ;dd < 18 ;dd++){ //FLOOP 
     		**s = '0'; (*s)++; 
     	}
     }
@@ -227,7 +228,7 @@ static void STR_print_real (char **s, double n, int len, char c){
 /* fast file routine, print number, c is the char to be printed preceding to the number
    if c==0, nothing will be printed preceding the number
    if len<0 then the #digits following '.' does not change (filed by '0')  */
-void FILE2::print_int ( LONG n, char c){
+void FILE2::print_int(LONG n, char c){
   STR_print_int (&(_buf), n, c);
 }
 void FILE2::print_real (double n, int len, char c){

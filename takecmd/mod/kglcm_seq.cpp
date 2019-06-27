@@ -235,7 +235,7 @@ void KGLCMSEQ::occ_delivery (KGLCMSEQ_QUE *occ, int flag){
 
 	for( u =  occ->begin() ; u < occ->end() ; u++){
 
-    m = MAX (MAX(0, u->_s -_II.get_gap_ub()), u->_org -(_II.get_len_ub()-1));
+    m = MAX (MAX(0, u->_s - _gap_ub), u->_org -(_II.get_len_ub()-1));
 
     w = _TT.get_w(u->_t);
 
@@ -530,9 +530,7 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
   KGLCMSEQ_ELM L;
 
 
-	preALLOC(
-		_TT.get_clms(), _TT.get_t(), _TT.get_row_max(), _TT.get_perm()
-	);
+	preALLOC();
 	
 
   //malloc2 (occ->_v, _TT.get_t(), EXIT);
@@ -561,7 +559,9 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
 	}
 
   if ( _II.get_len_ub() >= INTHUGE ) _II.set_len_ub(_TT.get_row_max());
-  if ( _II.get_gap_ub() >= INTHUGE ) _II.set_gap_ub( _TT.get_row_max());
+
+  if ( _gap_ub >= INTHUGE ) _gap_ub = _TT.get_row_max();
+
   _II.set_total_weight( _TT.get_total_w_org());
 	_II.set_rows_org(_TT.get_rows_org());
 	_II.set_trperm(_TT.get_trperm());
@@ -579,7 +579,7 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
   _dir = (_problem&LCMSEQ_LEFTMOST) && _II.get_len_ub()>=_TT.get_row_max() && !(_II.get_flag()&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT));   
 
 	 // flag for removing infrequent item or not
-  _root = _II.get_gap_ub()>=_TT.get_row_max() && _II.get_len_ub()>=_TT.get_row_max();  
+  _root = _gap_ub >= _TT.get_row_max() && _II.get_len_ub()>=_TT.get_row_max();  
 
   _th = _II.get_frq_lb();
 }
@@ -615,8 +615,7 @@ int KGLCMSEQ::run(int argc, char *argv[]){
 	_II.setParams(
 		_iFlag,_frq_lb,_frq_ub,_lb,_ub,_target,
 		_ratio_lb,_ratio_ub,_prob_lb,_prob_ub,
-		_rposi_lb,_rposi_ub,_nega_lb,_nega_ub,
-		_posi_lb,_posi_ub,
+		_nega_lb,_nega_ub,_posi_lb,_posi_ub,
 		_topk_k,_max_solutions,_separator,
 		_TT.get_total_w_org(),_TT.get_total_pw_org(), // frq, pfrq
 		_len_ub,_setrule_lb

@@ -136,8 +136,6 @@ class KGMACE{
 
 
 	QUEUE_ID **_shift;
-	// VEC_ID *_occ_t;
-
 
 	QUEUE *_OQ;
 	QUEUE _itemcand;
@@ -156,19 +154,6 @@ class KGMACE{
 
 	void add_vertex (QUEUE_INT K, QUEUE_INT v);
 	void extend (QUEUE_INT w);
-
-
-
-	//LONG parent_check_max ( QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w);
-	//LONG parent_check_parent (QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w);
-	//void add_vertex (QUEUE *K, QUEUE_INT v);
-	//void extend (QUEUE *K, QUEUE_INT w);
-	//void VBM_set_diff_vertexes ( QUEUE *K1, QUEUE *K2);
-	//void VBM_reset_diff_vertexes (QUEUE *K1, QUEUE *K2);
-	// LONG VBM_parent_check ( QUEUE *K, QUEUE *Q, QUEUE_INT w);
-	//LONG parent_check ( QUEUE *K, QUEUE_INT w);
-
-
 	void clq_iter ( QUEUE_INT v, QUEUE *occ);
 	void iter (int v);
 	void MACECORE ();
@@ -185,10 +170,7 @@ class KGMACE{
 
 	  size_t siz = _SG.edge_t()+2;
 
-	 // PROBLEM_ITEMJUMP + PROBLEM_ITEMCAND + PROBLEM_SHIFT + PROBLEM_OCC_T
-		
-		//calloc2 (_shift, siz, goto ERR);
-		_shift = new QUEUE_ID *[siz]();
+		_shift = new QUEUE_ID *[siz](); //calloc2
 
 		_itemcand.alloc(siz);
 
@@ -199,7 +181,6 @@ class KGMACE{
 
   	_II.alloc(_output_fname, p, _SG.edge_t() , _SG.edge_eles());
 
- 		
  		return;
 
 	  ERR:;
@@ -220,3 +201,18 @@ class KGMACE{
 
 };
 
+/*
+
+	// PROBLEM_ITEMJUMP + PROBLEM_ITEMCAND + PROBLEM_SHIFT + PROBLEM_OCC_T
+	//LONG parent_check_max ( QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w);
+	//LONG parent_check_parent (QUEUE *K, QUEUE *ad, QUEUE *Q, QUEUE_INT w);
+	//void add_vertex (QUEUE *K, QUEUE_INT v);
+	//void extend (QUEUE *K, QUEUE_INT w);
+	//void VBM_set_diff_vertexes ( QUEUE *K1, QUEUE *K2);
+	//void VBM_reset_diff_vertexes (QUEUE *K1, QUEUE *K2);
+	// LONG VBM_parent_check ( QUEUE *K, QUEUE *Q, QUEUE_INT w);
+	//LONG parent_check ( QUEUE *K, QUEUE_INT w);
+	// VEC_ID *_occ_t;
+
+
+*/

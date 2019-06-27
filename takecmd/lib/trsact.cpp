@@ -159,7 +159,7 @@ void TRSACT::_alloc(){
 			tt++;
 		}
 	}
-
+	
   // make the inverse perm of items
   for(VEC_ID t =0 ; t < _C.clms() ; t++ ){
     if ( _C.cperm(t) <= _clms_end ){
@@ -184,7 +184,6 @@ void TRSACT::_file_read (FILE2 &fp, FILE2 &fp2,  int flag)
   VEC_ID t=0;
 
   if ( flag ) {  _T.setVBuffer(0, 0); }
-
 
   fp.reset();
   if(_flag&(LOAD_GRAPHNUM)){
@@ -383,10 +382,7 @@ int TRSACT::loadMain(bool elef){
 
 	if( _C.existNegative()){ _flag2 |= TRSACT_NEGATIVE; }
 	
-	//_cPerm = _C.initCperm(_pfname ,_flag ,_flag2);
-	//_rPerm = _C.initRperm(_flag);
-	
- 	_C.makePerm(_pfname ,_flag ,_flag2);
+ 	_C.makePerm(_pfname ,_flag ,_flag2); //cperm, rperm
 
 	
 	// f は 
@@ -426,10 +422,11 @@ void TRSACT::delivery (WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m){
 
   	for(QUEUE_INT *b = occ->start() ; b < occ->end() ; b++){
     	_T.delivery_iter(
-    		 w, pw, *b, m ,
-    		 &_jump,_OQ,
-    		 _w,_pw,
-    		 _flag2&TRSACT_NEGATIVE);
+    		w, pw, *b, m ,
+    		&_jump,_OQ,
+    		_w,_pw,
+    		_flag2&TRSACT_NEGATIVE
+    	);
 	  }
 
 	}
@@ -586,7 +583,8 @@ void TRSACT::find_same (KGLCMSEQ_QUE *occ, QUEUE_INT end){
     	 _mark[o->pop_back()] = 1;  // no same transactions; mark by 1
     }
     if ( o->get_t() == 0 ) goto END;
-    // if previously inserted transactions are in different group, then change their marks with incrementing mark by one
+    // if previously inserted transactions are in different group, 
+    // then change their marks with incrementing mark by one
     mark++; 
     for (KGLCMSEQ_ELM *xx=o->start() ; xx < o->end() ; xx++){
     	_mark[xx->_t] = mark;

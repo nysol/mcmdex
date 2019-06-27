@@ -55,7 +55,7 @@ QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 
 	wfp.reset();
 	wfp.VARY_Read(_rw, kk);
-			
+
 	if ( _rw.min(0, kk) < 0 ) {
 		_negaFLG = true;
 	}
@@ -172,6 +172,7 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 
 		// s=0; 
 		k=0;
+
 		w = wf? (_rows_org<kk? _rw[_rows_org]: TRSACT_DEFAULT_WEIGHT): 1;
 
 		do {
@@ -229,7 +230,6 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 
 	kk = _rw.reallocx( kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
 
-
 	for(int i0=0 ; i0 < _rows_org ; i0++ ){
 		_total_w_org += _rw[i0];
 		_total_pw_org += MAX(_rw[i0],0);
@@ -254,7 +254,7 @@ int FILE_COUNT::file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf, char *wf2){
 		// swap variables in the case of transpose
 		_tpose();
 
-	} 
+	}
 	else{
 		if( _file_count( fp, wf) ){ return 1;	}
 		_end1 = _rows_org;

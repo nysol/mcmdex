@@ -194,7 +194,7 @@ class FILE_COUNT{
  		}
  
  
-    size_t get_rw(VEC_ID tt){ 
+    WEIGHT get_rw(VEC_ID tt){ 
     	return _rw.empty() ? 1 : _rw[tt] ;
     }
 

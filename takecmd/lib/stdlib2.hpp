@@ -301,6 +301,16 @@ class VECARY{
 	// 仮
 	//T* getp(){ return _v;}
 
+	void print(void){
+
+		for(size_t i=0;i<_end;i++){
+			printf("%g ",_v[i]);
+		}
+			printf("\n");
+		
+	
+	}
+
 	bool empty(){ return _end==0; }
 
 	T &operator[](size_t i){ return _v[i]; }

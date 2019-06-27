@@ -477,7 +477,8 @@ class QUEUE {
 					w[*x] += tw[t]; 
 					if( f ){ pw[*x] += tpw[t]; }
 				}
-			}			
+			}
+			
 	}
 
 	
