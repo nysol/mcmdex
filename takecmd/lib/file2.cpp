@@ -472,7 +472,35 @@ void FILE2::copy(char *f1, char *f2){
 }
 
 
+void FILE2::_ARY_Read(int *f,size_t num) {
+	for(size_t i=0 ; i < num  ; i++){
+ 		do{ f[i]= read_int(); }while((_FILE_err&6)==4);
+ 		if(_FILE_err&2)break;
+	 }
+}
+void FILE2::_ARY_Read(long long *f,size_t num) {
+	for(size_t i=0 ; i < num  ; i++){
+ 		do{ f[i]= read_int(); }while((_FILE_err&6)==4);
+ 		if(_FILE_err&2)break;
+	 }
+}
 
+void FILE2::_ARY_Read(unsigned int *f,size_t num) {
+	for(size_t i=0 ; i < num  ; i++){
+ 		do{ f[i]= read_int(); }while((_FILE_err&6)==4);
+ 		if(_FILE_err&2)break;
+	 }
+}
+
+void FILE2::_ARY_Read(double *f,size_t num) {
+	for(size_t i=0 ; i < num  ; i++){
+ 		do{ f[i]= read_double(); }while((_FILE_err&6)==4);
+ 		if(_FILE_err&2)break;
+	 }
+}
+
+
+/*
 template<typename T>
 void FILE2::_ARY_Read(T *f,size_t num) {
 
@@ -497,7 +525,20 @@ void FILE2::_ARY_Read<double>(double *f,size_t num) {
 		if(_FILE_err&2)break;
 	}
 }
+*/
 
+
+void FILE2::VARY_Read(VECARY<WEIGHT> &vec,size_t num) {
+
+	for (size_t i=0 ; i < num  ; i++){
+		do{
+			vec[i]=read_WEIGHT();
+		}while((_FILE_err&6)==4);
+		if(_FILE_err&2)break;
+	}
+}
+
+/*
 template<typename T>
 void FILE2::VARY_Read(VECARY<T> &vec,size_t num) {
 
@@ -521,7 +562,7 @@ void FILE2::VARY_Read<double>(VECARY<double> &vec,size_t num) {
 		if(_FILE_err&2)break;
 	}
 }
-
+*/
 
 FILE2 * FILE2::makeMultiFp(int size,FILE2 &a){
 

@@ -49,7 +49,11 @@
 #endif
 
 // for dealing with files more than 2GB
-#define _LARGEFILE_SOURCE
+#ifndef _LARGEFILE_SOURCE
+	#define _LARGEFILE_SOURCE
+#endif
+
+
 #define _FILE_OFFSET_BITS 64
 
 #ifndef NULL
@@ -266,10 +270,22 @@ template<typename T>
 void qsort_perm__(T *v, size_t siz, PERM *perm, int unit){
 
  if ( unit == 1 || unit==-1 ) unit *= sizeof(*v);  
+ 
+//qsort_rが標準ではないのでここは別途考える
+#ifdef __USE_GNU 
+ if (unit<0) qsort_r(perm, siz, sizeof(PERM),  (int (*)(const void*, const void*, void*))qqsort_cmp__r<T>,v);
+ else        qsort_r(perm, siz, sizeof(PERM),  (int (*)(const void*, const void*, void*))qqsort_cmp_r<T>,v);
+#else
  if (unit<0) qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp__r<T>);
  else        qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp_r<T>);
-
+#endif
+ /*
+*/
 } 
+
+
+
+
 
 template<typename T>
 PERM *qsort_perm_(T *v, size_t siz, int unit){

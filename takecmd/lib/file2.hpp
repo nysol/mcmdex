@@ -107,12 +107,18 @@ class FILE2{ // in ,out 完全分ける？
 		if(_fp){ fclose(_fp); _fp=NULL; }
 	}
 
+	void _ARY_Read(int *f,size_t num);
+	void _ARY_Read(long long *f,size_t num);
+	void _ARY_Read(unsigned int *f,size_t num);
+	void _ARY_Read(double *f,size_t num);
+
+/*
 	template<typename T>
 	void _ARY_Read(T *f,size_t num);
 
 	template <>
 	void _ARY_Read<double>(double *f,size_t num);
-	
+*/	
 
 	public :
 
@@ -200,11 +206,13 @@ class FILE2{ // in ,out 完全分ける？
 	size_t ARY_Scan_INT(void);
 	size_t ARY_Scan_DBL(void);
 
+/*
 	template<typename T>
 	void VARY_Read(VECARY<T> &vec,size_t num);
 
 	template <>
-	void VARY_Read<double>(VECARY<double> &vec,size_t num);
+*/
+	void VARY_Read(VECARY<WEIGHT> &vec,size_t num);
 
 	int getc();
 	FILE_LONG read_int ();
