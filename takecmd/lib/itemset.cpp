@@ -158,10 +158,10 @@ void ITEMSET::merge_counters (){
 
     _iters += _multi_iters[i];
     _solutions += _multi_solutions[i];
-    if ( _multi_fp[i].exist_buf() ) _multi_fp[i].flush_last ();
+    if ( _multi_fp[i].exist_buf() ) _multi_fp[i].flush_last();
   }
   
-	for(size_t i =0 ;i<MAX(_multi_core,1)*7 ;i++){ 
+	for(size_t i =0 ;i<MAX(_multi_core,1)*3 ;i++){ 
 		_multi_iters[i] = 0; 
 	}
 }

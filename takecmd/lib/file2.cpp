@@ -156,6 +156,7 @@ void FILE2::flush_ (){
   fwrite (_buf_org, _buf-_buf_org, 1, _fp);
   *_buf_org = *_buf;
   _buf = _buf_org;
+
 }
 
 

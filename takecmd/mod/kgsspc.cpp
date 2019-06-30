@@ -781,17 +781,16 @@ int KGSSPC::run (int argc ,char* argv[]){
 
   _II.set_perm(_positPERM);
 
-  _II.merge_counters ();
+  _II.merge_counters();
 
   if ( _II.get_topk_end() > 0 || _II.get_itemtopk_end ()> 0 ){
-  	 _II.last_output ();
+  	
+  	 _II.last_output();
   }
   else{
   	 _TT.printMes( LONGF " pairs are found\n", _II.get_sc(2));
   }
-	cerr << "pre close" << endl;
 	_II.close();
-	cerr << "end close" << endl;
 
   return 0;
 

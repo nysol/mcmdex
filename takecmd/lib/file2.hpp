@@ -149,7 +149,6 @@ class FILE2{ // in ,out 完全分ける？
 		delete [] _buf_org;
 		_buf_org = NULL;
 	  _buf = _buf_end = 0;
-		
 	}
 
 	bool Eof   (void)  { return (_FILE_err&2);     } // 2,6   <=eof
