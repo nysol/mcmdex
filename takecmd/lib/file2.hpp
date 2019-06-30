@@ -62,7 +62,7 @@ class OFILE2 {
 		va_end(ap);
 	}
 
-	void putc(char c){ fputc(c, _fp); }
+	void putch(char c){ fputc(c, _fp); }
 
 	void print(double f){
 		char s[200];
@@ -226,7 +226,7 @@ class FILE2{ // in ,out 完全分ける？
 	void flush_last(void);
 	void flush_(void);
 
-	void putc(char c){
+	void putch(char c){
 	  *_buf = c;
   	_buf++;
 	}

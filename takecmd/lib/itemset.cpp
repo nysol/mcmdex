@@ -203,8 +203,8 @@ void ITEMSET::last_output (){
 				_itemtopk[n].chg(i, WEIGHTHUGE);
 
       }
-      fp->putc ('\n');
-      fp->flush ();
+      fp->putch('\n');
+      fp->flush();
     }
     fp->flush_last ();
     goto END;
@@ -257,18 +257,18 @@ void ITEMSET::output_frequency ( WEIGHT frq, WEIGHT pfrq, int core_id){
   FILE2 *fp = &_multi_fp[core_id];
 
   if ( _flag&(ITEMSET_FREQ+ITEMSET_PRE_FREQ) ){
-    if ( _flag&ITEMSET_FREQ ) fp->putc (' ');
+    if ( _flag&ITEMSET_FREQ ) fp->putch(' ');
     fp->print_WEIGHT (frq, _digits, '(');
-    fp->putc ( ')');
-    if ( _flag&ITEMSET_PRE_FREQ ) fp->putc (' ');
+    fp->putch( ')');
+    if ( _flag&ITEMSET_PRE_FREQ ) fp->putch(' ');
   }
 
   if ( _flag&ITEMSET_OUTPUT_POSINEGA ){ // output positive sum, negative sum in the occurrence
-    fp->putc (' ');
-    fp->print_WEIGHT ( pfrq, _digits, '(');
-    fp->print_WEIGHT ( pfrq-frq, _digits, ',');
-    fp->print_WEIGHT ( pfrq/(2*pfrq-frq), _digits, ',');
-    fp->putc ( ')');
+    fp->putch(' ');
+    fp->print_WEIGHT( pfrq, _digits, '(');
+    fp->print_WEIGHT( pfrq-frq, _digits, ',');
+    fp->print_WEIGHT( pfrq/(2*pfrq-frq), _digits, ',');
+    fp->putch( ')');
   }
 }
 
@@ -297,7 +297,7 @@ void ITEMSET::output_occ ( QUEUE *occ, int core_id)
       fp->flush_();
     }
   }
-  fp->putc ('\n');
+  fp->putch('\n');
   if ( flush_flag ){
     fp->flush_ ();
     SPIN_UNLOCK(_multi_core, _lock_output);
@@ -399,7 +399,7 @@ void ITEMSET::output_itemset_(
     }
     if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( frq, pfrq, core_id);
     if ( ((_flag & ITEMSET_NOT_ITEMSET) == 0) || (_flag&ITEMSET_FREQ) || (_flag&ITEMSET_PRE_FREQ) ){
-      fp->putc ('\n');
+      fp->putch('\n');
     }
 		// for _trsact_h_
     if (_flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) output_occ ( occ, core_id);
@@ -495,7 +495,7 @@ void ITEMSET::output_itemset_(
     }
     if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( frq, pfrq, core_id);
     if ( ((_flag & ITEMSET_NOT_ITEMSET) == 0) || (_flag&ITEMSET_FREQ) || (_flag&ITEMSET_PRE_FREQ) ){
-      fp->putc ('\n');
+      fp->putch('\n');
     }
 		// for _trsact_h_
     if (_flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) output_occ ( occ, core_id);
@@ -621,7 +621,7 @@ void ITEMSET::output_itemset_ (
     			(_flag&ITEMSET_FREQ) || 
     			(_flag&ITEMSET_PRE_FREQ) )
     {
-      fp->putc ('\n');
+      fp->putch                                                              ('\n');
     }
 
     if ( flush_flag ){
@@ -674,7 +674,7 @@ void ITEMSET::output_itemset(int core_id){
       	fp->flush_ ();
       }
     }
-    fp->putc ('\n');
+    fp->putch('\n');
 
     if ( flush_flag ){
       fp->flush_ ();
@@ -760,7 +760,7 @@ void ITEMSET::output_rule ( QUEUE *occ, double p1, double p2, size_t item, int c
   if ( fp->exist() && !(_topk.end()) ){
     fp->print_real ( p1, _digits, '(');
     fp->print_real ( p2, _digits, ',');
-    fp->putc ( ')');
+    fp->putch( ')');
     fp->print_int ( _perm[item], _separator);
     fp->puts ( " <= ");
   }
@@ -828,9 +828,9 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
 
           _multi_fp[core_id].print_int ( _itemset.get_v(t), t?_separator:0);
           if ( t == i ){
-            _multi_fp[core_id].putc ( ' ');
-            _multi_fp[core_id].putc ( '=');
-            _multi_fp[core_id].putc ( '>');
+            _multi_fp[core_id].putch( ' ');
+            _multi_fp[core_id].putch( '=');
+            _multi_fp[core_id].putch( '>');
           }
           if ( !(_flag&ITEMSET_MULTI_OUTPUT) || _multi_fp[core_id].needFlush() ){
             SPIN_LOCK(_multi_core, _lock_output);
@@ -839,10 +839,10 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
           }
         }
         if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( _frq, _pfrq, core_id);
-        _multi_fp[core_id].putc ( ' ');
+        _multi_fp[core_id].putch( ' ');
         _multi_fp[core_id].print_real ( _frq/_set_weight[i], _digits, '(');
-        _multi_fp[core_id].putc ( ')');
-        _multi_fp[core_id].putc ( '\n');
+        _multi_fp[core_id].putch( ')');
+        _multi_fp[core_id].putch( '\n');
 
 				//for _trsact_h_
         if ( _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ){
@@ -912,7 +912,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
       if ( _fp.exist() && (_flag&(ITEMSET_RFRQ+ITEMSET_RINFRQ))){
         _multi_fp[core_id].print_real ( d, _digits, '[');
         _multi_fp[core_id].print_real ( _prob, _digits, ',');
-        _multi_fp[core_id].putc ( ']');
+        _multi_fp[core_id].putch( ']');
       }
       solution (occ, core_id);
     }
@@ -958,7 +958,7 @@ void ITEMSET::output_occ ( KGLCMSEQ_QUE *occ, int core_id){
     }
   }
 
-  fp->putc ('\n');
+  fp->putch('\n');
   if ( flush_flag ){
     fp->flush_ ();
     SPIN_UNLOCK(_multi_core, _lock_output);
@@ -1056,7 +1056,7 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ
     }
     if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( frq, pfrq, core_id);
     if ( ((_flag & ITEMSET_NOT_ITEMSET) == 0) || (_flag&ITEMSET_FREQ) || (_flag&ITEMSET_PRE_FREQ) ){
-      fp->putc ('\n');
+      fp->putch('\n');
     }
 		// for _trsact_h_
     if (_flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) output_occ ( occ, core_id);
@@ -1150,7 +1150,7 @@ void ITEMSET::output_rule ( KGLCMSEQ_QUE *occ, double p1, double p2, size_t item
   if ( fp->exist() && !(_topk.end()) ){
     fp->print_real ( p1, _digits, '(');
     fp->print_real ( p2, _digits, ',');
-    fp->putc ( ')');
+    fp->putch( ')');
     fp->print_int ( _perm[item], _separator);
     fp->puts ( " <= ");
   }
@@ -1222,9 +1222,9 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
 
           _multi_fp[core_id].print_int ( _itemset.get_v(t), t?_separator:0);
           if ( t == i ){
-            _multi_fp[core_id].putc ( ' ');
-            _multi_fp[core_id].putc ( '=');
-            _multi_fp[core_id].putc ( '>');
+            _multi_fp[core_id].putch( ' ');
+            _multi_fp[core_id].putch( '=');
+            _multi_fp[core_id].putch( '>');
           }
           if ( !(_flag&ITEMSET_MULTI_OUTPUT) || _multi_fp[core_id].needFlush() ){
             SPIN_LOCK(_multi_core, _lock_output);
@@ -1233,14 +1233,14 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
           }
         }
         if ( !(_flag&ITEMSET_PRE_FREQ) ) output_frequency ( _frq, _pfrq, core_id);
-        _multi_fp[core_id].putc ( ' ');
+        _multi_fp[core_id].putch( ' ');
         _multi_fp[core_id].print_real ( _frq/_set_weight[i], _digits, '(');
-        _multi_fp[core_id].putc ( ')');
+        _multi_fp[core_id].putch( ')');
 
 #ifdef _FILE2_LOAD_FROM_MEMORY_
   FILE2_WRITE_MEMORY (QUEUE_INT, FILE2_LOAD_FROM_MEMORY_END);
 #else
-        _multi_fp[core_id].putc ( '\n');
+        _multi_fp[core_id].putch( '\n');
 #endif
 			//for _trsact_h_
         if ( _flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ){
@@ -1304,7 +1304,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
       if ( _fp.exist() && (_flag&(ITEMSET_RFRQ+ITEMSET_RINFRQ))){
         _multi_fp[core_id].print_real ( d, _digits, '[');
         _multi_fp[core_id].print_real ( _prob, _digits, ',');
-        _multi_fp[core_id].putc ( ']');
+        _multi_fp[core_id].putch( ']');
       }
       solution (occ, core_id);
     }

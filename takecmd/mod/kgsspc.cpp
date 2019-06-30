@@ -789,8 +789,9 @@ int KGSSPC::run (int argc ,char* argv[]){
   else{
   	 _TT.printMes( LONGF " pairs are found\n", _II.get_sc(2));
   }
-
+	cerr << "pre close" << endl;
 	_II.close();
+	cerr << "end close" << endl;
 
   return 0;
 

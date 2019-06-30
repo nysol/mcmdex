@@ -461,7 +461,7 @@ class ITEMSET{
 		_multi_fp[coreID].print_int( n, c);
 	}
 	void putc(int coreID, char c){
-		_multi_fp[coreID].putc( c);
+		_multi_fp[coreID].putch(c);
 	}
 	void flush(int coreID){
 		_multi_fp[coreID].flush();
@@ -555,10 +555,9 @@ class ITEMSET{
 	void check_all_rule (WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT total, int core_id);
 
 	void close(){
-
 	  if( _multi_fp ){
-	  	for(int i = 0 ; i <  MAX(_multi_core,1) ; i++){ 
-	  		_multi_fp[i].closew(); 
+	  	for(int i = 0 ; i < MAX(_multi_core,1) ; i++){
+	  		_multi_fp[i].closew();
 	  	}
 		}
 	}

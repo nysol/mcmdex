@@ -526,7 +526,7 @@ int FSTAR::write_graph_item(
 
       fp.print(FSTAR_INTF"%c"FSTAR_INTF, x, _sep, y);
       if (_flag & LOAD_EDGEW){ 
-      	fp.putc(_sep); 
+      	fp.putch(_sep); 
       	fp.print(w); 
       }
       fp.print("\n");
@@ -536,11 +536,11 @@ int FSTAR::write_graph_item(
       fp.print( FSTAR_INTF"%c", y, _sep);
       if ( fp2.exist() ){ 
       	fp2.print(w); 
-				fp2.putc(_sep);  
+				fp2.putch(_sep);  
       }
       if ( _flag&LOAD_EDGEW ){ 
 				fp.print(w);
-				fp.putc(_sep);
+				fp.putch(_sep);
       }
     }
     *row = 1;

@@ -168,7 +168,7 @@ class kgClusterForCC{
 				if ( _set[x] == x ) break;
 				x = _set[x];
 			}
-			ofp.putc('\n');
+			ofp.putch('\n');
 		}
 		return;
 	}

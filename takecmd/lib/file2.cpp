@@ -333,7 +333,7 @@ int FILE2::read_item(LONG *x, LONG *y, int flag){
 
 
 void FILE2::closew (){
-  flush_last ();
+  flush_last();
   _fclose2();
   delete [] _buf_org;
   _buf_org = NULL;
@@ -450,7 +450,7 @@ void FILE2::ARY_Write(char* fname, int *p ,size_t size){
 	for( size_t i=0 ; i< size ;i++){
 		fp.print( "%d " ,p[i]);
 	}
-	fp.putc('\n');
+	fp.putch('\n');
 }
 
 void FILE2::copy(char *f1, char *f2){
