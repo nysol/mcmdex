@@ -201,7 +201,10 @@ class KGLCM{
   	}
 
 	  //_II.set_total_weight(_TT.get_total_w());
-	  _II.set_total_weight(0); //get_total_w_org?
+	  //_II.set_total_weight(0); //get_total_w_org?
+
+
+	  _II.set_total_weight(0); //_TT.get_total_w_org()?
 
 
 		_II.set_rows_org(_TT.get_rows_org());

@@ -542,11 +542,10 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
   occ->set_t(0);
 
   _TT.set_perm(NULL);
+  
   if ( _II.get_perm() && RANGE(0, _II.get_target(), _II.get_item_max()) ) _II.set_target ( _II.get_perm(_II.get_target()));
   
-  if ( !(_TT.exist_sc()) ) {  	
-  	_TT.calloc_sc(_TT.get_clms()+2);
-  }
+  if ( !(_TT.exist_sc()) ) { _TT.calloc_sc(_TT.get_clms()+2); }
   
   _II.set_itemflag(_TT.get_sc());
 

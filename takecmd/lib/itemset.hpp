@@ -65,6 +65,7 @@
 #include"aheap.hpp"
 
 
+
 class ITEMSET{
 
 	
@@ -72,16 +73,9 @@ class ITEMSET{
 	int _progress;
 	
   LONG _iters;                   // iterations
-  LONG _solutions, _solutions2;  // number of solutions output
+  LONG _solutions;  // number of solutions output
   LONG _max_solutions;           // maximum solutions to be output
-	LONG _outputs, _outputs2;
 
-	// counter
-  LONG *_multi_outputs, *_multi_outputs2;    // #calls of ITEMSET_output_itemset or ITEMSET_solusion
-  LONG *_multi_iters, *_multi_iters2, *_multi_iters3;  //iterations
-  LONG *_multi_solutions, *_multi_solutions2;  // number of solutions output
-	
-	
   QUEUE_INT _item_max;  // (original) maximum item
 
 	//boundary  
@@ -95,9 +89,8 @@ class ITEMSET{
 	// for sspc (-k)
   LONG  _itemtopk_item, _itemtopk_item2,_itemtopk_end; 
 
-
-
-  LONG _topk_k, _topk_frq;   // counter for topk bucket and #remainings
+	// counter for topk bucket and #remainings
+  LONG _topk_k, _topk_frq;   
 
   WEIGHT _frq, _pfrq, _frq_ub, _frq_lb;  // upper/lower bounds for the frequency
   WEIGHT _total_weight;  // total weight of the input database
@@ -129,7 +122,6 @@ class ITEMSET{
 
   LONG *_sc, *_sc2;    // #itemsets classified by the sizes / frequencies
 
-  FILE2 *_multi_fp;  // output file2 pointer for multi-core mode
   FILE2 _fp;    // file pointer to the output file
 
   QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
@@ -139,6 +131,11 @@ class ITEMSET{
   KGLCMSEQ_QUE **_set_occELE;    // the occurrence of each prefix of current itemset
 
   int _multi_core;  // number of processors
+  FILE2 *_multi_fp;  // output file2 pointer for multi-core mode
+	// counter
+  LONG *_multi_outputs;    // #calls of ITEMSET_output_itemset or ITEMSET_solusion
+  LONG *_multi_iters;   //iterations
+  LONG *_multi_solutions;  // number of solutions output
 
   AHEAP *_itemtopk;  // heap for topk mining. valid if topk->h is not NULL
   AHEAP _topk; 
@@ -146,8 +143,6 @@ class ITEMSET{
 	//これはあとで
 	QUEUE _itemset;   // current operating itemset
   QUEUE _add;       // for equisupport (hypercube decomposition)
-
-	char *_ERROR_MES;
 
 #ifdef MULTI_CORE
   pthread_spinlock_t _lock_counter;   // couneter locker for jump counter
@@ -207,30 +202,30 @@ class ITEMSET{
 
 
 	public:
-
+	
 	ITEMSET(void):	  
-		_flag(0),_progress(0),_iters(0),_solutions(0),_solutions2(0),
-  	_max_solutions(0),_outputs(0),_outputs2(0),_item_max(0),
+		_flag(0),_progress(0),_iters(0),_solutions(0),
+  	_max_solutions(0),_item_max(0),
 		_ub(INTHUGE),_lb(0),_len_ub(INTHUGE),_len_lb(0),
 		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0),
 		_topk_k(0),_topk_frq(0),
 		_frq(0),_pfrq(0),_frq_ub(WEIGHTHUGE),_frq_lb(-WEIGHTHUGE),_total_weight(0),
 		_ratio(0.0),_prob(0.0),_th(0.0),
-		_posi_lb(-WEIGHTHUGE),_posi_ub(WEIGHTHUGE),
-		_nega_lb(-WEIGHTHUGE),_nega_ub(WEIGHTHUGE),_setrule_lb(-WEIGHTHUGE),
-		_target(INTHUGE),
 		_ratio_ub(1),_ratio_lb(0),_prob_ub(1),_prob_lb(0),
+		_posi_lb(-WEIGHTHUGE),_posi_ub(WEIGHTHUGE),
+		_nega_lb(-WEIGHTHUGE),_nega_ub(WEIGHTHUGE),
+		_setrule_lb(-WEIGHTHUGE),_target(INTHUGE),
 		_separator(' '),_digits(4),
 		_topk_sign(1) ,_itemtopk_sign(1),  // initialization ; max topk
 		_itemflag(NULL),_perm(NULL),_item_frq(NULL),
 		_sc(NULL),_sc2(NULL),
 		_itemtopk_ary(NULL),
   	_set_weight(NULL),_set_occ(NULL),
-		_multi_outputs(NULL),_multi_outputs2(NULL),
-		_multi_iters(NULL),_multi_iters2(NULL),_multi_iters3(NULL),
-		_multi_solutions(NULL),_multi_solutions2(NULL),_multi_fp(NULL),
+		_multi_outputs(NULL),
+		_multi_iters(NULL),
+		_multi_solutions(NULL),_multi_fp(NULL),
 		_multi_core(0),_itemtopk(NULL),
-		_rows_org(0),_trperm(NULL),_ERROR_MES(NULL)
+		_rows_org(0),_trperm(NULL)
 		{}
 	
 	
@@ -489,7 +484,6 @@ class ITEMSET{
 
 	void set_item_frq(int i,WEIGHT v){_item_frq[i]= v;}
 
-	void set_maximum_frequency( WEIGHT v){ ENMIN (_frq_ub, v); }
 
 	bool exist_perm(void){ return _perm!=NULL;}
 
@@ -525,8 +519,6 @@ class ITEMSET{
 
 	// for mace
 	void output_itemset(int core_id);
-
-
 
 	void output_itemset_( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq,  QUEUE *occ,  int core_id);
 
@@ -594,9 +586,21 @@ class ITEMSET{
 //_iters2, _iters3; 
 //, _flag2; // <=_flag2 (LAMPの時しか使われてないようなきが ）
 //	int get_flag2(){ return _flag2;} 
+// ,_outputs(0),_outputs2(0)_solutions2(0),_multi_solutions2(NULL),
+// ,_multi_iters2(NULL),_multi_iters3(NULL)
+//	 LONG *_multi_outputs2
+//	 LONG *_multi_iters2, *_multi_iters3;
+//	 LONG *_multi_solutions2;
+// LONG _outputs, _outputs2;
+// LONG  _solutions2
+	//char *_ERROR_MES;
+	//	_multi_outputs2(NULL),
+	//,_ERROR_MES(NULL)
 
+	
 //	WEIGHT get_rposi_lb(){ return _rposi_lb;} 
 //	WEIGHT get_rposi_ub(){ return _rposi_ub;} 
+// 	void set_maximum_frequency( WEIGHT v){ ENMIN (_frq_ub, v); }
 
 //	void set_itemtopk_item( LONG v){_itemtopk_item=v;}
 //	void set_itemtopk_item2( LONG v){_itemtopk_item2=v;}

@@ -127,14 +127,10 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max,size_t item_max
 
   _total_weight = 1;
   j = MAX(_multi_core,1);
-  _multi_iters = new LONG[j*7](); // calloc2
 
-  _multi_iters2 = _multi_iters + j;
-  _multi_iters3 = _multi_iters2 + j;
-  _multi_outputs = _multi_iters3 + j;
-  _multi_outputs2 = _multi_outputs + j;
-  _multi_solutions = _multi_outputs2 + j;
-  _multi_solutions2 = _multi_solutions + j;
+  _multi_iters = new LONG[j*3](); // calloc2
+  _multi_outputs = _multi_iters + j;
+  _multi_solutions = _multi_outputs + j;
   
   _multi_fp = FILE2::makeMultiFp(j,_fp);
   
@@ -156,17 +152,12 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max,size_t item_max
 
 
 /* sum the counters computed by each thread */
-// _iters2 += _multi_iters2[i];
-// _iters3 += _multi_iters3[i];
 void ITEMSET::merge_counters (){
 
 	for(size_t i=0 ; i<MAX(_multi_core,1) ; i++){ // FLOOP 
 
     _iters += _multi_iters[i];
-    _outputs += _multi_outputs[i];
-    _outputs2 += _multi_outputs2[i];
     _solutions += _multi_solutions[i];
-    _solutions2 += _multi_solutions2[i];
     if ( _multi_fp[i].exist_buf() ) _multi_fp[i].flush_last ();
   }
   
@@ -337,7 +328,8 @@ void ITEMSET::output_itemset_(
   _multi_solutions[core_id]++;
   if ( _max_solutions>0 && _multi_solutions[core_id] > _max_solutions ){
     last_output ();
-    _ERROR_MES = "reached to maximum number of solutions";
+    // raiseする？
+    fprintf(stderr, "reached to maximum number of solutions\n");
     EXIT;
   }
 
@@ -543,7 +535,8 @@ void ITEMSET::output_itemset_ (
 
   if ( _max_solutions > 0 && _multi_solutions[core_id] > _max_solutions ){
     last_output ();
-    _ERROR_MES = "reached to maximum number of solutions";
+    // raiseする？
+    fprintf(stderr,"reached to maximum number of solutions\n");
     EXIT;
   }
 
@@ -703,7 +696,7 @@ void ITEMSET::solution_iter (QUEUE *occ, int core_id){
   if ( _itemset.get_t() > _ub ) return;
   output_itemset( occ, core_id);
 
-	if ( _ERROR_MES ) return;
+	// if ( _ERROR_MES ) return; エラー処理考える
 	
   for(;_add.get_t()>0;){
 
@@ -712,7 +705,7 @@ void ITEMSET::solution_iter (QUEUE *occ, int core_id){
 
     solution_iter ( occ, core_id);
 
-		if ( _ERROR_MES ) return;
+		// if ( _ERROR_MES ) return; エラー処理考える
     _itemset.dec_t();
   }
   _add.set_t(t);
@@ -876,7 +869,8 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
 
 				for(x=jump->get_v();x<jump->get_v()+jump->get_t() ; x++){
           if ( *x == _target ){ 
-             check_rule ( w, occ, *x, core_id);   if (_ERROR_MES) return;
+             check_rule ( w, occ, *x, core_id);   
+             // if (_ERROR_MES) return;エラー処理考える
           }
         }
       } 
@@ -888,7 +882,8 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
 					  for(i=0;i<t;i++){
               e = _add.get_v(i);
               _add.set_v(i,f);
-              check_rule ( w, occ, e, core_id);    if (_ERROR_MES) return;
+              check_rule ( w, occ, e, core_id);    
+              // if (_ERROR_MES) return; //エラー処理かんがえる
               _add.set_v(i,e);
             }
             _add.inc_t();
@@ -896,7 +891,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
 
 					for(x=jump->get_v();x<jump->get_v()+jump->get_t() ; x++){
             check_rule ( w, occ, *x, core_id);   
-  	        if (_ERROR_MES) return;			
+  	        // if (_ERROR_MES) return;			//エラー処理かんがえる
 					}
 
         }
@@ -906,7 +901,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
 					  for(i=0;i<_item_max;i++){ //FLOOP
               if ( _itemflag[i] != 1 ){
                 check_rule (w, occ, i, core_id);
-                if (_ERROR_MES) return;
+                //if (_ERROR_MES) return;//エラー処理かんがえる
               }
             }
           }
@@ -990,7 +985,7 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ
   _multi_solutions[core_id]++;
   if ( _max_solutions>0 && _multi_solutions[core_id] > _max_solutions ){
     last_output ();
-    _ERROR_MES = "reached to maximum number of solutions";
+    fprintf(stderr, "reached to maximum number of solutions\n");
     EXIT;
   }
 
@@ -1086,7 +1081,7 @@ void ITEMSET::solution_iter (KGLCMSEQ_QUE *occ, int core_id){
   if ( _itemset.get_t() > _ub ) return;
   output_itemset ( occ, core_id);
 
-	if ( _ERROR_MES ) return;
+	// if ( _ERROR_MES ) return;//エラー処理考える
 	
   //BLOOP (_add._t, _add._t, 0){
   for(;_add.get_dec_t()>0;){
@@ -1095,7 +1090,7 @@ void ITEMSET::solution_iter (KGLCMSEQ_QUE *occ, int core_id){
 
     solution_iter ( occ, core_id);
 
-		if ( _ERROR_MES ) return;
+		//if ( _ERROR_MES ) return;//エラー処理考える
 
     _itemset.dec_t();
 
@@ -1269,7 +1264,8 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
 				for(x=jump->get_v();x<jump->get_v()+jump->get_t() ; x++){
         // MQUE_FLOOP_CLS (*jump, x){
           if ( *x == _target ){ 
-             check_rule ( w, occ, *x, core_id);   if (_ERROR_MES) return;
+             check_rule ( w, occ, *x, core_id);  
+             // if (_ERROR_MES) return; ////エラー処理考える
           }
         }
       } else {
@@ -1280,7 +1276,8 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
 						for(i=0;i<t;i++){
               e = _add.get_v(i);
               _add.set_v(i,f);
-              check_rule ( w, occ, e, core_id);    if (_ERROR_MES) return;
+              check_rule ( w, occ, e, core_id);    
+              //if (_ERROR_MES) return; //エラー処理考える
               _add.set_v(i,e);
             }
             _add.inc_t();
@@ -1288,7 +1285,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
           // MQUE_FLOOP_CLS (*jump, x)
 					for(x=jump->get_v();x<jump->get_v()+jump->get_t() ; x++){
             check_rule ( w, occ, *x, core_id);   
-  	        if (_ERROR_MES) return;			
+  	        //if (_ERROR_MES) return;	 //エラー処理考える
 					}
 
         } else {
@@ -1296,7 +1293,8 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
             //FLOOP (i, 0, _item_max){
 						for(i=0;i<_item_max;i++){
               if ( _itemflag[i] != 1 ){
-                check_rule (w, occ, i, core_id);     if (_ERROR_MES) return;
+                check_rule (w, occ, i, core_id);    
+                // if (_ERROR_MES) return; //エラー処理考える
               }
             }
           }
@@ -1314,6 +1312,15 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
 }
 
 
-
+// つかってない？ 
 //  _item_max_org = (QUEUE_INT)item_max_org;つかってない？ 
+//    _solutions2 += _multi_solutions2[i];
+//  _multi_solutions2 = _multi_solutions + j;
+//  _multi_iters2 = _multi_iters + j;
+//  _multi_iters3 = _multi_iters2 + j;
 
+// _outputs += _multi_outputs[i];
+// _outputs2 += _multi_outputs2[i];
+// _iters2 += _multi_iters2[i];
+// _iters3 += _multi_iters3[i];
+//  _multi_outputs2 = _multi_outputs + j;
