@@ -251,6 +251,23 @@ void qsort_ (T *v, size_t siz, int unit){
 } 
 
 template<typename T>
+int gqqsort_cmp_r(const void *x,const void *y,void * v){
+
+	if ( ((T *)v)[*(PERM *)(x)] < ((T *)v)[*(PERM *)(y)] ) return (-1); 
+	else return (  ((T *)v)[*(PERM *)(x)] > ((T *)v)[*(PERM *)(y)]  ); 
+
+}
+
+template<typename T>
+int gqqsort_cmp__r(const void *x, const void *y,void * v){ 
+
+	if ( ((T *)v)[*(PERM *)(x)] > ((T *)v)[*(PERM *)(y)] ) return (-1); 
+	else return (  ((T *)v)[*(PERM *)(x)] < ((T *)v)[*(PERM *)(y)]  ); 
+
+}
+
+
+template<typename T>
 int qqsort_cmp_r(void * v,const void *x,const void *y){
 
 	if ( ((T *)v)[*(PERM *)(x)] < ((T *)v)[*(PERM *)(y)] ) return (-1); 
@@ -273,8 +290,8 @@ void qsort_perm__(T *v, size_t siz, PERM *perm, int unit){
  
 //qsort_rが標準ではないのでここは別途考える
 #ifdef __USE_GNU 
- if (unit<0) qsort_r(perm, siz, sizeof(PERM),  (int (*)(const void*, const void*, void*))qqsort_cmp__r<T>,v);
- else        qsort_r(perm, siz, sizeof(PERM),  (int (*)(const void*, const void*, void*))qqsort_cmp_r<T>,v);
+ if (unit<0) qsort_r(perm, siz, sizeof(PERM),  (int (*)(const void*, const void*, void*))gqqsort_cmp__r<T>,v);
+ else        qsort_r(perm, siz, sizeof(PERM),  (int (*)(const void*, const void*, void*))gqqsort_cmp_r<T>,v);
 #else
  if (unit<0) qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp__r<T>);
  else        qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp_r<T>);

@@ -41,6 +41,8 @@ class SETFAMILY{
   int _unit;
 
   PERM *_rperm, *_cperm;  // row permutation
+  
+  PERM *_sortPerm;
 
   QUEUE *_v;
   
@@ -77,6 +79,18 @@ class SETFAMILY{
 			delete [] cmm_p; 
 		}
 
+ /*
+ 	必要なら考える
+	int __qqsort_cmp_(const void *x, const void *y){
+		if (_v[*(PERM *)(x)] < _v[*(PERM *)(y)]) return (-1); 
+		else return ( _v[*(PERM *)(x)] > _v[*(PERM *)(y)] ); 
+	}
+
+	int __qqsort_cmp__(const void *x, const void *y){
+		if ( _v[*(PERM *)(x)] > _v[*(PERM *)(y)] ) return (-1); 
+		else return (_v[*(PERM *)(x)] < _v[*(PERM *)(y)] ); 
+	}
+	*/
 
 	public:
 
@@ -149,6 +163,9 @@ class SETFAMILY{
 			}
 			return p;
 		}
+
+		PERM *__qsort_perm_v(int unit);
+
 
 		QUEUE_INT * get_vv(int i)      { return _v[i].get_v(); }
 		QUEUE_INT   get_vv(int i,int j){ return _v[i].get_v(j); }

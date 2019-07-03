@@ -129,6 +129,22 @@ void SETFAMILY::sort(){
   }
 
 }
+/*
+必要なら考える
+PERM *SETFAMILY::__qsort_perm_v(int unit){
+
+	PERM *sortPerm = new PERM[_t];
+	for(size_t i=0 ; i<_t; i++){ sortPerm[i]=i; }
+	if ( unit == 1 || unit==-1 ) unit *= sizeof(QUEUE);
+
+ 	if (unit<0) qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp__);
+	else        qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp_);
+
+	return sortPerm;
+
+
+}
+*/
 
 void SETFAMILY::sort(int sflag){
 	
