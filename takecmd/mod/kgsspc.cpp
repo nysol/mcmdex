@@ -617,8 +617,11 @@ void *KGSSPC::iter (void *p){
     }
     i++;
   }
+  delete [] mark;
+  delete [] occ_w;
+  delete [] OQend;
 
-  mfree (mark, occ_w,OQend);
+  //mfree (mark, occ_w,OQend);
 
   return (NULL);
 
@@ -705,7 +708,7 @@ void KGSSPC::_SspcCore(){
 
   delete [] w;
   delete [] o;
-	delete SM;
+	delete [] SM;
 
 }
 

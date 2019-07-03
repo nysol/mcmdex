@@ -341,6 +341,15 @@ void FILE2::closew (){
   _buf = _buf_end = 0;
 }
 
+void FILE2::clearbuf(){
+  flush_last();
+  _fp=NULL;
+  delete [] _buf_org;
+  _buf_org = NULL;
+  _buf = _buf_end = 0;
+}
+
+
 size_t FILE2::ARY_Scan_INT(){
 
 	size_t num=0;

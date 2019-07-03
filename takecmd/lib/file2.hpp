@@ -104,7 +104,10 @@ class FILE2{ // in ,out 完全分ける？
 	}
 	
 	void _fclose2(){
-		if(_fp){ fclose(_fp); _fp=NULL; }
+		if(_fp){ 
+			fclose(_fp); 
+			_fp=NULL; 
+		}
 	}
 
 	void _ARY_Read(int *f,size_t num);
@@ -228,7 +231,9 @@ class FILE2{ // in ,out 完全分ける？
 
 	// write case
 	void closew();
-
+	void clearbuf();
+	
+	
 	bool needFlush(void){ return ( _buf-_buf_org ) > FILE2_BUFSIZ/2 ; }
 	void flush_last(void);
 	void flush_(void);

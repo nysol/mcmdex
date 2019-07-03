@@ -68,21 +68,18 @@
 
 class ITEMSET{
 
-	
 	int _flag;
 	int _progress;
 	
-  LONG _iters;                   // iterations
-  LONG _solutions;  // number of solutions output
-  LONG _max_solutions;           // maximum solutions to be output
+  LONG _iters;         // iterations
+  LONG _solutions;     // number of solutions output
+  LONG _max_solutions; // maximum solutions to be output
 
   QUEUE_INT _item_max;  // (original) maximum item
 
 	//boundary  
   int _ub, _lb;   // upper/lower bounds for the itemset size
   int _len_ub, _len_lb;   // upper/lower bounds for the length of the pattern
-
-
 
 	// the size of itemtopk heaps;
 	// specify topkheap to be used/the size of each in the initiaization
@@ -555,9 +552,11 @@ class ITEMSET{
 	void check_all_rule (WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT total, int core_id);
 
 	void close(){
+	
 	  if( _multi_fp ){
+	  	// fpは共有してるのでcloseはしない
 	  	for(int i = 0 ; i < MAX(_multi_core,1) ; i++){
-	  		_multi_fp[i].closew();
+	  		_multi_fp[i].clearbuf();
 	  	}
 		}
 	}
