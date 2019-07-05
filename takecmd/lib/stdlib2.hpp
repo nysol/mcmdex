@@ -296,8 +296,6 @@ void qsort_perm__(T *v, size_t siz, PERM *perm, int unit){
  if (unit<0) qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp__r<T>);
  else        qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp_r<T>);
 #endif
- /*
-*/
 } 
 
 

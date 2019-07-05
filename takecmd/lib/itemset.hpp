@@ -65,50 +65,139 @@
 #include"aheap.hpp"
 
 
+struct ItemSetParams {
+	
+	// ALL
+	int _flag;
+	LONG _max_solutions;
+	char _separator;
+	
+	// LCM LCMSEQ MACE
+	int _lb , _ub;
+	
+	// LCM LCMSEQ
+	WEIGHT _nega_lb ,_nega_ub;
+	WEIGHT _posi_lb ,_posi_ub;
+	double _prob_lb ,_prob_ub;
+	double _ratio_lb ,_ratio_ub;
+
+	// LCM LCMSEQ SSPC
+  WEIGHT _frq_lb;
+	// LCM	LCMSEQ
+  WEIGHT _frq_ub;
+
+	// LCMSEQ
+	WEIGHT _frq, _pfrq;
+	WEIGHT _setrule_lb;
+
+	// LCM SSPC
+	int _len_ub;
+	// SSPC	
+	int _len_lb;
+
+	// LCM LCMSEQ SSPC
+	LONG _topk_k;
+
+	// SSPC
+	LONG _itemtopk_end;
+	LONG _itemtopk_item;
+	LONG _itemtopk_item2;
+	int _multi_core;
+
+	//LCM LCMSEQ
+	QUEUE_INT _target;
+
+	// LCM
+	int _digits;
+
+	ItemSetParams(void):
+		_flag(0),_max_solutions(0),	
+		_separator(' '),
+		_ub(INTHUGE),_lb(0),
+		_nega_lb(-WEIGHTHUGE),_nega_ub(WEIGHTHUGE),
+		_posi_lb(-WEIGHTHUGE),_posi_ub(WEIGHTHUGE),
+		_prob_ub(1),_prob_lb(0),
+		_ratio_ub(1),_ratio_lb(0),
+		_len_ub(INTHUGE),_len_lb(0),
+		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0),
+		_multi_core(0),		
+		_topk_k(0),
+		_frq_ub(WEIGHTHUGE),_frq_lb(-WEIGHTHUGE),	
+		_target(INTHUGE),
+		_digits(4),
+		_frq(0),_pfrq(0),
+		_setrule_lb(-WEIGHTHUGE){}
+
+
+	bool checkNotBound( int t , WEIGHT frq, WEIGHT pfrq){
+	
+	  if ( t < _lb || t > _ub ) return true ;
+
+  	if ( (_flag&ITEMSET_IGNORE_BOUND)==0 ) {
+	  	if ( frq < _frq_lb || frq > _frq_ub ) return true;
+	  	if ( pfrq < _posi_lb || pfrq > _posi_ub || 
+	  			(frq - _pfrq) > _nega_ub || (frq - _pfrq) < _nega_lb ) return true;
+	  			
+	  }
+		return false;
+	}
+
+
+};
+
+
+//	int _flag;
+//	//boundary  
+//  int _ub, _lb;   // upper/lower bounds for the itemset size
+//  int _len_ub, _len_lb;   // upper/lower bounds for the length of the pattern
+
+//
+// the size of itemtopk heaps;
+// specify topkheap to be used/the size of each in the initiaization
+// for sspc (-k)
+//  LONG  _itemtopk_item, _itemtopk_item2,_itemtopk_end; 
+
+//  LONG _topk_k,
+//  WEIGHT _frq, _pfrq,_frq_ub, _frq_lb;  // upper/lower bounds for the frequency
+//
+//  WEIGHT _posi_lb, _posi_ub; 
+// WEIGHT _nega_lb, _nega_ub;  // upper/lower bounds for the sum of positive/negative weights
+
+//  int _digits;  // #decimals to be output, for non-natural numbers
+	// for lcmseq
+//  WEIGHT _setrule_lb;  // frequency lower bound for set rule
+//  QUEUE_INT _target;  // target item for rule mining
+//  LONG _max_solutions; // maximum solutions to be output
+//  int _multi_core;  // number of processors
+//  // upper/lower bounds for confidence and independent probability
+//  double _ratio_ub, _ratio_lb;
+// double _prob_ub, _prob_lb;   
+//  char _separator; // separator of items output
+
 
 class ITEMSET{
 
-	int _flag;
+	ItemSetParams _params;
+
 	int _progress;
 	
   LONG _iters;         // iterations
   LONG _solutions;     // number of solutions output
-  LONG _max_solutions; // maximum solutions to be output
 
   QUEUE_INT _item_max;  // (original) maximum item
 
-	//boundary  
-  int _ub, _lb;   // upper/lower bounds for the itemset size
-  int _len_ub, _len_lb;   // upper/lower bounds for the length of the pattern
-
-	// the size of itemtopk heaps;
-	// specify topkheap to be used/the size of each in the initiaization
-	// for sspc (-k)
-  LONG  _itemtopk_item, _itemtopk_item2,_itemtopk_end; 
-
 	// counter for topk bucket and #remainings
-  LONG _topk_k, _topk_frq;   
+  LONG _topk_frq;   
 
-  WEIGHT _frq, _pfrq, _frq_ub, _frq_lb;  // upper/lower bounds for the frequency
-  WEIGHT _total_weight;  // total weight of the input database
-  double _ratio, _prob, _th;   // confidence and independent probability of the current pattern
+	// total weight of the input database
+  WEIGHT _total_weight;  
 
-  WEIGHT _posi_lb, _posi_ub; 
-  WEIGHT _nega_lb, _nega_ub;  // upper/lower bounds for the sum of positive/negative weights
+	 // confidence and independent probability of the current pattern
+  double _ratio, _prob, _th;  
 
-	// for lcmseq
-  WEIGHT _setrule_lb;  // frequency lower bound for set rule
 
-  QUEUE_INT _target;  // target item for rule mining
-
-  // upper/lower bounds for confidence and independent probability
-  double _ratio_ub, _ratio_lb;
-  double _prob_ub, _prob_lb;   
-
-  char _separator; // separator of items output
-  int _digits;  // #decimals to be output, for non-natural numbers
-
-  char _topk_sign, _itemtopk_sign;  // determine min/max (1, -1) for topk/itemtopk heaps 
+	// determine min/max (1, -1) for topk/itemtopk heaps 
+  char _topk_sign, _itemtopk_sign;  
 
 	VEC_ID _rows_org; // _Xのかわり
 	PERM *_trperm;    // _Xのかわり 仮
@@ -127,7 +216,6 @@ class ITEMSET{
   QUEUE **_set_occ;    // the occurrence of each prefix of current itemset
   KGLCMSEQ_QUE **_set_occELE;    // the occurrence of each prefix of current itemset
 
-  int _multi_core;  // number of processors
   FILE2 *_multi_fp;  // output file2 pointer for multi-core mode
 	// counter
   LONG *_multi_outputs;    // #calls of ITEMSET_output_itemset or ITEMSET_solusion
@@ -174,16 +262,7 @@ class ITEMSET{
 
 	// t : itemset->get_t()でOK
 	bool _checkNotBound( int t , WEIGHT frq, WEIGHT pfrq){
-
-	  if ( t < _lb || t > _ub ) return true ;
-
-  	if ( (_flag&ITEMSET_IGNORE_BOUND)==0 ) {
-	  	if ( frq < _frq_lb || frq > _frq_ub ) return true;
-	  	if ( pfrq < _posi_lb || pfrq > _posi_ub || 
-	  			(frq - _pfrq) > _nega_ub || (frq - _pfrq) < _nega_lb ) return true;
-	  			
-	  }
-		return false;
+		return _params.checkNotBound( t , frq, pfrq);
 	}
 
 
@@ -199,38 +278,27 @@ class ITEMSET{
 
 
 	public:
-	
+					
 	ITEMSET(void):	  
-		_flag(0),_progress(0),_iters(0),_solutions(0),
-  	_max_solutions(0),_item_max(0),
-		_ub(INTHUGE),_lb(0),_len_ub(INTHUGE),_len_lb(0),
-		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0),
-		_topk_k(0),_topk_frq(0),
-		_frq(0),_pfrq(0),_frq_ub(WEIGHTHUGE),_frq_lb(-WEIGHTHUGE),_total_weight(0),
+		_progress(0),_iters(0),_solutions(0),
+  	_item_max(0),_topk_frq(0),_total_weight(0),
 		_ratio(0.0),_prob(0.0),_th(0.0),
-		_ratio_ub(1),_ratio_lb(0),_prob_ub(1),_prob_lb(0),
-		_posi_lb(-WEIGHTHUGE),_posi_ub(WEIGHTHUGE),
-		_nega_lb(-WEIGHTHUGE),_nega_ub(WEIGHTHUGE),
-		_setrule_lb(-WEIGHTHUGE),_target(INTHUGE),
-		_separator(' '),_digits(4),
 		_topk_sign(1) ,_itemtopk_sign(1),  // initialization ; max topk
 		_itemflag(NULL),_perm(NULL),_item_frq(NULL),
 		_sc(NULL),_sc2(NULL),
 		_itemtopk_ary(NULL),
   	_set_weight(NULL),_set_occ(NULL),
-		_multi_outputs(NULL),
-		_multi_iters(NULL),
+		_multi_outputs(NULL),_multi_iters(NULL),
 		_multi_solutions(NULL),_multi_fp(NULL),
-		_multi_core(0),_itemtopk(NULL),
+		_itemtopk(NULL),
 		_rows_org(0),_trperm(NULL)
 		{}
 	
 	
 	~ITEMSET(void){
 
-		for(LONG i=0;i<_itemtopk_end;i++){
+		for(LONG i=0;i<_params._itemtopk_end;i++){
 		  _itemtopk[i].end();
-    	//if ( _itemtopk_ary ) free2 (_itemtopk_ary[i]);
     	if ( _itemtopk_ary ) delete [] _itemtopk_ary[i];
 	  }
 	 	delete [] _itemtopk; 
@@ -244,7 +312,7 @@ class ITEMSET{
   	delete [] _set_occ;
   
 	  if ( _multi_fp ){
-			for(size_t i=0;i<MAX(_multi_core,1);i++){
+			for(size_t i=0;i<MAX(_params._multi_core,1);i++){
 				_multi_fp[i].clear();
 			}
 		  delete[] _multi_fp;
@@ -254,7 +322,7 @@ class ITEMSET{
   	delete [] _multi_iters ;
 
 		#ifdef MULTI_CORE
-  	if ( _multi_core>0 ){
+  	if ( _params._multi_core>0 ){
     	pthread_spin_destroy(&_lock_counter);
     	pthread_spin_destroy(&_lock_sc);
     	pthread_spin_destroy(&_lock_output);
@@ -269,17 +337,17 @@ class ITEMSET{
 		LONG topk_k,LONG itemtopk_item,LONG itemtopk_item2,
 		LONG itemtopk_end , int multi_core, LONG max_solutions,char separator
 	){
-		_flag   = iFlag;
-		_frq_lb = frq_lb;
-		_len_ub = len_ub;
-		_len_lb = len_lb;
-		_topk_k = topk_k;
-		_itemtopk_item = itemtopk_item;
-		_itemtopk_item2 = itemtopk_item2;
-		_itemtopk_end = itemtopk_end;
-		_multi_core = multi_core;
-		_max_solutions = max_solutions;
-		_separator = separator;
+		_params._flag   = iFlag;
+		_params._frq_lb = frq_lb;
+		_params._len_ub = len_ub;
+		_params._len_lb = len_lb;
+		_params._topk_k = topk_k;
+		_params._itemtopk_item = itemtopk_item;
+		_params._itemtopk_item2 = itemtopk_item2;
+		_params._itemtopk_end = itemtopk_end;
+		_params._multi_core = multi_core;
+		_params._max_solutions = max_solutions;
+		_params._separator = separator;
 
 	}
 	// LCM
@@ -290,24 +358,24 @@ class ITEMSET{
 		WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
 		char separator , LONG digits
 	){
-		_flag = flag;
-		_frq_lb = frq_lb;
-		_frq_ub = frq_ub;
-		_lb = lb;
-		_ub = ub;
-		_target = target;
-		_ratio_lb = ratio_lb;
-		_ratio_ub = ratio_ub;
-		_prob_lb = prob_lb;
-		_prob_ub = prob_ub;
-		_nega_lb = nega_lb;
-		_nega_ub = nega_ub;
-		_posi_lb = posi_lb;
-		_posi_ub = posi_ub;
-		_topk_k = topk_k;
-		_max_solutions = max_solutions;
-		_separator = separator;
-		_digits = digits;	
+		_params._flag = flag;
+		_params._frq_lb = frq_lb;
+		_params._frq_ub = frq_ub;
+		_params._lb = lb;
+		_params._ub = ub;
+		_params._target = target;
+		_params._ratio_lb = ratio_lb;
+		_params._ratio_ub = ratio_ub;
+		_params._prob_lb = prob_lb;
+		_params._prob_ub = prob_ub;
+		_params._nega_lb = nega_lb;
+		_params._nega_ub = nega_ub;
+		_params._posi_lb = posi_lb;
+		_params._posi_ub = posi_ub;
+		_params._topk_k = topk_k;
+		_params._max_solutions = max_solutions;
+		_params._separator = separator;
+		_params._digits = digits;	
 	}
 
 	// LCMSEQ
@@ -318,38 +386,38 @@ class ITEMSET{
 		WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
 		char separator ,  WEIGHT frq,  WEIGHT pfrq, int len_ub ,WEIGHT setrule_lb
 	){
-		_flag = flag;
-		_frq_lb = frq_lb;
-		_frq_ub = frq_ub;
-		_lb = lb;
-		_ub = ub;
-		_target = target;
-		_ratio_lb = ratio_lb;
-		_ratio_ub = ratio_ub;
-		_prob_lb = prob_lb;
-		_prob_ub = prob_ub;
-		_nega_lb = nega_lb;
-		_nega_ub = nega_ub;
-		_posi_lb = posi_lb;
-		_posi_ub = posi_ub;
-		_topk_k = topk_k;
-		_max_solutions = max_solutions;
-		_separator = separator;
-		_pfrq = pfrq;
-		_frq = frq;
-		_len_ub = len_ub;
-		_setrule_lb = setrule_lb;
+		_params._flag = flag;
+		_params._frq_lb = frq_lb;
+		_params._frq_ub = frq_ub;
+		_params._lb = lb;
+		_params._ub = ub;
+		_params._target = target;
+		_params._ratio_lb = ratio_lb;
+		_params._ratio_ub = ratio_ub;
+		_params._prob_lb = prob_lb;
+		_params._prob_ub = prob_ub;
+		_params._nega_lb = nega_lb;
+		_params._nega_ub = nega_ub;
+		_params._posi_lb = posi_lb;
+		_params._posi_ub = posi_ub;
+		_params._topk_k = topk_k;
+		_params._max_solutions = max_solutions;
+		_params._separator = separator;
+		_params._pfrq = pfrq;
+		_params._frq = frq;
+		_params._len_ub = len_ub;
+		_params._setrule_lb = setrule_lb;
 	}
 
 	// MACE
 	void setParams(
 		int iFlag, int lb,int ub, LONG max_solutions,char separator
 	){
-		_flag   = iFlag;
-		_lb = lb;
-		_ub = ub;
-		_max_solutions = max_solutions;
-		_separator = separator;
+		_params._flag   = iFlag;
+		_params._lb = lb;
+		_params._ub = ub;
+		_params._max_solutions = max_solutions;
+		_params._separator = separator;
 	}
 		
 #ifdef MULTI_CORE
@@ -407,40 +475,40 @@ class ITEMSET{
 	  return item;
 	}
 
-	QUEUE_INT get_target(void){ return _target;}
+	QUEUE_INT get_target(void){ return _params._target;}
 	QUEUE_INT get_item_max(void){ return _item_max;}
-	LONG get_itemtopk_end(void){ return _itemtopk_end;}
-	LONG get_itemtopk_item(void){ return _itemtopk_item;}
+	LONG get_itemtopk_end(void){ return _params._itemtopk_end;}
+	LONG get_itemtopk_item(void){ return _params._itemtopk_item;}
 
 	AHEAP_ID get_topk_end(){ return _topk.end();}
 
-	int get_flag(){ return _flag;} 
+	int get_flag(){ return _params._flag;} 
 	LONG get_iters(){ return _iters;} 
 
-	int get_multi_core(){ return _multi_core;} 
-	WEIGHT get_frq_lb(){ return _frq_lb;} 
-	WEIGHT get_frq_ub(){ return _frq_ub;} 
-	WEIGHT get_posi_lb(){ return _posi_lb;} 
-	WEIGHT get_posi_ub(){ return _posi_ub;} 
+	int get_multi_core(){ return _params._multi_core;} 
+	WEIGHT get_frq_lb(){ return _params._frq_lb;} 
+	WEIGHT get_frq_ub(){ return _params._frq_ub;} 
+	WEIGHT get_posi_lb(){ return _params._posi_lb;} 
+	WEIGHT get_posi_ub(){ return _params._posi_ub;} 
 
-	int get_len_lb(){ return _len_lb;} 
-	int get_len_ub(){ return _len_ub;} 
+	int get_len_lb(){ return _params._len_lb;} 
+	int get_len_ub(){ return _params._len_ub;} 
 	QUEUE* getp_itemset() { return &_itemset;}
-	char get_separator(){ return _separator;} 
+	char get_separator(){ return _params._separator;} 
 	LONG get_solutions(){ return _solutions;} 
 	LONG get_sc(int i){ return _sc[i];}
-	int get_ub(){return _ub;}
+	int get_ub(){return _params._ub;}
 
 	double get_prob(){return _prob;}
-	double get_prob_lb(){ return _prob_lb;} 
-	double get_prob_ub(){ return _prob_ub;} 
-	double get_ratio_lb(){ return _ratio_lb;}
-	double get_ratio_ub(){ return _ratio_ub;}
-	WEIGHT get_frq(){return _frq;}
-	WEIGHT get_pfrq(){return _pfrq;}
+	double get_prob_lb(){ return _params._prob_lb;} 
+	double get_prob_ub(){ return _params._prob_ub;} 
+	double get_ratio_lb(){ return _params._ratio_lb;}
+	double get_ratio_ub(){ return _params._ratio_ub;}
+	WEIGHT get_frq(){return _params._frq;}
+	WEIGHT get_pfrq(){return _params._pfrq;}
 
 	WEIGHT get_item_frq(int i){return _item_frq[i];}
-	LONG get_topk_k(){ return _topk_k ;}
+	LONG get_topk_k(){ return _params._topk_k ;}
 
 	int get_topk_base(){ return _topk.base();}
 
@@ -464,17 +532,17 @@ class ITEMSET{
 		_multi_fp[coreID].flush();
 	}
 
-	void set_target(QUEUE_INT v){ _target=v;}
+	void set_target(QUEUE_INT v){ _params._target=v;}
 	void set_perm(PERM* v){_perm =v;}
 
-	void set_len_ub(int v){ _len_ub =v; }
-	void set_ub(int v){_ub=v;}
-	void set_lb(int v){_lb=v;}
+	void set_len_ub(int v){ _params._len_ub =v; }
+	void set_ub(int v){_params._ub=v;}
+	void set_lb(int v){_params._lb=v;}
 	void set_th(double v){_th=v;}
 	void set_prob(double v){_prob=v;}
 
-	void set_frq(WEIGHT v){_frq=v;}
-	void set_pfrq(WEIGHT v){_pfrq=v;}
+	void set_frq(WEIGHT v){_params._frq=v;}
+	void set_pfrq(WEIGHT v){_params._pfrq=v;}
 
 	void set_topk_base(int v){ _topk.base(v);}
 	void set_topk_end(int v){ _topk.end(v);}
@@ -555,7 +623,7 @@ class ITEMSET{
 	
 	  if( _multi_fp ){
 	  	// fpは共有してるのでcloseはしない
-	  	for(int i = 0 ; i < MAX(_multi_core,1) ; i++){
+	  	for(int i = 0 ; i < MAX(_params._multi_core,1) ; i++){
 	  		_multi_fp[i].clearbuf();
 	  	}
 		}
