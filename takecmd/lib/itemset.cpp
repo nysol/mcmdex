@@ -114,8 +114,8 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max,size_t item_max
   	// バッファ確保しないほうがいい？
     if ( strcmp (fname, "-") == 0 ) _fp.open(stdout);
     else{
-    	if(_params._flag&ITEMSET_APPEND){ _fp.open(fname,"a");}
-    	else                    { _fp.open(fname,"w");}
+    	if(_params._flag&ITEMSET_APPEND){ _fp.openA(fname);}
+    	else                    { _fp.open(fname);}
     }
   } 
 
@@ -133,7 +133,7 @@ void ITEMSET::alloc (char *fname, PERM *perm, QUEUE_INT item_max,size_t item_max
   _multi_outputs = _multi_iters + j;
   _multi_solutions = _multi_outputs + j;
   
-  _multi_fp = FILE2::makeMultiFp(j,_fp);
+  _multi_fp = OFILE2::makeMultiFp(j,_fp);
   
 
 #ifdef MULTI_CORE
@@ -178,7 +178,7 @@ void ITEMSET::last_output (){
   WEIGHT w;
   unsigned char c;
 
-  FILE2 *fp = &_multi_fp[0];
+  OFILE2 *fp = &_multi_fp[0];
 
   merge_counters();
 
@@ -258,7 +258,7 @@ void ITEMSET::last_output (){
 /* output frequency, coverage */
 void ITEMSET::output_frequency ( WEIGHT frq, WEIGHT pfrq, int core_id){
 
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
 
   if ( _params._flag&(ITEMSET_FREQ+ITEMSET_PRE_FREQ) ){
     if ( _params._flag&ITEMSET_FREQ ) fp->putch(' ');
@@ -281,7 +281,7 @@ void ITEMSET::output_frequency ( WEIGHT frq, WEIGHT pfrq, int core_id){
 void ITEMSET::output_occ ( QUEUE *occ, int core_id)
 {
   QUEUE_INT *x;
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
 
   VEC_ID j, ee = _rows_org;
 
@@ -319,7 +319,7 @@ void ITEMSET::output_itemset_(
   QUEUE_ID i;
   QUEUE_INT e;
   int flush_flag = 0;
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
   
   _multi_outputs[core_id]++;
   if ( (_params._flag&SHOW_PROGRESS ) && (_multi_outputs[core_id]%(ITEMSET_INTERVAL) == 0) )
@@ -425,7 +425,7 @@ void ITEMSET::output_itemset_(
   QUEUE_INT e;
   int flush_flag = 0;
 
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
   
   _multi_outputs[core_id]++;
 
@@ -524,7 +524,7 @@ void ITEMSET::output_itemset_ (
   QUEUE_INT e;
 
   int flush_flag = 0;
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
   
   _multi_outputs[core_id]++;
 
@@ -642,7 +642,7 @@ void ITEMSET::output_itemset(int core_id){
   QUEUE_INT e;
 
   int flush_flag = 0;
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
   
   _multi_outputs[core_id]++;
 
@@ -760,7 +760,7 @@ void ITEMSET::solution (QUEUE *occ, int core_id){
 /*************************************************************************/
 void ITEMSET::output_rule ( QUEUE *occ, double p1, double p2, size_t item, int core_id){
 
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
   if ( fp->exist() && !(_topk.end()) ){
     fp->print_real ( p1, _params._digits, '(');
     fp->print_real ( p2, _params._digits, ',');
@@ -930,7 +930,7 @@ void ITEMSET::check_all_rule ( WEIGHT *w, QUEUE *occ, QUEUE *jump, WEIGHT total,
 //for _trsact_h_
 void ITEMSET::output_occ ( KGLCMSEQ_QUE *occ, int core_id){
   KGLCMSEQ_ELM *x;
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
 
   VEC_ID j, ee = _rows_org;
 
@@ -976,7 +976,7 @@ void ITEMSET::output_itemset_ (QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ
   QUEUE_INT e;
 
   int flush_flag = 0;
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
   
   _multi_outputs[core_id]++;
   if ( (_params._flag&SHOW_PROGRESS ) && (_multi_outputs[core_id]%(ITEMSET_INTERVAL) == 0) )
@@ -1150,7 +1150,7 @@ void ITEMSET::solution (KGLCMSEQ_QUE *occ, int core_id){
 /*************************************************************************/
 void ITEMSET::output_rule ( KGLCMSEQ_QUE *occ, double p1, double p2, size_t item, int core_id){
 
-  FILE2 *fp = &_multi_fp[core_id];
+  OFILE2 *fp = &_multi_fp[core_id];
   if ( fp->exist() && !(_topk.end()) ){
     fp->print_real ( p1, _params._digits, '(');
     fp->print_real ( p2, _params._digits, ',');

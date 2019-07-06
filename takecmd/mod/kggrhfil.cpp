@@ -222,16 +222,17 @@ int KGGRHFIL::replaceDATA()
 {
 	char i;
 	LONG l,x;
-	FILE2 ifp, ofp;
+	IFILE2 ifp;
+	OFILE2 ofp;
 	WEIGHT w;
 	FSTAR_INT *table=NULL;
 	
 	if(_table_fname){
-		FILE2::ARY_Load(table,_table_fname);
+		IFILE2::ARY_Load(table,_table_fname);
 	}
 	
-	ifp.open( _fname , "r");
-  ofp.open(_output_fname, "w");
+	ifp.open(_fname);
+  ofp.open(_output_fname);
 		
 	do{
 		i=0; x=0;
@@ -258,7 +259,7 @@ int KGGRHFIL::replaceDATA()
 	} while ( ifp.NotEof()); //(FILE_err&2)==0
 
 	ifp.close ();
-	ofp.closew ();
+	ofp.close ();
 			
 	return 0;
 			
@@ -268,7 +269,7 @@ int KGGRHFIL::replaceDATA()
 /* main routine */
 int KGGRHFIL::run (int argc ,char* argv[]){
 
-  FILE2 fp, fp2;
+ // FILE2 fp, fp2;
   LONG l, ll, x, xx;
   char i;
   WEIGHT w;

@@ -201,7 +201,7 @@ void SETFAMILY::sort(int sflag){
 
 // sgraphに移行?
 //void SETFAMILY::_flie_load(FILE2 &fp, FILE_COUNT &C){
-void SETFAMILY::_flie_load(FILE2 &fp){
+void SETFAMILY::_flie_load(IFILE2 &fp){
   WEIGHT z=0;
   VEC_ID t;
   LONG x, y;
@@ -209,7 +209,7 @@ void SETFAMILY::_flie_load(FILE2 &fp){
   int flag=0;
 
   int wflag = _flag&LOAD_EDGEW;
-  FILE2 wfp;
+  //IFILE2 wfp;
 
   if ( flag ) flag2 = _flag | LOAD_EDGEW;
 
@@ -262,7 +262,7 @@ void SETFAMILY::_flie_load(FILE2 &fp){
 
 /* scan file and load the data from file to SMAT structure */
 // call from sgraph.ccp loadEDGE// sgraphに移行
-void SETFAMILY::load (FILE2 &fp,  int flag)
+void SETFAMILY::load (IFILE2 &fp,  int flag)
 {
 
   //FILE2 fp; //_fname = fname;
@@ -289,7 +289,7 @@ void SETFAMILY::load (FILE2 &fp,  int flag)
 
 //from Trsact (Not use weight)
 void SETFAMILY::file_read(
-	FILE2 &fp, FILE_COUNT &C,
+	IFILE2 &fp, FILE_COUNT &C,
 	VEC_ID *pos ,
 	int flag, int tflag
 ){ 
@@ -330,7 +330,7 @@ void SETFAMILY::file_read(
 
 //from Trsact (use weight)
 void SETFAMILY::file_read(
-	FILE2 &fp, FILE2 &wfp,FILE_COUNT &C, 
+	IFILE2 &fp, IFILE2 &wfp,FILE_COUNT &C, 
 	VEC_ID *pos ,
 	int flag, int tflag){ 
 

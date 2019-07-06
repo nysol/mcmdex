@@ -251,7 +251,8 @@ void KGSIMSET::unify (char *fname, char *fname2, int flag){
 
 	FSTAR FF;
   char c;
-  FILE2 fp,wfp;
+  IFILE2 fp;
+  OFILE2 wfp;
   FSTAR_INT i, j, e, z;
   char *buf;
   LONG x, y;
@@ -260,7 +261,7 @@ void KGSIMSET::unify (char *fname, char *fname2, int flag){
     if ( !_unifind.empty() ){
 	    _unifind.alloc(_nodes);
 	  }
-    fp.open ( fname2, "r");
+    fp.open ( fname2);
     do {
       if ( fp.read_pair( &x, &y, NULL, 0) ) continue;
       _unifind.unify_set(x,y);
@@ -273,7 +274,7 @@ void KGSIMSET::unify (char *fname, char *fname2, int flag){
 	FF.load();
 
 
-  wfp.open(fname, "w");
+  wfp.open(fname);
 
 	for(i=0;i<FF.get_node_num() ; i++){
     if ( flag==0 || _unifind.mark(i) == i ){
@@ -295,18 +296,18 @@ void KGSIMSET::unify (char *fname, char *fname2, int flag){
         e = FF.get_edge(j);
         if ( _unifind.mark(e) != e ) continue;
         while (1){
-	        fp.print_int(e, c);
-	        fp.flush();
+	        wfp.print_int(e, c);
+	        wfp.flush();
           c = ' ';
           if ( flag == 2 || _unifind.set(e) == e ) break;
           e = _unifind.set(e);
         }
       }
     }
-    fp.puts("\n");
-	  fp.flush();
+    wfp.puts("\n");
+	  wfp.flush();
   }
-  fp.closew();
+  wfp.close();
 
 }
 

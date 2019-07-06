@@ -168,7 +168,7 @@ int FSTAR::eval_edge (FSTAR_INT x, FSTAR_INT y, WEIGHT w){
 
 /* scan the file and count the degree, for edge listed file */
 /* if F->out_node_num is set ot a number larger than #nodes, set the node number to it, so that isolated vertices will be attached to the last */
-void FSTAR::_scan_file(FILE2 *fp){
+void FSTAR::_scan_file(IFILE2 *fp){
 
   LONG i, j;
 
@@ -198,7 +198,7 @@ void FSTAR::_scan_file(FILE2 *fp){
 }
 
 /* load data from file to memory with allocation, (after the scan for counting) */
-void FSTAR::read_file(FILE2 *fp, FILE2 *wfp){
+void FSTAR::read_file(IFILE2 *fp, IFILE2 *wfp){
 
   LONG i, x, y;
   int fc=0, FILE_err_=0;
@@ -329,7 +329,7 @@ void FSTAR::extract_subgraph()
 */
 int FSTAR::load(){
 
-  FILE2 fp , wfp;
+  IFILE2 fp , wfp;
 
   if ( _in_lb >0 || _in_ub <FSTAR_INTHUGE ){
   	 _flag |= (FSTAR_IN_CHK+FSTAR_CNT_IN);
@@ -351,8 +351,8 @@ int FSTAR::load(){
     }
   }
 
-  fp.open ( _fname, "r");
-  if ( _wfname ) wfp.open ( _wfname, "r");
+  fp.open ( _fname);
+  if ( _wfname ) wfp.open(_wfname);
 
   _scan_file(&fp);
   printMes("first & second scan end: %s\n", _fname);
@@ -380,7 +380,7 @@ int FSTAR::load(){
 
 
 /* load data from file to memory with allocation, (after the scan for counting) */
-void FSTAR::read_fileMED(FILE2 *fp ){
+void FSTAR::read_fileMED(IFILE2 *fp ){
 
   LONG i=0; 
   LONG x, y;
@@ -425,7 +425,7 @@ int FSTAR::loadMed(){
   LONG i, j;
   FILE_COUNT C ;
 
-	FILE2 fp(_fname);
+	IFILE2 fp(_fname);
   C.countFST(&fp, _flag&LOAD_TPOSE);
 
   _xmax = C.get_rows();

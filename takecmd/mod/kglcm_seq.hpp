@@ -105,7 +105,7 @@ class KGLCMSEQ{
     // set outperm
 	  if ( _outperm_fname ){
 
-  	  j = FILE2::ARY_Load(p, _outperm_fname);
+  	  j = IFILE2::ARY_Load(p, _outperm_fname);
     	if ( perm ){
 
      	 for(j=0;j<siz;j++){

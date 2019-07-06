@@ -60,7 +60,7 @@ class kgClusterForCC{
 
 	~kgClusterForCC(){}
 
-	void read(FILE2 *fp){ 
+	void read(IFILE2 *fp){ 
 
 		LONG x, y;
 
@@ -80,7 +80,7 @@ class kgClusterForCC{
 		
 	}
 
-	void readWithCnt(FILE2 *fp){
+	void readWithCnt(IFILE2 *fp){
 
 		LONG x, y, yy;
 		FSTAR_INT flag = 0;
@@ -178,7 +178,7 @@ class kgClusterForCC{
 
 class KGMEDSET{
 
-  FILE2 _fp;
+  IFILE2 _fp;
 	OFILE2 _ofp; // org II._fp
 
 	int _problem;

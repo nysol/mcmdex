@@ -114,7 +114,7 @@ class KGMACE{
 
 	int _problem;
 
-	FILE2 _fp; 
+	OFILE2 _fp; 
 
 	char *_outperm_fname;
 	char *_output_fname;
@@ -187,12 +187,11 @@ class KGMACE{
   	WEIGHT w;
   	unsigned char c;
 
-	  FILE2 *fp = &_fp;
-
   	if ( !_onMsg ) return;  // "no message" is specified
   
  		fprintf(stderr,"iters=" LONGF, _iters);
   	fprintf(stderr,"\n");  
+
 	}
 
 	void _output_itemset(){
@@ -202,8 +201,6 @@ class KGMACE{
 
 	  int flush_flag = 0;
 
-  	FILE2 *fp = &_fp;
-  
 	  _outputs++;
 
 	  if ( _onProgress && (_outputs%(ITEMSET_INTERVAL) == 0) ){
@@ -220,16 +217,14 @@ class KGMACE{
   	  _last_output ();
     	EXIT; //returnでする方法考える
 	  }
-	  if ( fp ){
 
-			for(i=0;i<_itemset.get_t();i++){
-    	  e = _itemset.get_v(i);
-      	fp->print_int( _perm? _perm[e]: e, i==0? 0: _separator);
-      	fp->flush_ ();
-  	  }
-    	fp->putch('\n');
-      fp->flush_ ();
-  	}
+		for(i=0;i<_itemset.get_t();i++){
+      e = _itemset.get_v(i);
+     	_fp.print_int( _perm? _perm[e]: e, i==0? 0: _separator);
+     	_fp.flush_();
+		}
+		_fp.putch('\n');
+		_fp.flush_();
 	}
 
 	/* allocate arrays and structures */
@@ -243,7 +238,7 @@ class KGMACE{
 
     // set outperm
 		if ( _outperm_fname ){
-			FILE2::ARY_Load(_perm , _outperm_fname);
+			IFILE2::ARY_Load(_perm , _outperm_fname);
 	  }
 
   	_itemset.alloc((QUEUE_ID)siz,(QUEUE_ID)siz);
@@ -257,8 +252,8 @@ class KGMACE{
 			// バッファ確保しないほうがいい？
 			if ( strcmp (_output_fname, "-") == 0 ) _fp.open(stdout);
 			else{
-				if(_outApend){ _fp.open(_output_fname,"a");}
-				else         { _fp.open(_output_fname,"w");}
+				if(_outApend){ _fp.openA(_output_fname);}
+				else         { _fp.open(_output_fname);}
 			}
 		}
  		return;

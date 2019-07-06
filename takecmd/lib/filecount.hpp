@@ -73,8 +73,8 @@ class FILE_COUNT{
 
 
 	QUEUE_INT _weight_Scan(char *wf);
-	int _file_count_T (FILE2 &fp, char *wf);
-	int _file_count   (FILE2 &fp, char *wf);  // NOT LOAD_TPOSEの時
+	int _file_count_T (IFILE2 &fp, char *wf);
+	int _file_count   (IFILE2 &fp, char *wf);  // NOT LOAD_TPOSEの時
 
 
 
@@ -127,14 +127,14 @@ class FILE_COUNT{
 	
 	
 		// call from trsact.cpp
-		int file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf,char *wf2=NULL);
+		int file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 
 		// call from sgraph.cpp 
-		void countSG (FILE2 *rfp, int flag);
-		void countFST(FILE2 *rfp, int flag);
+		void countSG (IFILE2 *rfp, int flag);
+		void countFST(IFILE2 *rfp, int flag);
 
 		// call from fstar.cpp
-		void countFS (FILE2 *rfp, int flag, int int_clms);
+		void countFS (IFILE2 *rfp, int flag, int int_clms);
 
 		 // 仮
 		size_t c_clms(){ return _c_clms; }

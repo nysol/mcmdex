@@ -19,8 +19,10 @@
 
 short FILE2_POW[5] = {1, 10, 100, 1000, 10000};
 
+
+
 /* fast file routine, getc, putc, puts, */
-int FILE2::getc(){
+int IFILE2::getc(){
   int c;
 
   if ( _buf >= _buf_end ){
@@ -42,7 +44,7 @@ int FILE2::getc(){
    If read either the end-of-file or newline before reading an integer,
    return 5, and 6 
 */
-FILE_LONG FILE2::read_int(){
+FILE_LONG IFILE2::read_int(){
   FILE_LONG item;
   int sign=1, ch;
   _FILE_err = 0;
@@ -63,7 +65,7 @@ FILE_LONG FILE2::read_int(){
   }
 }
 
-double FILE2::read_double (){
+double IFILE2::read_double (){
   double item, geta=1;
   int sign=1, ch, n=0, d, flag=0;
   _FILE_err = 0;
@@ -137,7 +139,7 @@ double FILE2::read_double (){
 }
 
 /* read a WEIGHT from file */
-WEIGHT FILE2::read_WEIGHT (){
+WEIGHT IFILE2::read_WEIGHT (){
 	#ifdef WEIGHT_DOUBLE
   	return (read_double());
 	#else
@@ -145,14 +147,14 @@ WEIGHT FILE2::read_WEIGHT (){
 	#endif
 }
 
-void FILE2::flush_last(){
+void OFILE2::flush_last(){
   if ( _buf > _buf_org ){
     fwrite (_buf_org, _buf-_buf_org, 1, _fp);
     _buf = _buf_org;
   }
 }
 
-void FILE2::flush_ (){
+void OFILE2::flush_(){
   fwrite (_buf_org, _buf-_buf_org, 1, _fp);
   *_buf_org = *_buf;
   _buf = _buf_org;
@@ -160,7 +162,7 @@ void FILE2::flush_ (){
 }
 
 
-static void STR_print_int_ (char **s, LONG n, int len, char c){
+static void STR_print_int_(char **s, LONG n, int len, char c){
   char *ss;
   if ( c ){ **s = c; (*s)++; }
   if ( n == 0 ){ **s = '0'; (*s)++; return; }
@@ -174,7 +176,7 @@ static void STR_print_int_ (char **s, LONG n, int len, char c){
 /* fast file routine, print number, c is the char to be printed preceding to the number
    if c==0, nothing will be printed preceding the number
    if len<0 then the #digits following '.' does not change (filed by '0')  */
-static void STR_print_int (char **s, LONG n, char c){
+static void STR_print_int(char **s, LONG n, char c){
   LONG nn = n;
   char *ss;
   if ( c ){ **s = c; (*s)++; }
@@ -189,7 +191,7 @@ static void STR_print_int (char **s, LONG n, char c){
 }
 
 /* print a real number to string pointed by *s */
-static void STR_print_real (char **s, double n, int len, char c){
+static void STR_print_real(char **s, double n, int len, char c){
   int flag=1, d=0, dd, ll = len;
   LONG nn;
 
@@ -229,14 +231,14 @@ static void STR_print_real (char **s, double n, int len, char c){
 /* fast file routine, print number, c is the char to be printed preceding to the number
    if c==0, nothing will be printed preceding the number
    if len<0 then the #digits following '.' does not change (filed by '0')  */
-void FILE2::print_int(LONG n, char c){
+void OFILE2::print_int(LONG n, char c){
   STR_print_int (&(_buf), n, c);
 }
-void FILE2::print_real (double n, int len, char c){
+void OFILE2::print_real (double n, int len, char c){
   STR_print_real (&(_buf), n, len, c);
 }
 
-void FILE2::print_WEIGHT ( WEIGHT w, int len, char c){
+void OFILE2::print_WEIGHT ( WEIGHT w, int len, char c){
 #ifdef WEIGHT_DOUBLE
   print_real( w, len, c);
 #else
@@ -244,11 +246,12 @@ void FILE2::print_WEIGHT ( WEIGHT w, int len, char c){
 #endif
 }
 
-void FILE2::flush (){
+void OFILE2::flush (){
   if ( _buf > _buf_org+FILE2_BUFSIZ/2 ) flush_ ();
 }
+
 /* read through the file until newline or EOF */
-void FILE2::read_until_newline (){
+void IFILE2::read_until_newline (){
   int ch;
   if (_FILE_err & 3) return;
   while (1){
@@ -259,7 +262,7 @@ void FILE2::read_until_newline (){
 }
 
 /* read an edge := a pair of numbers /(and its weight) */
-int FILE2::read_pair ( LONG *x, LONG *y, WEIGHT *w, int flag){
+int IFILE2::read_pair ( LONG *x, LONG *y, WEIGHT *w, int flag){
   *x = read_int();
   if (_FILE_err&4) return (1);
   *y = read_int ();
@@ -271,7 +274,7 @@ int FILE2::read_pair ( LONG *x, LONG *y, WEIGHT *w, int flag){
   return (0);
 }
 
-int FILE2::read_pair( LONG *x, LONG *y ){
+int IFILE2::read_pair( LONG *x, LONG *y ){
 
   *x = read_int();
   if (_FILE_err&4) return (1);
@@ -282,7 +285,8 @@ int FILE2::read_pair( LONG *x, LONG *y ){
 }
 
 /* read an item and its weight (auto-adjast when */
-int FILE2::read_item (FILE2 *wfp, LONG *x, LONG *y, WEIGHT *w, int fc, int flag){
+int IFILE2::read_item (IFILE2 *wfp, LONG *x, LONG *y, WEIGHT *w, int fc, int flag){
+
   int f, ff=0;
 
   *y = read_int ();
@@ -316,7 +320,7 @@ int FILE2::read_item (FILE2 *wfp, LONG *x, LONG *y, WEIGHT *w, int fc, int flag)
 
 
 /* read an item and its weight (auto-adjast when */
-int FILE2::read_item(LONG *x, LONG *y, int flag){
+int IFILE2::read_item(LONG *x, LONG *y, int flag){
   int f, ff=0;
 
   *y = read_int();
@@ -332,25 +336,7 @@ int FILE2::read_item(LONG *x, LONG *y, int flag){
   return (ff);
 }
 
-
-void FILE2::closew (){
-  flush_last();
-  _fclose2();
-  delete [] _buf_org;
-  _buf_org = NULL;
-  _buf = _buf_end = 0;
-}
-
-void FILE2::clearbuf(){
-  flush_last();
-  _fp=NULL;
-  delete [] _buf_org;
-  _buf_org = NULL;
-  _buf = _buf_end = 0;
-}
-
-
-size_t FILE2::ARY_Scan_INT(){
+size_t IFILE2::ARY_Scan_INT(){
 
 	size_t num=0;
 
@@ -371,12 +357,10 @@ size_t FILE2::ARY_Scan_INT(){
 }
 
 
-size_t FILE2::ARY_Scan_DBL(){
+size_t IFILE2::ARY_Scan_DBL(){
 
 	size_t num=0;
-
 	do{
-
 		do{ 
 			read_double(); 
 		} while((_FILE_err&5)==5);
@@ -391,12 +375,12 @@ size_t FILE2::ARY_Scan_DBL(){
 
 }
 
-int FILE2::ARY_Load(int *f,char* fname){
+int IFILE2::ARY_Load(int *f,char* fname){
 
-	FILE2 cmn;
+	IFILE2 cmn;
 	int num;
 	
-	cmn.open(fname,"r");
+	cmn.open(fname);
 	num = cmn.ARY_Scan_INT();
 	f = new int[num+1];
 	cmn.reset();
@@ -405,12 +389,12 @@ int FILE2::ARY_Load(int *f,char* fname){
 	return num;
 }
 
-int FILE2::ARY_Load(long long *f,char* fname){
+int IFILE2::ARY_Load(long long *f,char* fname){
 
-	FILE2 cmn;
+	IFILE2 cmn;
 	int num;
 
-	cmn.open(fname,"r");
+	cmn.open(fname);
 	num = cmn.ARY_Scan_INT();
 	f = new long long[num+1]; //malloc2
 
@@ -421,12 +405,12 @@ int FILE2::ARY_Load(long long *f,char* fname){
 
 }
 
-int FILE2::ARY_Load(unsigned int *f,char* fname){
+int IFILE2::ARY_Load(unsigned int *f,char* fname){
 			
-	FILE2 cmn;
+	IFILE2 cmn;
 	int num;
 		
-	cmn.open(fname,"r");
+	cmn.open(fname);
 	num = cmn.ARY_Scan_INT();
 	f = new unsigned int[num+1]; //malloc2
 
@@ -438,12 +422,12 @@ int FILE2::ARY_Load(unsigned int *f,char* fname){
 
 
 	
-int FILE2::ARY_Load(double *f,char* fname){
+int IFILE2::ARY_Load(double *f,char* fname){
 
-	FILE2 cmn;
+	IFILE2 cmn;
 	int num;
 
-	cmn.open(fname,"r");
+	cmn.open(fname);
 	num = cmn.ARY_Scan_DBL();
 	f = new double[num+1];
 
@@ -453,10 +437,9 @@ int FILE2::ARY_Load(double *f,char* fname){
 	return num;
 }
 
-void FILE2::ARY_Write(char* fname, int *p ,size_t size){
+void OFILE2::ARY_Write(char* fname, int *p ,size_t size){
 
 	OFILE2 fp(fname);
-		
 	for( size_t i=0 ; i< size ;i++){
 		fp.print( "%d " ,p[i]);
 	}
@@ -482,27 +465,27 @@ void FILE2::copy(char *f1, char *f2){
 }
 
 
-void FILE2::_ARY_Read(int *f,size_t num) {
+void IFILE2::_ARY_Read(int *f,size_t num) {
 	for(size_t i=0 ; i < num  ; i++){
  		do{ f[i]= read_int(); }while((_FILE_err&6)==4);
  		if(_FILE_err&2)break;
 	 }
 }
-void FILE2::_ARY_Read(long long *f,size_t num) {
-	for(size_t i=0 ; i < num  ; i++){
- 		do{ f[i]= read_int(); }while((_FILE_err&6)==4);
- 		if(_FILE_err&2)break;
-	 }
-}
-
-void FILE2::_ARY_Read(unsigned int *f,size_t num) {
+void IFILE2::_ARY_Read(long long *f,size_t num) {
 	for(size_t i=0 ; i < num  ; i++){
  		do{ f[i]= read_int(); }while((_FILE_err&6)==4);
  		if(_FILE_err&2)break;
 	 }
 }
 
-void FILE2::_ARY_Read(double *f,size_t num) {
+void IFILE2::_ARY_Read(unsigned int *f,size_t num) {
+	for(size_t i=0 ; i < num  ; i++){
+ 		do{ f[i]= read_int(); }while((_FILE_err&6)==4);
+ 		if(_FILE_err&2)break;
+	 }
+}
+
+void IFILE2::_ARY_Read(double *f,size_t num) {
 	for(size_t i=0 ; i < num  ; i++){
  		do{ f[i]= read_double(); }while((_FILE_err&6)==4);
  		if(_FILE_err&2)break;
@@ -510,35 +493,8 @@ void FILE2::_ARY_Read(double *f,size_t num) {
 }
 
 
-/*
-template<typename T>
-void FILE2::_ARY_Read(T *f,size_t num) {
 
-	for(size_t i=0 ; i < num  ; i++){
-
- 		do{
- 			f[i]= read_int();
-	 	}while((_FILE_err&6)==4);
-
- 		if(_FILE_err&2)break;
-	 }
-}
-
-template <>
-void FILE2::_ARY_Read<double>(double *f,size_t num) {
-
-	for (size_t i=0 ; i < num  ; i++){
-		do{
-			f[i]=read_double();
-		}while((_FILE_err&6)==4);
-
-		if(_FILE_err&2)break;
-	}
-}
-*/
-
-
-void FILE2::VARY_Read(VECARY<WEIGHT> &vec,size_t num) {
+void IFILE2::VARY_Read(VECARY<WEIGHT> &vec,size_t num) {
 
 	for (size_t i=0 ; i < num  ; i++){
 		do{
@@ -548,184 +504,15 @@ void FILE2::VARY_Read(VECARY<WEIGHT> &vec,size_t num) {
 	}
 }
 
-/*
-template<typename T>
-void FILE2::VARY_Read(VECARY<T> &vec,size_t num) {
 
-	for (size_t i=0 ; i < num  ; i++){
-		do{
-			vec[i]=read_int();
-		}while((_FILE_err&6)==4);
+OFILE2 * OFILE2::makeMultiFp(int size,OFILE2 &a){
 
-		if(_FILE_err&2)break;
-	}
-}
-
-template <>
-void FILE2::VARY_Read<double>(VECARY<double> &vec,size_t num) {
-
-	for (size_t i=0 ; i < num  ; i++){
-		do{
-			vec[i]=read_double();
-		}while((_FILE_err&6)==4);
-
-		if(_FILE_err&2)break;
-	}
-}
-*/
-
-FILE2 * FILE2::makeMultiFp(int size,FILE2 &a){
-
-	FILE2 *mfp = new FILE2[size];
+	OFILE2 *mfp = new OFILE2[size];
 	for(int i=0;i<size;i++){
 		mfp[i].open(a._fp);
 	}
 	return mfp;
 }
 
-
-/*
-
-	size_t ARY_Scan_INT(int d){
-
-		size_t num=0;
-
-		do{
-			do{ 
-				read_int(); 
-			} while((_FILE_err&((d)*5))==5);
-	
-			if(RANGE(5+(int)(d),_FILE_err,6))break;
-	
-			(num)++;
-
-		}while((_FILE_err&(3-(int)(d)))==0);
-	
-		return num;
-	}
-
-	size_t ARY_Scan_DBL(int d){
-
-		size_t num=0;
-
-		do{
-
-			do{ read_double(); } while((_FILE_err&((d)*5))==5);
-	
-			if(RANGE(5+(int)(d),_FILE_err,6))break;
-	
-			(num)++;
-
-		}while((_FILE_err&(3-(int)(d)))==0);
-	
-		return num;
-	}
-
-int FILE2::ARY_Load(int *f,char* fname,int d){
-
-	FILE2 cmn;
-	int num;
-	cmn.open(fname,"r");
-	num = cmn.ARY_Scan_INT(d);
-
-	f = new int[num+1];
-
-	cmn.reset();
-	cmn.ARY_Read(f,num);
-	cmn.close();
-	return num;
-}
-
-
-int FILE2::ARY_Load(long long *f,char* fname,int d){
-
-	FILE2 cmn;
-	int num;
-
-	cmn.open(fname,"r");
-	num = cmn.ARY_Scan_INT(d);
-	f = new long long[num+1]; //malloc2
-
-	cmn.reset();
-	cmn.ARY_Read(f,num);
-	cmn.close();
-	return num;
-}
-
-int FILE2::ARY_Load(unsigned int *f,char* fname,int d){
-			
-	FILE2 cmn;
-	int num;
-		
-	cmn.open(fname,"r");
-	num = cmn.ARY_Scan_INT(d);
-	f = new unsigned int[num+1]; //malloc2
-
-	cmn.reset();
-	cmn.ARY_Read(f,num);
-	cmn.close();
-	return num;
-}
-
-
-int FILE2::ARY_Load(double *f,char* fname,int d){
-
-	FILE2 cmn;
-	int num;
-
-	cmn.open(fname,"r");
-	num = cmn.ARY_Scan_DBL(d);
-	f = new double[num+1];
-
-	cmn.reset();
-	cmn.ARY_Read(f,num);
-	cmn.close();
-	return num;
-}
-	size_t FILE2::ARY_Scan_INT(int d){
-
-		size_t num=0;
-
-		do{
-			do{ 
-				read_int(); 
-			} while((_FILE_err&((d)*5))==5);
-	
-			if(RANGE(5+(int)(d),_FILE_err,6))break;
-	
-			(num)++;
-
-		}while((_FILE_err&(3-(int)(d)))==0);
-	
-		return num;
-	}
-
-	size_t FILE2::ARY_Scan_DBL(int d){
-
-		size_t num=0;
-
-		do{
-
-			do{ read_double(); } while((_FILE_err&((d)*5))==5);
-	
-			if(RANGE(5+(int)(d),_FILE_err,6))break;
-	
-			(num)++;
-
-		}while((_FILE_err&(3-(int)(d)))==0);
-	
-		return num;
-	}
-
-*/
-
-/********************  file I/O routines  ********************************/
-
-//int FILE_err;  
-/*  signals  0: for normal termination
-                   1: read a number, then encountered a newline,
-                   2: read a number, then encountered the end-of-file
-                   5: read no number, and encountered a newline
-                   6: read no number, and encountered the end-of-file */
 
 

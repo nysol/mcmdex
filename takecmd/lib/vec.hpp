@@ -49,7 +49,7 @@ class SETFAMILY{
 	char *_ERROR_MES;
 
 	//void _flie_load(FILE2 &fp, FILE_COUNT &C);
-	void _flie_load(FILE2 &fp);
+	void _flie_load(IFILE2 &fp);
 
 	void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
 
@@ -123,11 +123,11 @@ class SETFAMILY{
 
 		//void load(int flag , char *fname);
 		//void load (FILE2 &fp, FILE_COUNT &C, int flag);
-		void load (FILE2 &fp, int flag);
+		void load (IFILE2 &fp, int flag);
 
 		// call from trsact.cpp
-		void file_read(FILE2 &fp,            FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
-		void file_read(FILE2 &fp,FILE2 &wfp, FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
+		void file_read(IFILE2 &fp,            FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
+		void file_read(IFILE2 &fp,IFILE2 &wfp, FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 
 
 		void clrMark(int i,char* mark){

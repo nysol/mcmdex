@@ -150,7 +150,7 @@ int KGMEDSET::run (int argc, char *argv[]){
 
 	try{
 
-	  _fp.open (_input_fname, "r");
+	  _fp.open (_input_fname);
 		_ofp.open(_output_fname);
 
 		// うえ２つは別にしたほうが

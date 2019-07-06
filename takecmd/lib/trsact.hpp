@@ -56,8 +56,6 @@ class TRSACT {
 
   FILE_COUNT _C;
 	
-	char * _ERROR_MES; 
-
   SETFAMILY _T;   // transaction
 
   VECARY<WEIGHT> _w;
@@ -115,7 +113,7 @@ class TRSACT {
 	// to permutation, and free C.rw, C.cw 
 	//void _file_read( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
 
-	void _file_read( FILE2 &fp,  FILE2 &fp2 , int flag);
+	void _file_read( IFILE2 &fp,  IFILE2 &fp2 , int flag);
 
 	/*  copy transaction t to tt (only items i s.t. pw[i]>=th)                 **/
 	void copy ( VEC_ID tt, VEC_ID t, QUEUE_INT end);
@@ -178,7 +176,7 @@ class TRSACT {
   	_flag(0),_flag2(0),_clms_org(0),_clm_max(0),_clms_end(0), _row_max(0),
   	_perm(NULL), _trperm(NULL),_pw(NULL),
   	_eles_org(0),_total_pw(0),_str_num(0),
-		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0),_ERROR_MES(NULL)
+		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0)
 		{}
 		
 		
@@ -326,7 +324,7 @@ class TRSACT {
 
 			PERM *p = NULL;
 
-			FILE2::ARY_Load( p ,fname);
+			IFILE2::ARY_Load( p ,fname);
 
 			if ( _perm ){
 				for(int j =0 ;j < _T.get_clms() ; j++){

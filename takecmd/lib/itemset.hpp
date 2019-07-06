@@ -208,7 +208,7 @@ class ITEMSET{
 
   LONG *_sc, *_sc2;    // #itemsets classified by the sizes / frequencies
 
-  FILE2 _fp;    // file pointer to the output file
+  OFILE2 _fp;    // file pointer to the output file
 
   QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
 
@@ -216,7 +216,7 @@ class ITEMSET{
   QUEUE **_set_occ;    // the occurrence of each prefix of current itemset
   KGLCMSEQ_QUE **_set_occELE;    // the occurrence of each prefix of current itemset
 
-  FILE2 *_multi_fp;  // output file2 pointer for multi-core mode
+  OFILE2 *_multi_fp;  // output file2 pointer for multi-core mode
 	// counter
   LONG *_multi_outputs;    // #calls of ITEMSET_output_itemset or ITEMSET_solusion
   LONG *_multi_iters;   //iterations

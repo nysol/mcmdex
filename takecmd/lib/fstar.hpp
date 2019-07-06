@@ -71,10 +71,10 @@ class FSTAR{
 	void calc_fstar();
 
 	//privateでOK?
-	void _scan_file (FILE2 *fp);
+	void _scan_file (IFILE2 *fp);
 
-	void read_file (FILE2 *fp, FILE2 *wfp);
-	void read_fileMED (FILE2 *fp);
+	void read_file (IFILE2 *fp, IFILE2 *wfp);
+	void read_fileMED (IFILE2 *fp);
 
 	void extract_subgraph();
 

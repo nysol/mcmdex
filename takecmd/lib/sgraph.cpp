@@ -29,7 +29,7 @@ int SGRAPH::loadEDGE(int flag ,char* fname){
 	_flag |= LOAD_RC_SAME;
 
 
-	FILE2 fp(_fname);
+	IFILE2 fp(_fname);
 
 	_C.countSG( &fp, _flag&LOAD_ELE );
 

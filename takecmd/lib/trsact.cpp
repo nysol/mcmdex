@@ -177,7 +177,7 @@ void TRSACT::_alloc(){
 
 /* load the file to allocated memory according to permutation */
 // flag ( _C.r_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
-void TRSACT::_file_read (FILE2 &fp, FILE2 &fp2,  int flag)
+void TRSACT::_file_read (IFILE2 &fp, IFILE2 &fp2,  int flag)
 { 
 
   QUEUE_ID tt;
@@ -191,7 +191,7 @@ void TRSACT::_file_read (FILE2 &fp, FILE2 &fp2,  int flag)
   }
 	  
   if( _item_wfname ){ // sspcでitem weightを指定した時のみ
-	  FILE2 wfp(_item_wfname);
+	  IFILE2 wfp(_item_wfname);
 		_T.file_read( fp , wfp, _C , &t , flag , _flag);
   	
   }
@@ -368,7 +368,7 @@ void TRSACT::_sortELE(){
 /*****************************************/
 int TRSACT::loadMain(bool elef){
 
-  FILE2 fp(_fname) , fp2(_fname2) ;
+  IFILE2 fp(_fname) , fp2(_fname2) ;
 
   int f;
 
@@ -401,12 +401,6 @@ int TRSACT::loadMain(bool elef){
 
   if(elef){ _sortELE(); }
 	else    { _sort   (); }
-
-
-  if (_ERROR_MES){
-	  fprintf(stderr,"TRSACT::loadMain");
-		return 1;
-  } 
 
   prop_print();
 
@@ -656,14 +650,11 @@ void TRSACT::copy ( VEC_ID tt, VEC_ID t, QUEUE_INT end){
 
   buf = (QUEUE_INT *)_buf.get_memory ( _T.get_vt(t)+1);
 
-	if ( _ERROR_MES ) return;
   if ( wflag ){
-
   	wbuf = (WEIGHT *)_wbuf.get_memory ( _T.get_vt(t)+1);
   	_T.set_w(tt,wbuf);
   }
 
-	if ( _ERROR_MES ){ _buf.set_num(bnum); _buf.set_block_num(bblock); return; }
   _T.set_vv(tt, buf);
   _w[tt] = _w[t];
   if ( _flag2&TRSACT_NEGATIVE ) _pw[tt] = _pw[t];
@@ -729,13 +720,9 @@ void TRSACT::itemweight_union (VEC_ID tt, VEC_ID t){
     // if sufficiently large memory can not be taken from the current memory block, use the next block
   if ( xx_end >= (QUEUE_INT *)_buf.get_base(_buf.get_block_num()) + _buf.get_block_siz() ){
     xx_end = xx = ((QUEUE_INT*) _buf.get_memory ( _buf.get_block_siz())) +siz;
-		if (_ERROR_MES) return;
     ww = ((WEIGHT *)_wbuf.get_memory (_wbuf.get_block_siz())) +siz;
-		if ( _ERROR_MES ){ _buf.set_num(bnum); _buf.set_block_num(bblock); return; }
     flag =1;
   }
-
-  if ( _ERROR_MES ) return;
 
     // take union and store it in the allocated memory
   while ( x >= _T.get_vv(tt) && y >= _T.get_vv(t) ){
@@ -842,7 +829,6 @@ void TRSACT::merge_trsact (QUEUE_INT end){
       }
       if ( _flag2 & TRSACT_UNION ){
         itemweight_union (tt, *x);
-        if ( _ERROR_MES ) _mark[*x] = *x+2; // do not merge if not enough memory
       }
     }
 
@@ -855,10 +841,9 @@ void TRSACT::merge_trsact (QUEUE_INT end){
 
         tt = _new_t++;
 
-        copy ( tt, *x, (_flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
-
-        if( _ERROR_MES ){ _new_t--; tt = *x; }
-        else { for (_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++);}
+        copy( tt, *x, (_flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
+        
+        for(_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++) ; 
 
       } 
       else{
@@ -912,7 +897,6 @@ void TRSACT::merge_trsact( KGLCMSEQ_QUE *o, QUEUE_INT end){
       }
       if ( _flag2 & TRSACT_UNION ){
         itemweight_union (tt, x);
-        if ( _ERROR_MES ) _mark[x] = x+2; // do not merge if not enough memory
       }
     }
 
@@ -926,10 +910,8 @@ void TRSACT::merge_trsact( KGLCMSEQ_QUE *o, QUEUE_INT end){
         tt = _new_t++;
 
         copy ( tt, x, (_flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
-
-        if( _ERROR_MES ){ _new_t--; tt = x; }
-        else { for (_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++);}
-
+        for (_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++) ;
+        
       } 
       else{
       	tt = x;

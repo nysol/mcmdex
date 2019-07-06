@@ -41,8 +41,8 @@ VEC_ID FILE_COUNT::adjust_RowSep(VEC_ID sep){
     
 QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 
-	FILE2 wfp;
-	wfp.open(wf, "r");
+	IFILE2 wfp;
+	wfp.open(wf);
 
 	#ifdef WEIGHT_DOUBLE
 		QUEUE_INT kk = wfp.ARY_Scan_DBL();
@@ -76,7 +76,7 @@ QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 /* C->clmt[i],C->cw[i] := the number/(sum of weights) of transactions including i  */
 /****************************************/
 // LOAD_TPOSEの時
-int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
+int FILE_COUNT::_file_count_T(IFILE2 &fp,char *wf){
 
 	QUEUE_INT item, kk=0, k;
 	VECARY<VEC_ID> jump;
@@ -156,7 +156,7 @@ int FILE_COUNT::_file_count_T(FILE2 &fp,char *wf){
 
 
 // NOT LOAD_TPOSEの時
-int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
+int FILE_COUNT::_file_count(IFILE2 &fp, char *wf){
 	
   // WEIGHT s;
   // QUEUE_INT i,
@@ -241,7 +241,7 @@ int FILE_COUNT::_file_count(FILE2 &fp, char *wf){
 
 // call from trsact 
 // wf2は未実装
-int FILE_COUNT::file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf, char *wf2){
+int FILE_COUNT::file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2){
 
 	if(flg){ // TPOSE
 
@@ -271,7 +271,7 @@ int FILE_COUNT::file_count(int flg, FILE2 &fp, FILE2 &fp2, char *wf, char *wf2){
 
 }
 // fstar.cpp <<=kggrphfil.cpp
-void FILE_COUNT::countFS(FILE2 *rfp,int flag, int int_clms)
+void FILE_COUNT::countFS(IFILE2 *rfp,int flag, int int_clms)
 {
 	FILE_COUNT_INT k=0, j, x, y, t=0;
 
@@ -381,7 +381,7 @@ void FILE_COUNT::countFS(FILE2 *rfp,int flag, int int_clms)
 // on fr 
 // on or off ft
 // off fe fc
-void FILE_COUNT::countFST( FILE2 *rfp, int ft )
+void FILE_COUNT::countFST( IFILE2 *rfp, int ft )
 {
 
 	FILE_COUNT_INT k=0, j, x, y, t=0;
@@ -435,7 +435,7 @@ void FILE_COUNT::countFST( FILE2 *rfp, int ft )
 // on fr
 // on or off fe
 // off  ft fc
-void FILE_COUNT::countSG(FILE2 *rfp,int fe)
+void FILE_COUNT::countSG(IFILE2 *rfp,int fe)
 {
 
 	FILE_COUNT_INT x, y, t=0;
@@ -509,7 +509,7 @@ void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
 	// この分岐を整理すること。わける
   if ( pfname && !( tflag2&TRSACT_WRITE_PERM) ){ 
 
-		ttt = FILE2::ARY_Load(p, pfname);
+		ttt = IFILE2::ARY_Load(p, pfname);
 
 		ttt_max = p[0];
 		for(int i=1; i < ttt ; i++){
@@ -528,7 +528,7 @@ void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
       }
     }
     if ( pfname ) { 
-    	FILE2::ARY_Write(pfname , p , _clms_org); 
+    	OFILE2::ARY_Write(pfname , p , _clms_org); 
     }
   }
 	
