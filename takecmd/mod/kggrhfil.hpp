@@ -15,15 +15,13 @@
 #include <math.h>
 #include "stdlib2.hpp"
 #include "fstar.hpp"
-#include "itemset.hpp"
 
 
 class KGGRHFIL{
 
-	 LONG _ip_l1;
+	LONG _ip_l1;
 
   // problem項目
-  ITEMSET _II;
   int _problem,_problem2;
   int _root;
 
@@ -55,8 +53,6 @@ class KGGRHFIL{
 	char *_fname2;
 	int _edge_dir2;
 
-  char *_ERROR_MES ;
-
 	void help(void);
 
 	int setArgs_iter (char *a, int *ff);
@@ -73,7 +69,7 @@ class KGGRHFIL{
 		_out_lb(0),_out_ub(FSTAR_INTHUGE),_w_lb(-WEIGHTHUGE),_w_ub(WEIGHTHUGE),
 		_edge_dir(0),_edge_dir2(0),_sep(' '),
 		_weight_fname(NULL),_table_fname(NULL),
-		_output_fname(NULL),_ERROR_MES(NULL),
+		_output_fname(NULL),
 		_fname(NULL),_fname2(NULL),_wfname(NULL){}
 
 	int run(int argc ,char* argv[]);

@@ -141,8 +141,6 @@ PERM *SETFAMILY::__qsort_perm_v(int unit){
 	else        qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp_);
 
 	return sortPerm;
-
-
 }
 */
 
@@ -226,7 +224,6 @@ void SETFAMILY::_flie_load(FILE2 &fp){
 
     } else {
       x = t;
-      //FILE_err_ = fp.read_item ( _wfname?&wfp:NULL, &x, &y, &z, fc, flag2);
       FILE_err_ = fp.read_item ( NULL, &x, &y, &z, fc, flag2);
       if ( fp.Null() ) goto LOOP_END; //( FILE_err&4 )
     }

@@ -29,9 +29,6 @@ int SGRAPH::loadEDGE(int flag ,char* fname){
 	_flag |= LOAD_RC_SAME;
 
 
-  // #_edge.load(_flag,_fname);
- 	//　下に展開
-
 	FILE2 fp(_fname);
 
 	_C.countSG( &fp, _flag&LOAD_ELE );
@@ -49,6 +46,8 @@ int SGRAPH::loadEDGE(int flag ,char* fname){
 	return 0;
 }
 
+
+/*
 char * SGRAPH::initOQ(QUEUE * OQ){
 
 	QUEUE_INT *x;
@@ -83,7 +82,7 @@ char * SGRAPH::initOQ(QUEUE * OQ){
 
 
 }
-
+*/
 
 
 

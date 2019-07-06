@@ -114,7 +114,6 @@ class KGSSPC{
 	VECARY <QUEUE_INT> _buf;
 
   size_t _buf_end;
-  QUEUE_ID _i;
 
 	ITEMSET _II;
 	TRSACT _TT;
@@ -140,7 +139,6 @@ class KGSSPC{
  	void help();
 
 	public :
-
 	KGSSPC():
 	  _iFlag(0),_tFlag(0),
 		_root(0),_dir(0),_problem(0),_siz(0),
@@ -149,7 +147,7 @@ class KGSSPC{
 		_outperm_fname(NULL),_table_fname(NULL),
 		_positPERM(NULL),_vecchr(NULL),
 		_occ_w(NULL),_itemary(NULL),
-		_buf_end(0),_i(0),_sep(0),
+		_buf_end(0),_sep(0),
 		_row_lb_(0.0),_row_lb(0),
 		_row_ub_(0.0),_row_ub(QUEUE_IDHUGE),
 		_clm_lb_(0.0),_w_lb(-WEIGHTHUGE),
@@ -174,7 +172,8 @@ class KGSSPC{
 	static vector<LONG> mrun(int argc ,char* argv[]);
 
 };
-
+//  QUEUE_ID _i;
+//,_i(0)
 //iparamで
 // gloval value in org
 // LONG _ip_l2;

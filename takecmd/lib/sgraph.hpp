@@ -154,12 +154,12 @@ class SGRAPH {
 	  _perm = perm;
 
 	}
-	char * initOQ(QUEUE *);
 
 } ;
 
 /*  initialization  */
 /*
+	char * initOQ(QUEUE *);
 // これは再考
 //void edge_union_flag(int flag){ _edge.union_flag(flag);} 
 

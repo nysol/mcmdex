@@ -12,30 +12,33 @@
 
 
 #pragma once
+#include "sgraph.hpp"
+#include "problem.hpp"
 
 
 #define WEIGHT_DOUBLE
 
-#include "sgraph.hpp"
-#include "itemset.hpp"
-#include "problem.hpp"
+#ifndef ITEMSET_INTERVAL
+#define ITEMSET_INTERVAL 500000
+#endif
+
+
 
 #define VBMMARK_MAX 16  /* MAXsize of BITMAP */ 
 #define VBMINT unsigned long     /* variable type for BITMAP */
 #define VBMINT_MAX 30  /* MAXsize of BITMAP */
 
+//char *_mark;
+//int _mark_max;
 class MACEVBM {
+
   VBMINT *_edge;  /* BITMAP representation w.r.t. columns of vertices in the current clique */
   VBMINT *_set, *_reset;  /* array for BITMASKs */
   int *_pos;   /* positions of vertices of the clique in the bitmap */
   QUEUE _dellist;
-  //char *_mark;
-  //int _mark_max;
-  
   
   public:
-	MACEVBM():
-		_edge(NULL),_set(NULL),_reset(NULL),_pos(NULL)
+	MACEVBM():_edge(NULL),_set(NULL),_reset(NULL),_pos(NULL)
 	{
 		_dellist.set_v(NULL);
 	}
@@ -104,9 +107,6 @@ class MACEVBM {
 	bool existEdge(QUEUE_INT x, VBMINT pp){
 		return pp == (pp&_edge[x]);
 	}
-
-
-
 } ;
 
 
@@ -114,30 +114,41 @@ class KGMACE{
 
 	int _problem;
 
+	FILE2 _fp; 
+
 	char *_outperm_fname;
 	char *_output_fname;
 
 	SGRAPH _SG;
-	ITEMSET _II;
 	MACEVBM _VV;
 
+	bool _outApend;
+	bool _onMsg;
+	bool _onProgress;
+
 	// _II
-	int _iFlag;
+	// int _iFlag;
 	int _lb ,_ub;
 	int _max_solutions;
 	char _separator;
+
+	// base _II
+	QUEUE _itemset;   // current operating itemset
+  QUEUE _add;       // for equisupport (hypercube decomposition)
+  LONG _iters;      // iterations
+  LONG _outputs;
+  LONG _solutions;
+	PERM *_perm;
 
 	// SG
 	char *_sgfname;
 	int _sgFlag;
 
 
-	char* _ERROR_MES;
-
-
 	QUEUE_ID **_shift;
 
 	QUEUE *_OQ;
+	char *_OQbuf;
 	QUEUE _itemcand;
 
 
@@ -163,10 +174,66 @@ class KGMACE{
 	int setArgs (int argc, char *argv[]);
 
 
+
+	// for Mace 
+	/*******************************************************************/
+	/* output at the termination of the algorithm */
+	/* print #of itemsets of size k, for each k */
+	/*******************************************************************/
+	void _last_output (){
+
+  	QUEUE_ID i;
+  	LONG n=0, nn=0;
+  	WEIGHT w;
+  	unsigned char c;
+
+	  FILE2 *fp = &_fp;
+
+  	if ( !_onMsg ) return;  // "no message" is specified
+  
+ 		fprintf(stderr,"iters=" LONGF, _iters);
+  	fprintf(stderr,"\n");  
+	}
+
+	void _output_itemset(){
+
+	  QUEUE_ID i;
+  	QUEUE_INT e;
+
+	  int flush_flag = 0;
+
+  	FILE2 *fp = &_fp;
+  
+	  _outputs++;
+
+	  if ( _onProgress && (_outputs%(ITEMSET_INTERVAL) == 0) ){
+  	    fprintf(stderr,
+    	  			"---- " LONGF " solutions in " LONGF " candidates\n",
+							_solutions, _outputs);
+	  }
+
+	  if ( _itemset.get_t() < _lb || _itemset.get_t() > _ub ) return;
+
+  	_solutions++;
+
+	  if ( _max_solutions > 0 && _solutions > _max_solutions ){
+  	  _last_output ();
+    	EXIT; //returnでする方法考える
+	  }
+	  if ( fp ){
+
+			for(i=0;i<_itemset.get_t();i++){
+    	  e = _itemset.get_v(i);
+      	fp->print_int( _perm? _perm[e]: e, i==0? 0: _separator);
+      	fp->flush_ ();
+  	  }
+    	fp->putch('\n');
+      fp->flush_ ();
+  	}
+	}
+
 	/* allocate arrays and structures */
 	void preALLOC (){
-
-	  PERM *p=NULL;
 
 	  size_t siz = _SG.edge_t()+2;
 
@@ -176,26 +243,75 @@ class KGMACE{
 
     // set outperm
 		if ( _outperm_fname ){
-			FILE2::ARY_Load(p, _outperm_fname);
+			FILE2::ARY_Load(_perm , _outperm_fname);
 	  }
 
-  	_II.alloc(_output_fname, p, _SG.edge_t() , _SG.edge_eles());
+  	_itemset.alloc((QUEUE_ID)siz,(QUEUE_ID)siz);
+		_add.alloc((QUEUE_ID)siz);
 
+		_iters = 0;
+		_outputs = 0;
+		_solutions = 0;
+
+		if(_output_fname){
+			// バッファ確保しないほうがいい？
+			if ( strcmp (_output_fname, "-") == 0 ) _fp.open(stdout);
+			else{
+				if(_outApend){ _fp.open(_output_fname,"a");}
+				else         { _fp.open(_output_fname,"w");}
+			}
+		}
  		return;
+	}
 
-	  ERR:;
- 		EXIT;
+
+
+	void _queInit(){
+
+		_OQ = new QUEUE[_SG.edge_t()+1];
+
+		QUEUE_INT *x;
+		VEC_ID eSize = _SG.edge_t();
+
+		VEC_ID *occ_t =  new VEC_ID[eSize+2](); // calloc2
+
+		for (VEC_ID iv=0 ; iv< eSize; iv++){
+			for ( x= _SG.edge_vv(iv) ; *x < eSize ; x++){ occ_t[*x]++; }
+		}
+		size_t OQMemSize = 0;
+		for(VEC_ID i=0; i < eSize ; i++){ OQMemSize += occ_t[i]; }
+
+		if(!
+			( _OQbuf = (char*)malloc(
+					sizeof(char) * 
+					( OQMemSize+(eSize*2)+2)*(sizeof(QUEUE_INT))  
+			))
+		){ 
+			delete [] occ_t;
+			throw("memory allocation error : SGRAPH::initOQ");
+		}
+		char *cmn_pnt = _OQbuf;
+		for(VEC_ID i=0; i < eSize ;i++){
+			_OQ[i].set_endv( occ_t[i],(QUEUE_ID *)cmn_pnt);
+			cmn_pnt += (sizeof(QUEUE_INT)) * (occ_t[i]+(2));
+		}
+		delete [] occ_t;
 	}
 
 
 	public:
-	KGMACE():
-		_problem(0),_outperm_fname(NULL),_output_fname(NULL),
-		_sgFlag(0),_sgfname(NULL),_ub(INTHUGE),_lb(0),_iFlag(0),
-		_max_solutions(0),_separator(' '),_ERROR_MES(NULL){
-		
-	}
 
+	KGMACE():
+		_problem(0),_outperm_fname(NULL),_output_fname(NULL),_sgFlag(0),_sgfname(NULL),
+		_ub(INTHUGE),_lb(0),_max_solutions(0),_separator(' '),_perm(NULL),_OQbuf(NULL),
+		_outApend(false),_onMsg(true),_onProgress(false){}
+
+	~KGMACE(){
+		delete [] _shift;
+  	delete [] _perm;
+  	delete [] _OQ;
+  	if(_OQbuf){ free(_OQbuf); } 
+	}
 	int run(int argc ,char* argv[]);
 	static int mrun(int argc ,char* argv[]);
 
@@ -214,5 +330,19 @@ class KGMACE{
 	//LONG parent_check ( QUEUE *K, QUEUE_INT w);
 	// VEC_ID *_occ_t;
 
+// 表示させたいなら復活させる
+// 		_sc = new LONG[siz+2](); // calloc2
+//	  _sc[_itemset.get_t()]++;
+//	LONG *_sc;
+//		for(i=0;i<_itemset.get_end()+1;i++){
+//  	  n += _sc[i];
+//    	if ( _sc[i] != 0 ) nn = i;
+//	  }
+// 
+ //  	if ( n!=0 ){ //OK?
+// 	   printf (LONGF "\n", n);
+//			for(i=0;i<nn+1;i++){  printf (LONGF "\n", _sc[i]); }
+//	  }
+//		delete [] _sc;
 
 */

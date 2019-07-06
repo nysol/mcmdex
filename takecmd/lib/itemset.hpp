@@ -427,8 +427,6 @@ class ITEMSET{
 #endif
 
 	void itemINS(QUEUE_INT v){ _itemset.push_back(v);}
-	void iaddINS(QUEUE_INT v){ _add.push_back(v);}
-
 	void item_dec_t(){ _itemset.dec_t();}
 
 	QUEUE_INT * item_get_v(){ return _itemset.get_v();}
@@ -436,7 +434,6 @@ class ITEMSET{
 	QUEUE_INT * iadd_get_v(){ return _add.get_v();}
 
 	void item_set_t(QUEUE_ID t){ _itemset.set_t(t);}
-	void iadd_set_t(QUEUE_ID t){ _add.set_t(t);}
 
 	void item_cal_prob(){ 
 		for(QUEUE_INT *x=_itemset.begin(); x<_itemset.end(); x++){
@@ -696,7 +693,8 @@ class ITEMSET{
 //	void sub_flag(int flag){ _flag-=flag;}
 //	int get_gap_ub(){return _gap_ub;}
 //	void set_gap_ub(int v){_gap_ub=v;}
-//
+//	void iaddINS(QUEUE_INT v){ _add.push_back(v);}
+// 	void iadd_set_t(QUEUE_ID t){ _add.set_t(t);}
 // これでいいような気がする
 // void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, int core_id);
 // void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, int core_id);
