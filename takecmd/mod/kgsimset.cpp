@@ -34,8 +34,6 @@ void mremove_ (char *x, ...){
 
 void KGSIMSET::_error(void){
 
-  _ERROR_MES = "command explanation";
-
   fprintf(stderr,"simset ISCMOt [options] similarity-graph-filename similarity-threshold degree-threshold output-filename\n\
 %%:show progress, _:no message, +:write solutions in append mode, =:do not remove temporal files\n\
 @:do not execute data polishing, E:read edge list file\n\
@@ -317,8 +315,6 @@ void KGSIMSET::unify (char *fname, char *fname2, int flag){
 int KGSIMSET::run (int argc ,char* argv[]){
 
 	read_param (argc, argv);
-  if ( _ERROR_MES ) return (1);  // read params, and exit if error
-
 
   //char *W = _workdir, 
   int flag=1, count=0, unify_flag = 0, break_flag = 0;
@@ -595,6 +591,6 @@ int KGSIMSET::run (int argc ,char* argv[]){
   	 );
   }
 
-  return (_ERROR_MES?1:0);
+  return 0;
 
 }

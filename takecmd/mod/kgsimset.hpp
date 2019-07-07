@@ -11,7 +11,7 @@
 class KGSIMSET{
 
 	int   _cmn_argc;
-	char *_ERROR_MES;
+
 	double _th;    // threshold for data polishing
 	double _th1;   // threshold for the transaction comparison phase
 	double _th2;   // threshold for clique unification
@@ -94,7 +94,6 @@ class KGSIMSET{
 	public :
 
 	KGSIMSET(void):
-		_ERROR_MES(NULL),
 		_th(0.0),_th1(0.0),_th2(0.0),_th3(0.0),_th4(0.0),_thk(0),
 		_nodes(0),_deg_ub(INTHUGE),_deg_lb(0),_outperm_fname(NULL),
 		_no_remove(0),_repeat(0),_intersection(0),_intgraph(0),

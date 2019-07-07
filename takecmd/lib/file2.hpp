@@ -149,7 +149,7 @@ class OFILE2: public FILE2 {
 	void openA(char *fname){ FILE2::open(fname,"a"); }
 	void open(FILE *fp){ FILE2::open(fp); }
 
-	void print(char *frm ,...){
+	void print(const char *frm ,...){
 		va_list ap;
 		va_start(ap,frm);
 		vfprintf(_fp,frm,ap);	
@@ -183,7 +183,7 @@ class OFILE2: public FILE2 {
   	_buf++;
 	}
 
-	void puts(char *s){
+	void puts(const char *s){
 	  while ( *s != 0 ){
   	  *_buf = *s;
 			s++;

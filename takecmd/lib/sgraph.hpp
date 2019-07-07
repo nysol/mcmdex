@@ -33,7 +33,7 @@ class SGRAPH {
 
   QUEUE_INT *_itemary; // item Count ARRAY
 
-	void _printMes(char *frm ,...){
+	void _printMes(const char *frm ,...){
 		if( _flag&1 ){
 			va_list ap;
 			va_start(ap,frm);

@@ -545,7 +545,7 @@ class TRSACT {
 		}
 	}
 
-		void printMes(char *frm ,...){
+		void printMes(const char *frm ,...){
 
 			if( _flag&1 ){
 				va_list ap;

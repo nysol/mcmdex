@@ -13,7 +13,7 @@
 #include "kglcm_seq.hpp"
 
 void KGLCMSEQ::help(){
-  _ERROR_MES = "command explanation";
+
   fprintf(stderr,"LCMseq: [FCfQIq] [options] input-filename support [output-filename]\n\
 %%:show progress, _:no message, +:write solutions in append mode\n\
 F:position occurrence, C:document occurrence\n\
@@ -591,8 +591,6 @@ int KGLCMSEQ::run(int argc, char *argv[]){
   KGLCMSEQ_QUE occ;
 
   setArgs (argc, argv);
-	
-	if ( _ERROR_MES ) return (1);
 
 	//TRSACT_ALLOC_OCC + 
 	_tFlag2 |=  TRSACT_MAKE_NEW +  ( (_iFlag & (ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ) ? 0 : (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
@@ -620,12 +618,8 @@ int KGLCMSEQ::run(int argc, char *argv[]){
 		_len_ub,_setrule_lb
 	);
 
-  if ( _ERROR_MES ){ return 1; }
-  
   _init( &occ); 
 
-  if( _ERROR_MES ){ return 1; }
-  
   LCMseq(_TT.get_clms(), &occ);
 
   _II.last_output();
@@ -633,7 +627,7 @@ int KGLCMSEQ::run(int argc, char *argv[]){
   
   _TT.set_sc(NULL);
 
-  return (_ERROR_MES?1:0);
+  return 0;
 
 }
 

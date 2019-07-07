@@ -203,7 +203,7 @@ class KGMEDSET{
 	/* read file , and output the histogram of each line */
 	void _MedsetCore();
 
-	void _printMes(char *frm ,...){
+	void _printMes(const char *frm ,...){
 
 		if( _fsFlag&1 ){
 			va_list ap;

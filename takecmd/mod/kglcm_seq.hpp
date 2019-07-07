@@ -34,7 +34,6 @@ class KGLCMSEQ{
   double _th;
 	WEIGHT *_occ_w,*_occ_pw;
 
-	char *_ERROR_MES;
 	QUEUE _itemjump,_itemcand;
 
 	int _problem;
@@ -140,8 +139,7 @@ class KGLCMSEQ{
 
 	KGLCMSEQ():
 		_problem(0),_root(0),_dir(0),_th(0),_occ_w(NULL),_occ_pw(NULL),
-		_outperm_fname(NULL),_output_fname(NULL),_ERROR_MES(NULL),
-
+		_outperm_fname(NULL),_output_fname(NULL),
 		_ub(INTHUGE),_lb(0),
 		_prob_ub(1),_prob_lb(0),
 		_target(INTHUGE),
