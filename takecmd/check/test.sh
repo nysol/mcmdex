@@ -54,6 +54,21 @@ rDPATH0=/Users/nain/work/git/mcmdex/takecmd/check/out/
 rm -rf ${rDPATH0}
 mkdir ${rDPATH0}
 
+function lcmminiRUN() {
+
+${preCMD} ${MLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outmsamp0c.dat 
+${preCMD} ${TLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outtsamp0c.dat 
+
+${preCMD} ${MLCM} F ${sample0} 1 ${rDPATH0}outmsampF0.dat 
+${preCMD} ${TLCM} F ${sample0} 1 ${rDPATH0}outtsampF0.dat 
+
+${preCMD} ${MLCM} M ${sample0} 1 ${rDPATH0}outmsampM0.dat 
+${preCMD} ${TLCM} M ${sample0} 1 ${rDPATH0}outtsampM0.dat 
+
+${preCMD} ${MLCM} C ${sample0} 1 ${rDPATH0}outmsampC0.dat 
+${preCMD} ${TLCM} C ${sample0} 1 ${rDPATH0}outtsampC0.dat 
+}
+
 function lcmRUN() {
 
 ${preCMD} ${MLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outmsamp0c.dat 
@@ -106,9 +121,36 @@ function lcmseqRUN() {
 ${preCMD} ${MLCMSEQ} F ${smallSAMP} 1 ${rDPATH0}outmseqF.dat 
 ${preCMD} ${TLCMSEQ} F ${smallSAMP} 1 ${rDPATH0}outtseqF.dat 
 
+${preCMD} ${MLCMSEQ} F -p 0.5 ${smallSAMP} 1 ${rDPATH0}outmseqFp.dat 
+${preCMD} ${TLCMSEQ} F -p 0.5 ${smallSAMP} 1 ${rDPATH0}outtseqFp.dat 
+
+${preCMD} ${MLCMSEQ} F -P 0.5 ${smallSAMP} 1 ${rDPATH0}outmseqFpl.dat 
+${preCMD} ${TLCMSEQ} F -P 0.5 ${smallSAMP} 1 ${rDPATH0}outtseqFpl.dat 
+
+${preCMD} ${MLCMSEQ} F -w data/weight.dat ${smallSAMP} 1 ${rDPATH0}outmseqFw.dat 
+${preCMD} ${TLCMSEQ} F -w data/weight.dat ${smallSAMP} 1 ${rDPATH0}outtseqFw.dat 
+
+${preCMD} ${MLCMSEQ} F -w data/weight.dat -p 0.5 ${smallSAMP} 1 ${rDPATH0}outmseqFpw.dat 
+${preCMD} ${TLCMSEQ} F -w data/weight.dat -p 0.5 ${smallSAMP} 1 ${rDPATH0}outtseqFpw.dat 
+
+${preCMD} ${MLCMSEQ} F -w data/weight.dat -P 0.5 ${smallSAMP} 1 ${rDPATH0}outmseqFplw.dat 
+${preCMD} ${TLCMSEQ} F -w data/weight.dat -P 0.5 ${smallSAMP} 1 ${rDPATH0}outtseqFplw.dat 
+
 }
 
 function sspcRUN() {
+
+
+${preCMD} ${MSSPC} R -b 10 ${tra100} 0.1 ${rDPATH0}outmsspcRb10.dat 
+
+
+${preCMD} ${TSSPC} R -b 10 ${tra100} 0.1 ${rDPATH0}outtsspcRb10.dat 
+
+
+${preCMD} ${MSSPC} R ${tra100} 0.1 ${rDPATH0}outmsspcR.dat 
+
+${preCMD} ${TSSPC} R ${tra100} 0.1 ${rDPATH0}outtsspcR.dat 
+
 
 ${preCMD} ${MSSPC} C ${tra100} 0.1 ${rDPATH0}outmsspcC.dat 
 #35.37 real        35.15 user         0.15 sys
@@ -119,6 +161,9 @@ ${preCMD} ${TSSPC} C ${tra100} 0.1 ${rDPATH0}outtsspcC.dat
 #42.98 real        42.67 user         0.17 sys
 #45.05 real        44.09 user         0.39 sys
 #44.70 real        44.10 user         0.26 sys
+
+${preCMD} ${MSSPC} C -2 ${smallSAMP} ${tra100} 0.1 ${rDPATH0}outmsspcC2.dat 
+#${preCMD} ${TSSPC} C -2 ${smallSAMP} ${tra100} 0.1 ${rDPATH0}outtsspcC2.dat 
 
 
 }
@@ -153,12 +198,20 @@ function simsetRUN() {
 ${preCMD} ${MSIMSET} T ${smallSAMP} 2 4 ${rDPATH0}outmsimT.dat 
 ${preCMD} ${TSIMSET} T ${smallSAMP} 2 4 ${rDPATH0}outtsimT.dat 
 
-
 ${preCMD} ${MSIMSET} TM -v 0.7 ${smallSAMP} 0.0001 2 ${rDPATH0}outmsim.dat 
 ${preCMD} ${TSIMSET} TM -v 0.7 ${smallSAMP} 0.0001 2 ${rDPATH0}outtsim.dat 
 
 }
 
+
+function lcmminiCHK() {
+
+diff ${DIFFSIMPLE} ${rDPATH0}outmsampF0.dat ${rDPATH0}outtsampF0.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsampM0.dat ${rDPATH0}outtsampM0.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsampC0.dat ${rDPATH0}outtsampC0.dat 
+
+diff ${DIFFSIMPLE} ${rDPATH0}outmsamp0c.dat ${rDPATH0}outtsamp0c.dat
+}
 
 function lcmCHK() {
 
@@ -181,11 +234,25 @@ diff ${DIFFSIMPLE} ${rDPATH0}outmlcmC.dat ${rDPATH0}outtlcmC.dat
 function lcmseqCHK() {
 
 diff ${DIFFSIMPLE} ${rDPATH0}outmseqF.dat ${rDPATH0}outtseqF.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmseqFp.dat ${rDPATH0}outtseqFp.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmseqFpl.dat ${rDPATH0}outtseqFpl.dat 
+
+
+diff ${DIFFSIMPLE} ${rDPATH0}outtseqFw.dat ${rDPATH0}outtseqFw.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outtseqFpw.dat ${rDPATH0}outtseqFpw.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outtseqFplw.dat ${rDPATH0}outtseqFplw.dat 
 
 }
 
 function sspcCHK() {
+
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcRb10.dat ${rDPATH0}outtsspcRb10.dat 
+
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcR.dat ${rDPATH0}outtsspcR.dat 
+
 diff ${DIFFSIMPLE} ${rDPATH0}outmsspcC.dat ${rDPATH0}outtsspcC.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcC2.dat ${rDPATH0}outtsspcC2.dat 
+
 }
 
 function grhfilCHK() {
@@ -237,9 +304,19 @@ simsetCHK
 
 }
 
+
 allRUN
+#lcmseqRUN
+#sspcRUN
+#maceRUN
+#simsetRUN
 
 echo vvvvvvvv1
 allCHK
+#lcmseqCHK
+#sspcCHK
+#maceCHK
+#simsetCHK
+
 echo vvvvvvvv2
 

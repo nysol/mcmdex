@@ -126,7 +126,7 @@ class FILE2{ // in ,out 完全分ける？
 		_buf_end = NULL;
 	}
 
-	bool exist_buf(){ return _buf!=NULL; }
+	//bool exist_buf(){ return _buf!=NULL; }
 	bool exist()    { return _fp!=NULL; }
 	
 	static void copy(char *f1, char *f2); //simsetでいる
