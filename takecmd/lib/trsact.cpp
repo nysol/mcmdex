@@ -20,18 +20,17 @@ using namespace std;
 
 void TRSACT::prop_print (){
 
-  if ( !(_flag & SHOW_MESSAGE) ) return;
+  if ( !(_params._flag & SHOW_MESSAGE) ) return;
 
-  fprintf(stderr,"trsact: %s", _fname);
-  if(_fname2){ 
-  	fprintf(stderr," ,2nd-trsact %s (from ID %d)", _fname2, _C.end1()); 
+  fprintf(stderr,"trsact: %s", _params._fname);
+  if(_params._fname2){ 
+  	fprintf(stderr," ,2nd-trsact %s (from ID %d)", _params._fname2, _C.end1()); 
   }
   fprintf(stderr," ,#transactions %d ,#items %d ,size %zd", _C.rows(), _C.clms(),_C.eles());
   fprintf(stderr," extracted database: #transactions %d ,#items %d ,size %zd", _T.get_t(), _T.get_clms(), _T.get_eles());
 
-	if(_wfname)      { fprintf(stderr," ,weightfile %s", _wfname); }
-	if(_item_wfname) { fprintf(stderr," ,itemweightfile %s", _item_wfname); }
-	if(_pfname)      { fprintf(stderr," ,item-order-file %s", _pfname); }
+	if(_params._wfname)      { fprintf(stderr," ,weightfile %s", _params._wfname); }
+	if(_params._iwfname) { fprintf(stderr," ,itemweightfile %s", _params._iwfname); }
   fprintf(stderr,"\n");
 
 }
@@ -96,15 +95,15 @@ void TRSACT::_alloc(){
   PERM *q, *p=NULL;
   char *buf;
 
-  if ( _flag2&TRSACT_SHRINK ) _flag |= LOAD_DBLBUF;
+  if ( _params._flag2&TRSACT_SHRINK ) _params._flag |= LOAD_DBLBUF;
 
 	_clms_end = _C.c_end();
 
-	_T.setSize(_C,_flag); // _Tのバッファ _v _bufもセットされる
+	_T.setSize(_C,_params._flag); // _Tのバッファ _v _bufもセットされる
 
   _w.malloc2( _T.get_end());
 
-  if ( _flag2&TRSACT_NEGATIVE ) { 	// たぶんこう？
+  if ( _params._flag2&TRSACT_NEGATIVE ) { 	// たぶんこう？
   	_pw = new WEIGHT[_T.get_end()]; //malloc2
   }
   else{
@@ -121,7 +120,7 @@ void TRSACT::_alloc(){
   _buf.alloc ( sizeof(QUEUE_INT), bufSize );
   _wbuf.alloc( sizeof(WEIGHT), bufSize);
 
-  if ( _flag2&TRSACT_SHRINK ){
+  if ( _params._flag2&TRSACT_SHRINK ){
     
     _mark  = new VEC_ID[_T.get_end()];       //malloc2
     _shift = new QUEUE_INT*[_T.get_end()]; //malloc2
@@ -130,8 +129,8 @@ void TRSACT::_alloc(){
   }
 
   if ( !_T.exist_w() ) {
-  	if(_flag2&TRSACT_UNION){ _T.alloc_w();}
-		if( _item_wfname )     { _T.alloc_weight(_C); }
+  	if(_params._flag2&TRSACT_UNION){ _T.alloc_w();}
+		if( _params._iwfname )     { _T.alloc_weight(_C); }
 	}
 
   _trperm = new PERM[_T.get_t()];   //malloc2 
@@ -186,26 +185,26 @@ void TRSACT::_file_read (IFILE2 &fp, IFILE2 &fp2,  int flag)
   if ( flag ) {  _T.setVBuffer(0, 0); }
 
   fp.reset();
-  if(_flag&(LOAD_GRAPHNUM)){
+  if(_params._flag&(LOAD_GRAPHNUM)){
   	fp.read_until_newline(); 
   }
 	  
-  if( _item_wfname ){ // sspcでitem weightを指定した時のみ
-	  IFILE2 wfp(_item_wfname);
-		_T.file_read( fp , wfp, _C , &t , flag , _flag);
+  if( _params._iwfname ){ // sspcでitem weightを指定した時のみ
+	  IFILE2 wfp(_params._iwfname);
+		_T.file_read( fp , wfp, _C , &t , flag , _params._flag);
   	
   }
   else{
-		_T.file_read( fp , _C , &t ,flag , _flag);
+		_T.file_read( fp , _C , &t ,flag , _params._flag);
 	}
 
 	// fp2にアイテムファイルは指定できないようになってたので
 	if( fp2.exist() ){
 		fp2.reset();
-	  if(_flag&(LOAD_GRAPHNUM)){
+	  if(_params._flag&(LOAD_GRAPHNUM)){
   		fp2.read_until_newline (); 
   	}
-		_T.file_read( fp2 , _C , &t , flag , _flag);
+		_T.file_read( fp2 , _C , &t , flag , _params._flag);
 	}
 
 	_T.initQUEUEs();
@@ -225,7 +224,7 @@ void TRSACT::_sort(){
 
 	// _T.allvvInit(); //これいる？
 
-  flag = (_flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE);
+  flag = (_params._flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_params._flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE);
 
 	// sort rows for the case 
 	// that some columns are not read
@@ -233,19 +232,19 @@ void TRSACT::_sort(){
 
 
 
-  if ( _flag & LOAD_PERM ) {  flag = 1; }
-  else{  flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0); }
+  if ( _params._flag & LOAD_PERM ) {  flag = 1; }
+  else{  flag = (_params._flag&LOAD_INCSORT)? 1: ((_params._flag&LOAD_DECSORT)? -1: 0); }
 
   if ( flag ){ _T.queueSortALL(flag); }
 
-  if ( _flag & LOAD_RM_DUP ){	_T.rmDup(); }
+  if ( _params._flag & LOAD_RM_DUP ){	_T.rmDup(); }
 
 	_row_max = _T.RowMax();
 
 	_OccAlloc();  // _flag2 & TRSACT_ALLOC_OCC+TRSACT_SHRINK
 
 	// shrinking database
-  if ( _flag2&TRSACT_1ST_SHRINK ){
+  if ( _params._flag2&TRSACT_1ST_SHRINK ){
 
     Q = _OQ[_T.get_clms()];
 
@@ -279,7 +278,7 @@ void TRSACT::_sortELE(){
 
 	//_T.allvvInit();
 
-  flag = (_flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE); // QUEUEsでOK?
+  flag = (_params._flag&(LOAD_SIZSORT+LOAD_WSORT)? ((_params._flag&LOAD_DECROWSORT)? -1:1):0) *sizeof(QUEUE); // QUEUEsでOK?
 
   if ( flag ){   
   	// sort rows for the case that some columns are not read
@@ -293,14 +292,12 @@ void TRSACT::_sortELE(){
 		
   }
 
-  //free2 (C->rperm); free2 (C->cperm);
-
-  if ( _flag & LOAD_PERM ) flag = 1;
-  else flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0);
+  if ( _params._flag & LOAD_PERM ) flag = 1;
+  else flag = (_params._flag&LOAD_INCSORT)? 1: ((_params._flag&LOAD_DECSORT)? -1: 0);
 
   if ( flag ){ _T.queueSortALL(flag); }
   
-  if ( _flag & LOAD_RM_DUP ){ _T.rmDup(); }
+  if ( _params._flag & LOAD_RM_DUP ){ _T.rmDup(); }
 
 	_row_max = _T.RowMax();
 
@@ -338,7 +335,7 @@ void TRSACT::_sortELE(){
   }
 
 	// shrinking database
-  if ( _flag2&TRSACT_1ST_SHRINK ){
+  if ( _params._flag2&TRSACT_1ST_SHRINK ){
 
     Q = _OQELE[_T.get_clms()];
     _OQELE[_T.get_clms()].set_t(0);
@@ -355,34 +352,24 @@ void TRSACT::_sortELE(){
   }
 }
 
-/*****************************************/
-/* load transaction file and its weight  */
-// _fname
-// _wfname (-w:sspcの場合) 
-// _item_wfname (-W:sspcの場合)
-// _fname2  (-2:sspcの場合)
-// 以下二つは指定される事がない
-// 必要であれば追加する
-// _wfname2  
-// _item_wfname2
-/*****************************************/
+// load transaction file and its weight 
 int TRSACT::loadMain(bool elef){
 
-  IFILE2 fp(_fname) , fp2(_fname2) ;
+  IFILE2 fp(_params._fname) , fp2(_params._fname2) ;
 
   int f;
 
 	// PreRead for count  
 	// swap variables in the case of transpose
 	// set lower/upper bounds if it is given by the ratio
-  if( _C.file_count( _flag&LOAD_TPOSE , fp ,fp2 ,_wfname )) { 
+  if( _C.file_count( _params._flag&LOAD_TPOSE , fp ,fp2 ,_params._wfname )) { 
 	  fprintf(stderr,"file_count ERROR");
   	return 1;
   }
 
-	if( _C.existNegative()){ _flag2 |= TRSACT_NEGATIVE; }
+	if( _C.existNegative()){ _params._flag2 |= TRSACT_NEGATIVE; }
 	
- 	_C.makePerm(_pfname ,_flag ,_flag2); //cperm, rperm
+ 	_C.makePerm(_params._flag ,_params._flag2); //cperm, rperm
 
 	
 	// f は 
@@ -391,7 +378,7 @@ int TRSACT::loadMain(bool elef){
   // flagがセットさていない場合は
   // _T.setVBufferが動くのでバッファが_Tにセットされている？
   // 
-	f = ( _C.r_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
+	f = ( _C.r_eles() > _C.c_eles() && !(_params._flag & LOAD_TPOSE) );
   
   _alloc();
 
@@ -419,7 +406,7 @@ void TRSACT::delivery (WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m){
     		w, pw, *b, m ,
     		&_jump,_OQ,
     		_w,_pw,
-    		_flag2&TRSACT_NEGATIVE
+    		_params._flag2&TRSACT_NEGATIVE
     	);
 	  }
 
@@ -430,11 +417,9 @@ void TRSACT::delivery (WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m){
     	_T.delivery_iter( 
     		w, pw, t, m ,
     		&_jump,_OQ, _w,_pw,
-    		_flag2&TRSACT_NEGATIVE);
+    		_params._flag2&TRSACT_NEGATIVE);
     }
 	}
-	
-
 }
 
 /* usual delivery (make transpose) with checking sc
@@ -557,10 +542,14 @@ void TRSACT::find_same (QUEUE *occ, QUEUE_INT end){
 
 
 void TRSACT::find_same (KGLCMSEQ_QUE *occ, QUEUE_INT end){
+
   VEC_ID mark=2, t_end;
+
   KGLCMSEQ_QUE *o=occ, *EQ, *QQ = _OQELE;
+
   QUEUE_INT *x, e;
   QUEUE_ID ot = occ->get_t();
+
   // initialization
 	for(KGLCMSEQ_ELM *xx=occ->begin(); xx <occ->end() ; xx++){
 		_mark[xx->_t] = mark; 
@@ -626,10 +615,7 @@ void TRSACT::find_same (KGLCMSEQ_QUE *occ, QUEUE_INT end){
 
   // same transactions are in queue of item_max
   if ( QQ[_T.get_clms()].size() == 1 ){
-		//QQ[_T.get_clms()].dec_t();
-  	//_mark[QQ[_T.get_clms()].get_v(QQ[_T.get_clms()].get_t())] = 1;
   	_mark[QQ[_T.get_clms()].pop_back()] = 1;
-
   }
 
   if ( occ != &QQ[_T.get_clms()] ) occ->set_t(ot);
@@ -645,7 +631,7 @@ void TRSACT::copy ( VEC_ID tt, VEC_ID t, QUEUE_INT end){
 
   QUEUE_INT *x, *buf;
   WEIGHT *wbuf = NULL, tw = _w[t], *w = _T.exist_w()? _T.get_w(t): NULL;
-  int bnum = _buf.get_num(), bblock = _buf.get_block_num(), wflag = (w || (_flag2&TRSACT_UNION));
+  int bnum = _buf.get_num(), bblock = _buf.get_block_num(), wflag = (w || (_params._flag2&TRSACT_UNION));
 
 
   buf = (QUEUE_INT *)_buf.get_memory ( _T.get_vt(t)+1);
@@ -657,10 +643,9 @@ void TRSACT::copy ( VEC_ID tt, VEC_ID t, QUEUE_INT end){
 
   _T.set_vv(tt, buf);
   _w[tt] = _w[t];
-  if ( _flag2&TRSACT_NEGATIVE ) _pw[tt] = _pw[t];
+  if ( _params._flag2&TRSACT_NEGATIVE ) _pw[tt] = _pw[t];
 
 	for(x=_T.get_vv(t); *((QUEUE_INT *)x)<(end) ; x++){
-  // MQUE_MLOOP_CLS (_T.get_v(t), x, end){
     if ( !_sc[*x] ){
       *buf = *x; buf++;
       if ( wflag ){ *wbuf = w? *w: tw; wbuf++; }
@@ -823,11 +808,11 @@ void TRSACT::merge_trsact (QUEUE_INT end){
     if ( mark == _mark[*x] ){
       _mark[*x] = 0;   // mark of unified (deleted) transaction
       _w[tt] += _w[*x]; if ( _pw ) _pw[tt] += _pw[*x];
-      if ( _flag2 & TRSACT_INTSEC ){
+      if ( _params._flag2 & TRSACT_INTSEC ){
         suffix_and(tt, *x);
         _buf.set_num( (int)(_T.get_vv(tt) - (QUEUE_INT *)_buf.get_base(_buf.get_block_num())  +_T.get_vt(tt) +1) );
       }
-      if ( _flag2 & TRSACT_UNION ){
+      if ( _params._flag2 & TRSACT_UNION ){
         itemweight_union (tt, *x);
       }
     }
@@ -837,11 +822,11 @@ void TRSACT::merge_trsact (QUEUE_INT end){
     
       mark = _mark[*x];
 
-      if ( _flag2&TRSACT_MAKE_NEW ){
+      if ( _params._flag2&TRSACT_MAKE_NEW ){
 
         tt = _new_t++;
 
-        copy( tt, *x, (_flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
+        copy( tt, *x, (_params._flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
         
         for(_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++) ; 
 
@@ -891,11 +876,11 @@ void TRSACT::merge_trsact( KGLCMSEQ_QUE *o, QUEUE_INT end){
     if ( mark == _mark[x] ){
       _mark[x] = 0;   // mark of unified (deleted) transaction
       _w[tt] += _w[x]; if ( _pw ) _pw[tt] += _pw[x];
-      if ( _flag2 & TRSACT_INTSEC ){
+      if ( _params._flag2 & TRSACT_INTSEC ){
         suffix_and (tt, x);
         _buf.set_num( (int)(_T.get_vv(tt) - (QUEUE_INT *)_buf.get_base(_buf.get_block_num())  +_T.get_vt(tt) +1) );
       }
-      if ( _flag2 & TRSACT_UNION ){
+      if ( _params._flag2 & TRSACT_UNION ){
         itemweight_union (tt, x);
       }
     }
@@ -905,11 +890,11 @@ void TRSACT::merge_trsact( KGLCMSEQ_QUE *o, QUEUE_INT end){
     
       mark = _mark[x];
 
-      if ( _flag2&TRSACT_MAKE_NEW ){
+      if ( _params._flag2&TRSACT_MAKE_NEW ){
 
         tt = _new_t++;
 
-        copy ( tt, x, (_flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
+        copy ( tt, x, (_params._flag2&(TRSACT_INTSEC+TRSACT_UNION))? _T.get_clms(): end);
         for (_shift[tt]=_T.get_vv(tt) ; *(_shift[tt])<end ; _shift[tt]++) ;
         
       } 
@@ -941,9 +926,6 @@ void TRSACT::reduce_occ(QUEUE *occ){
   occ->resize(i);
 }
 
-
-
-
 /***********************************/
 /*  DEBUG print transactions            */
 /***********************************/ 
@@ -960,14 +942,33 @@ void TRSACT::print ( QUEUE *occ, PERM *p){
     for (j=0; j<_T.get_vt(t) ; j++){
       e = _T.get_vv(t,j);
       printf (QUEUE_INTF, p? p[e]: e);
-      //if ( T->T.w ) printf ("(" WEIGHTF ")", T->T.w[t][j]);
       printf (",");
     }
-    //if ( T->w ) printf (" :" WEIGHTF " ", T->w[t]);
-    //printf (" (" QUEUE_INTF ")\n", T->T.v[t].end);
   }
 }
 
+/*****************************************/
+/* load transaction file and its weight  */
+// _fname
+// _wfname (-w:sspcの場合) 
+// _item_wfname (-W:sspcの場合)
+// _fname2  (-2:sspcの場合)
+// 以下二つは指定される事がない
+// 必要であれば追加する
+// _wfname2  
+// _item_wfname2
+/*****************************************/
+//int TRSACT::loadMain(bool elef){
 
 
+////QQ[_T.get_clms()].dec_t();
+//_mark[QQ[_T.get_clms()].get_v(QQ[_T.get_clms()].get_t())] = 1;
+//  =>	_mark[QQ[_T.get_clms()].pop_back()] = 1;
+
+ //	_C.makePerm(_pfname ,_params._flag ,_params._flag2); //cperm, rperm
+
+// if(_pfname)      { fprintf(stderr," ,item-order-file %s", _pfname); }
+      //if ( T->T.w ) printf ("(" WEIGHTF ")", T->T.w[t][j]);
+    //if ( T->w ) printf (" :" WEIGHTF " ", T->w[t]);
+    //printf (" (" QUEUE_INTF ")\n", T->T.v[t].end);
 

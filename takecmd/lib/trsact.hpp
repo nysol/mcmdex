@@ -42,17 +42,49 @@ using namespace std;
  #define TRSACT_MAXNUM 20000000LL
 #endif
 
+struct TrsactParams {
+
+	//ALL
+	int _flag;
+	char *_fname;
+	char *_wfname;
+	char *_iwfname;
+	char *_fname2;
+	
+	//lcm , lcmseq
+	int _flag2;
+	
+	//lcmseq
+	bool _eleflg;
+
+	// filecountで必要
+	LimitVal _limVal;
+
+	TrsactParams():
+		_flag(0),_flag2(0),
+  	_fname(NULL),_fname2(NULL),_wfname(NULL),_iwfname(NULL),
+  	_eleflg(false){}
+
+};
+
+struct BaseStatusWithWeight{ //for lcm
+	int _bnum;
+  int _bblock;
+  int _wnum;
+  int _wblock;
+  VEC_ID _new_t;
+};
+
+struct BaseStatus{//for lcmseq
+	int _bnum;
+  int _bblock;
+  VEC_ID _new_t;
+};
 
 // LCM LCMseqで分ける
 class TRSACT {
 
-  int _flag;      
-  int _flag2;  // <= いる？
-
-  char *_fname,*_fname2;	// input file name
-	char *_wfname;      		// weight file name 
-	char *_item_wfname;  		// item-weight file name
-  char *_pfname; 					// item-permutation file name
+	TrsactParams _params;
 
   FILE_COUNT _C;
 	
@@ -61,7 +93,8 @@ class TRSACT {
   VECARY<WEIGHT> _w;
   WEIGHT *_pw;  // weight/positive-weight of transactions
 
-  QUEUE_INT _clms_org, _clm_max, _clms_end;  // #items in original file, max size of clms, and max of (original item, internal item)
+	// #items in original file, max size of clms, and max of (original item, internal item)
+  QUEUE_INT _clms_org, _clm_max, _clms_end; 
 
   VEC_ID  _row_max; // #transactions in the original file
 
@@ -71,12 +104,8 @@ class TRSACT {
   PERM *_perm, *_trperm; // original item permutation loaded from permutation file (and inverse)
 
 
-
-  VEC_ID _str_num;  // number of database (itemset stream/string datasets) in T
-  
   // for finding same transactions
   // queue of non-empty buckets, used in find_same_transactions  
-  // _OQ,_OQELE別クラスにする？
   QUEUE _jump, *_OQ;   
   KGLCMSEQ_QUE _jumpELE, *_OQELE;   // queue of non-empty buckets, used in find_same_transactions  
 
@@ -85,34 +114,21 @@ class TRSACT {
   QUEUE_INT **_shift;  // memory for shift positions of each transaction
   char *_sc;   // flag for non-active (in-frequent) items 
   
-    // for extra transactions
-  VEC_ID _new_t;     // the start ID of un-used transactions
-  BASE _buf;   // buffer for transaction
-  BASE _wbuf;   // buffer for itemweights
+	// for extra transactions
+	VEC_ID _new_t;     // the start ID of un-used transactions
+	BASE _buf;   // buffer for transaction
+	BASE _wbuf;   // buffer for itemweights
 
-	/*****************************************/
-	/* scan file "fp" with weight file wfp and count #items, #transactions in the file. */
-	/*   count weight only if wfp!=NULL                                      */
-	/* T->rows_org, clms_org, eles_org := #items, #transactions, #all items  */
-	/*   ignore the transactions of size not in range T->clm_lb - clm_ub     */ 
-	/* T->total_w, total_pw := sum of (positive) weights of transactions     */
-	/* C.clmt[i],C.cw[i] := the number/(sum of weights) of transactions including i  */
-	/****************************************/
-	//int file_count (FILE_COUNT *C, FILE2 *fp, char *wf);
 
 	/*   print transactions */
 	void prop_print (void);
 
-	// デストラクタへ
-	//void end (void){}
 
 	// allocate memory, set permutation, and free C.clmt,rowt,rw,cw 
 	void _alloc(void);
 
 	// load the file to allocated memory according 
 	// to permutation, and free C.rw, C.cw 
-	//void _file_read( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
-
 	void _file_read( IFILE2 &fp,  IFILE2 &fp2 , int flag);
 
 	/*  copy transaction t to tt (only items i s.t. pw[i]>=th)                 **/
@@ -121,18 +137,6 @@ class TRSACT {
 	void _sort(void);
 	void _sortELE(void);
 	void _OccAlloc(void);
-
-	/* occurrence deliver (only counting) */
-	/* WARNING: next cell of the last item of each transaction must be INTHUGE */
-	/* compute occurrence for items less than max item, in the database induced
-	 by occ */
-
-	/* if jump!=0, all i with non-zero occ[i].t will be inserted to jump */
-	/* be careful for overflow of jump */
-	/* if occ==NULL, scan all transactions */
-	/* flag&1: count only positive weights */
-	//void delivery_iter ( WEIGHT *w, WEIGHT *pw, VEC_ID t, QUEUE_INT m);
-	//void delivery (QUEUE *jump, WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
 
 
 	/*  intersection of transaction t and tt (only items i s.t. pw[i]>=th)     **/
@@ -155,6 +159,7 @@ class TRSACT {
 	void merge_trsact(QUEUE_INT end);
 
 	void removeDupTrsacts();
+
 	/**************************************************************/
 	/* Find identical transactions in a subset of transactions, by radix-sort like method */
 	/* infrequent items (refer LCM_occ) and items larger than item_max are ignored */
@@ -172,10 +177,9 @@ class TRSACT {
 	public:
 
 	TRSACT(void):
-  	_fname(NULL),_wfname(NULL),_item_wfname(NULL),_fname2(NULL),_pfname(NULL),
-  	_flag(0),_flag2(0),_clms_org(0),_clm_max(0),_clms_end(0), _row_max(0),
+  	_clms_org(0),_clm_max(0),_clms_end(0), _row_max(0),
   	_perm(NULL), _trperm(NULL),_pw(NULL),
-  	_eles_org(0),_total_pw(0),_str_num(0),
+  	_eles_org(0),_total_pw(0),
 		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0)
 		{}
 		
@@ -186,7 +190,7 @@ class TRSACT {
 
 	// use by sspc 
 	VEC_ID adjust_sep(VEC_ID sep){
-		if(_flag&LOAD_TPOSE){ return _C.adjust_ClmSep(sep);}
+		if(_params._flag&LOAD_TPOSE){ return _C.adjust_ClmSep(sep);}
 		else                { return _C.adjust_RowSep(sep);}
 	}
 
@@ -198,48 +202,15 @@ class TRSACT {
     return lb;
 	}
 
-
-	// load transaction file to TRSACT 
-	int load( //sspc
-		int flag ,
-		char *fname,char *wfname,char *iwfname,char *fname2,
-		WEIGHT w_lb,WEIGHT w_ub,
-		double clm_lb_  , double clm_ub_ ,
-		QUEUE_ID row_lb , QUEUE_ID row_ub ,
-		double row_lb_  , double row_ub_
-	){
-		_flag = flag;
-		_fname = fname;
-		_wfname = wfname;
-		_item_wfname = iwfname;
-		_fname2 = fname2; 
-
-	  _C.setLimit(
-	  	w_lb   , w_ub   ,
-	  	clm_lb_, clm_ub_,
-	  	row_lb , row_ub ,
-	  	row_lb_, row_ub_
-	  );
-		return loadMain();
-	}
-
-	int load( // lcm lcmseq
-		int flag ,int flag2 ,
-		char *fname,char *wfname,char *iwfname,char *fname2,
-		WEIGHT w_lb,WEIGHT w_ub,bool eleflg=false
-	){
 	
-		_flag = flag;
-		_flag2 = flag2;
-		_fname = fname;
-		_wfname = wfname;
-		_item_wfname = iwfname;
-		_fname2 = fname2; 
-
-	  _C.setLimit( w_lb , w_ub );
-
-		return loadMain(eleflg);
-		
+	void setParams(TrsactParams tpara)
+	{
+		_params = tpara;
+	  _C.setLimit(_params._limVal);
+	}
+	
+	int load(){
+		return loadMain(_params._eleflg);
 	}
 
 	// using only sspc 
@@ -257,27 +228,19 @@ class TRSACT {
 				_OQ[*x].push_back(e);
 			}
 		}
-	}
-	
-  void multipule_w(){
-		for(QUEUE_INT i =0 ; i < _T.get_clms(); i++){
-			_w[i] *= _w[i];
-		}
+
+
 	}
 
-	void setOQend(){
-		for(QUEUE_INT i =0 ;i < _T.get_clms();i++){
-			_OQ[i].set_end(0);
-		}
-	}
 
+	// using only sspc 
 	QUEUE_INT **skipLaegeFreqItems(int len_lb)
   {
 	  QUEUE_INT **o=NULL;
 
 		// skipping items of large frequencies
-		if ( _flag & LOAD_SIZSORT ){
-			//malloc2 (o, _T.get_clms(), exit(1));
+		if ( _params._flag & LOAD_SIZSORT ){
+
 			o = new QUEUE_INT *[_T.get_clms()];
 
 			for ( QUEUE_ID i =0 ; i < _T.get_clms() ; i++){
@@ -291,7 +254,22 @@ class TRSACT {
 	  }
   	return o;
   }
+
+
+
 	
+  void multipule_w(){
+		for(QUEUE_INT i =0 ; i < _T.get_clms(); i++){
+			_w[i] *= _w[i];
+		}
+	}
+
+	void setOQend(){
+		for(QUEUE_INT i =0 ;i < _T.get_clms();i++){
+			_OQ[i].set_end(0);
+		}
+	}
+
 	void clrMark_T(int i,char *mark){
 		_T.clrMark(i,mark);
 	}
@@ -301,7 +279,7 @@ class TRSACT {
 	}
 
 	void clrOQend(int i){ _OQ[i].endClr(); }
-	void clrOQt(int i){ _OQ[i].tClr(); }
+	void clrOQt(int i)  { _OQ[i].tClr(); }
 
 	void clrOQendByJump(){ 
 
@@ -361,19 +339,13 @@ class TRSACT {
 	WEIGHT get_total_w_org(void){ return _C.get_total_w_org();}
 	WEIGHT get_total_pw_org(void){ return _C.get_total_pw_org();}
 
-	int get_bnum(void){return _buf.get_num();}  
-	int get_bblock(void){return _buf.get_block_num();} 
-	int get_wnum(void){return _wbuf.get_num();}  
-	int get_wblock(void){return _wbuf.get_block_num();} 
 
-	VEC_ID get_new_t(){ return _new_t;}
+	bool incNega(){ return (_params._flag2 & TRSACT_NEGATIVE); }
 
-	bool incNega(){ return (_flag2 & TRSACT_NEGATIVE); }
+	bool isShrink(){ return (_params._flag2 & TRSACT_SHRINK ); }
 
 	VEC_ID get_t(void){ return _T.get_t();}
 	WEIGHT get_w(int i){ return _w[i];}
-	
-	
 
 	WEIGHT * beginTw(int i){ return _T.get_w(i);}
 	WEIGHT * endTw(int i)  { return _T.get_w(i)  + _T.get_vt(i);}
@@ -389,8 +361,6 @@ class TRSACT {
 
 
 	void resizeOQ(int i,int v){ _OQ[i].resize(v); }
-
-
 
 	//	==== use in seq	====
 	QUEUE_ID get_OQ_tELE(int i){ return _OQELE[i].get_t(); }
@@ -432,19 +402,48 @@ class TRSACT {
 	bool exist_trperm(void) { return _trperm!=NULL; }
 	bool exist_perm(void) { return _perm!=NULL; }
 	bool exist_sc(void) { return _sc!=NULL; }
+	bool exist_wfname(void) { return _params._wfname!=NULL; }
+
+
 	QUEUE* getp_jump(){ return &_jump;} //再考？
 	QUEUE* getp_OQ(int i){ return  &_OQ[i];} 
 
 	KGLCMSEQ_QUE* getp_OQELE(int i){ return  &_OQELE[i];} 
 
 
-	void set_bnum(int v){return _buf.set_num(v);}  
-	void set_bblock(int v){return _buf.set_block_num(v);} 
-	void set_wnum(int v){return _wbuf.set_num(v);}  
-	void set_wblock(int v){return _wbuf.set_block_num(v);} 
-	void set_new_t(VEC_ID v){ _new_t=v;}
+	// LCM
+	BaseStatusWithWeight getBaseStsW(void){
+		BaseStatusWithWeight rtn;
+		rtn._bnum   = _buf.get_num();
+		rtn._bblock = _buf.get_block_num();
+		rtn._wnum   = _wbuf.get_num();
+		rtn._wblock = _wbuf.get_block_num();
+		rtn._new_t  = _new_t;
+		return rtn;
+	}  
 
-	void set_sc(char* v){_sc=v;}
+	void setBaseStsW(BaseStatusWithWeight &bsts){
+		_buf.set_num(bsts._bnum);
+		_buf.set_block_num(bsts._bblock);
+		_wbuf.set_num(bsts._wnum);
+		_wbuf.set_block_num(bsts._wblock);
+		_new_t=bsts._new_t;
+	}  
+
+	// LCMSEQ
+	BaseStatus getBaseSts(void){
+		BaseStatus rtn;
+		rtn._bnum   = _buf.get_num();
+		rtn._bblock = _buf.get_block_num();
+		rtn._new_t  = _new_t;
+		return rtn;
+	}  
+
+	void setBaseSts(BaseStatus &bsts){
+		_buf.set_num(bsts._bnum);
+		_buf.set_block_num(bsts._bblock);
+		_new_t=bsts._new_t;
+	}  
 
 	QUEUE dup_OQ(int i){
 		return _OQ[i].dup();
@@ -461,6 +460,7 @@ class TRSACT {
 	}
 
 	// normalize the vectors for inner product
+	//sspc
 	void normalize(WEIGHT *w){
 		// org ARY_FILL
 	  for(QUEUE_INT i=0; i<_T.get_clms() ; i++){ w[i] = 0; } 
@@ -545,9 +545,9 @@ class TRSACT {
 		}
 	}
 
-		void printMes(const char *frm ,...){
+	void printMes(const char *frm ,...){
 
-			if( _flag&1 ){
+			if( _params._flag&1 ){
 				va_list ap;
 				va_start(ap,frm);
 				vfprintf(stderr,frm,ap);
@@ -559,13 +559,66 @@ class TRSACT {
 } ;
 
 
+//	void set_sc(char* v){_sc=v;}
+
+//_str_num(0),
+//  VEC_ID _str_num;  // number of database (itemset stream/string datasets) in T
+  
+
+	/*****************************************/
+	/* scan file "fp" with weight file wfp and count #items, #transactions in the file. */
+	/*   count weight only if wfp!=NULL                                      */
+	/* T->rows_org, clms_org, eles_org := #items, #transactions, #all items  */
+	/*   ignore the transactions of size not in range T->clm_lb - clm_ub     */ 
+	/* T->total_w, total_pw := sum of (positive) weights of transactions     */
+	/* C.clmt[i],C.cw[i] := the number/(sum of weights) of transactions including i  */
+	/****************************************/
+	//int file_count (FILE_COUNT *C, FILE2 *fp, char *wf);
+	//void _file_read( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
+
+
+/*
+  int _flag;      
+  int _flag2;  // <= いる？
+  char *_fname,*_fname2;	// input file name
+	char *_wfname;      		// weight file name 
+	char *_item_wfname;  		// item-weight file name
+  char *_pfname; 					// item-permutation file name //つかってない？
+*/
+
+/*
+	void set_bnum(int v){return _buf.set_num(v);}  
+	void set_bblock(int v){return _buf.set_block_num(v);} 
+	void set_wnum(int v){return _wbuf.set_num(v);}  
+	void set_wblock(int v){return _wbuf.set_block_num(v);} 
+	void set_new_t(VEC_ID v){ _new_t=v;}
+	int get_bnum(void){return _buf.get_num();}  
+	int get_bblock(void){return _buf.get_block_num();} 
+	int get_wnum(void){return _wbuf.get_num();}  
+	int get_wblock(void){return _wbuf.get_block_num();} 
+	VEC_ID get_new_t(){ return _new_t;}
+*/
+
+
+	/* occurrence deliver (only counting) */
+	/* WARNING: next cell of the last item of each transaction must be INTHUGE */
+	/* compute occurrence for items less than max item, in the database induced
+	 by occ */
+
+	/* if jump!=0, all i with non-zero occ[i].t will be inserted to jump */
+	/* be careful for overflow of jump */
+	/* if occ==NULL, scan all transactions */
+	/* flag&1: count only positive weights */
+	//void delivery_iter ( WEIGHT *w, WEIGHT *pw, VEC_ID t, QUEUE_INT m);
+	//void delivery (QUEUE *jump, WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
+
 //#define TRSACT_ALLOC_OCC 8388608  // make new transaction for each 
 //#define TRSACT_INIT_SHRINK 65536  // allocate memory for database reduction
 //PERM * _cPerm, * _rPerm;
 //,*_wfname2 <-必要なら復活させる 
 //, *_item_wfname2 <-必要なら復活させる // item-weight file name
 // VEC_ID _rows_org, _row_max; // #transactions in the original file
-
+//_flag(0),_flag2(0),
 // _clm_lb(0),_clm_ub(VEC_ID_END),_row_lb(0),_row_ub(QUEUE_IDHUGE),
 // _clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
 // _w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),	/*_rows_org(0),*/
@@ -582,11 +635,63 @@ class TRSACT {
 
   // lower/upper bound of #elements in a column/row. 
   // colunmn or row of out of range will be ignored
+//  	_fname(NULL),_wfname(NULL),_item_wfname(NULL),_fname2(NULL),_pfname(NULL),
   /*
-  VEC_ID _clm_lb, _clm_ub; 
   WEIGHT   _w_lb, _w_ub;
   double   _clm_lb_, _clm_ub_;
   QUEUE_ID _row_lb, _row_ub;
   double   _row_lb_, _row_ub_;  
-  */
+  VEC_ID _clm_lb, _clm_ub; 
 
+  */
+	// デストラクタへ
+	//void end (void){}
+
+
+/*	
+	int load( // lcm lcmseq
+		int flag ,int flag2 ,
+		char *fname,char *wfname,char *iwfname,char *fname2,
+		WEIGHT w_lb,WEIGHT w_ub,bool eleflg=false
+	){
+	
+		_params._flag = flag;
+		_params._flag2 = flag2;
+		_params._fname = fname;
+		_params._wfname = wfname;
+		_params._iwfname = iwfname;
+		_params._fname2 = fname2; 
+
+	  _C.setLimit( w_lb , w_ub );
+
+		return loadMain(eleflg);
+		
+	}
+*/
+
+/*
+
+	// load transaction file to TRSACT 
+	int load( //sspc
+		int flag ,
+		char *fname,char *wfname,char *iwfname,char *fname2,
+		WEIGHT w_lb,WEIGHT w_ub,
+		double clm_lb_  , double clm_ub_ ,
+		QUEUE_ID row_lb , QUEUE_ID row_ub ,
+		double row_lb_  , double row_ub_
+	){
+		_params._flag = flag;
+		_params._fname = fname;
+		_params._wfname = wfname;
+		_params._iwfname = iwfname;
+		_params._fname2 = fname2; 
+
+	  _C.setLimit(
+	  	w_lb   , w_ub   ,
+	  	clm_lb_, clm_ub_,
+	  	row_lb , row_ub ,
+	  	row_lb_, row_ub_
+	  );
+		return loadMain();
+	}
+*/

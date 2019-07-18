@@ -26,6 +26,57 @@
  #define TRSACT_MAXNUM 20000000LL
 #endif
 
+struct LimitVal{
+
+	//ALL
+	WEIGHT _w_lb;
+	WEIGHT _w_ub;
+
+	//sspc
+	double _clm_lb_; 
+	double _clm_ub_; 
+	QUEUE_ID _row_lb;
+	QUEUE_ID _row_ub;
+	double _row_lb_;
+	double _row_ub_;
+
+	// calc only
+  VEC_ID _clm_lb;
+  VEC_ID _clm_ub; 
+
+
+	LimitVal():
+		_w_lb(-WEIGHTHUGE) , _w_ub(WEIGHTHUGE) ,
+		_clm_lb_(0.0),_clm_ub_(0.0),
+		_row_lb(0) , _row_ub(QUEUE_IDHUGE),
+		_row_lb_(0.0),_row_ub_(0.0),
+		_clm_lb(0) , _clm_ub(VEC_ID_END){}
+
+	// set lower/upper bounds if it is given by the ratio
+	void setBoundsbyRate(VEC_ID rows,QUEUE_INT clms){
+
+	  if ( _row_lb_ ) _row_lb = rows * _row_lb_;
+  	if ( _row_ub_ ) _row_ub = rows * _row_ub_;
+  	if ( _clm_lb_ ) _clm_lb = clms * _clm_lb_;
+  	if ( _clm_ub_ ) _clm_ub = clms * _clm_ub_;
+	}
+
+
+	bool clmOK(WEIGHT s,QUEUE_INT k){
+		return  ( RANGE( _w_lb, s, _w_ub) && RANGE (_clm_lb, k, _clm_ub) );
+	}
+
+
+		//if(RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) ){
+
+	bool rowOK(QUEUE_INT k){
+		return ( RANGE (_row_lb, k, _row_ub) );
+	}
+
+
+
+};
+
 
 class FILE_COUNT{
 
@@ -47,12 +98,14 @@ class FILE_COUNT{
   // Limit 
   // lower/upper bound of #elements in a column/row. 
   // colunmn or row of out of range will be ignored
+	LimitVal _limVal;
+  /*
   WEIGHT   _w_lb , _w_ub ;
   VEC_ID   _clm_lb , _clm_ub; 
 	QUEUE_ID _row_lb , _row_ub;
 	double   _row_lb_, _row_ub_;
 	double   _clm_lb_, _clm_ub_;
-  
+  */
   
   // size of each row/clmn
 	VECARY <FILE_COUNT_INT> _rowt;
@@ -100,28 +153,15 @@ class FILE_COUNT{
 
 	}
 	
-	// set lower/upper bounds if it is given by the ratio
-	void _setBoundsbyRate(){
-
-	  if ( _row_lb_ ) _row_lb = _rows_org * _row_lb_;
-  	if ( _row_ub_ ) _row_ub = _rows_org * _row_ub_;
-  	if ( _clm_lb_ ) _clm_lb = _clms_org * _clm_lb_;
-  	if ( _clm_ub_ ) _clm_ub = _clms_org * _clm_ub_;
-		
-	}
 
 	public :
 
 		FILE_COUNT(void):
-			_clms_org(0) ,_rows_org(0) , _total_w_org(0) , _total_pw_org(0) ,_eles_org(0) ,
-			_clms(0) , _rows(0) , _eles(0),
+			_clms_org(0) ,_rows_org(0) , 
+			_total_w_org(0) , _total_pw_org(0) ,
+			_eles_org(0) ,_clms(0) , _rows(0) , _eles(0),
 			 _total_rw(0), _total_cw(0),
 			 _rperm(NULL) , _cperm(NULL),_negaFLG(false),
-			_w_lb(-WEIGHTHUGE) , _w_ub(WEIGHTHUGE) ,
-			_clm_lb(0) , _clm_ub(VEC_ID_END), 
-			_row_lb(0) , _row_ub(QUEUE_IDHUGE),
-		  _clm_lb_(0.0),_clm_ub_(0.0),
-		  _row_lb_(0.0),_row_ub_(0.0),
 			_end1(0),_c_eles(0),_c_clms(0),_r_eles(0),_r_clms(0)
 			{}
 	
@@ -171,6 +211,10 @@ class FILE_COUNT{
 			//rowtは他でセットされる
 		}
 
+  	void setLimit(LimitVal val){
+	  	_limVal = val;
+  	}
+/*
   	void setLimit(
   		WEIGHT w_lb , WEIGHT w_ub ,
   		double clm_lb_  = 0.0 , double clm_ub_  = 0.0, 
@@ -187,7 +231,7 @@ class FILE_COUNT{
 			_row_ub_ = row_ub_;
 
   	};
-
+*/
 
 		bool rPermGErows(VEC_ID t){
 			return _rperm[t] <= _rows_org;
@@ -213,8 +257,12 @@ class FILE_COUNT{
     VEC_ID adjust_ClmSep(VEC_ID sep);
     VEC_ID adjust_RowSep(VEC_ID sep);
 
-		void makePerm(char *pfname,int tflag,int tflag2);
-		void initCperm(char *pfname,int tflag,int tflag2);
+		//void makePerm(char *pfname,int tflag,int tflag2);
+
+		void makePerm(int tflag,int tflag2);
+
+		//void initCperm(char *pfname,int tflag,int tflag2);
+		void initCperm(int tflag,int tflag2);
 		void initRperm(int tflag);
 
 		//以下 using vec.cpp
@@ -226,6 +274,13 @@ class FILE_COUNT{
 		
 
 };
+
+
+//	_w_lb(-WEIGHTHUGE) , _w_ub(WEIGHTHUGE) ,
+//	_clm_lb(0) , _clm_ub(VEC_ID_END), 
+//	_row_lb(0) , _row_ub(QUEUE_IDHUGE),
+//	_clm_lb_(0.0),_clm_ub_(0.0),
+//	_row_lb_(0.0),_row_ub_(0.0),
 
 // int _flag;
 //  FILE_COUNT_INT _row_btm , _clm_btm;

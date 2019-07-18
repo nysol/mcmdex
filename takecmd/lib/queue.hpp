@@ -68,12 +68,19 @@ class KGLCMSEQ_QUE{
 
 	void set_end(QUEUE_ID val){ _end = val;}
 
+	void init_v(size_t siz ,QUEUE_ID end){
+		_v   = new KGLCMSEQ_ELM[siz];
+		_end = end;
+		_s = 0;
+		_t = 0;
+	}
+	
+
+	void set_v(int i,KGLCMSEQ_ELM v){ _v[i]=v;}
 	void set_s(QUEUE_ID val){ _s = val;}
+	void set_v(int i,QUEUE_ID v){ _v[i]._t=v;}
 	void set_t(QUEUE_ID val){ _t = val;}
 	void set_v(KGLCMSEQ_ELM *val){ _v = val;}
-	void set_v(int i,QUEUE_ID v){ _v[i]._t=v;}
-	void set_v(int i,KGLCMSEQ_ELM v){ _v[i]=v;}
-	
 	
 	void endClr(){ _end = 0;  }
 	void tClr()  { _t = 0;  }

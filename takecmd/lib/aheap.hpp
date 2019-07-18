@@ -43,7 +43,6 @@
 
 class AHEAP {
 
-	
 	/* update the ancestor of node i */
 	void update(AHEAP_ID i){
   	AHEAP_ID j;
@@ -56,7 +55,6 @@ class AHEAP {
 		  _v[i] = a;
   	}
 	}
-
 
 	AHEAP_ID IDX (AHEAP_ID i){ return (i+1-_base)%_end; }
 	AHEAP_ID LEAF(AHEAP_ID i){ return (i+_base)%_end + _end-1;}
@@ -99,9 +97,6 @@ class AHEAP {
 
 		void end(AHEAP_ID end){ _end=end;}
 		void base(AHEAP_ID base){ _base=base;}
-
-
-
 
 		AHEAP_KEY H(AHEAP_ID i){ 
 			return _v[(i+_base)%_end+_end-1];
@@ -166,6 +161,58 @@ class AHEAP {
 		}
 
 } ;
+
+class AHEAPARY {
+
+	AHEAP *_v;
+	size_t _size;
+
+	public:
+	
+	AHEAPARY(void):_v(NULL),_size(0){}
+	
+	AHEAPARY(size_t siz){
+		_v = new AHEAP[siz];
+		_size = siz;
+	}
+	~AHEAPARY(){
+		delete [] _v;
+	}
+	
+	void setSize(size_t siz,AHEAP_ID isiz,AHEAP_KEY val){
+		if( _v ){
+			delete [] _v;
+		}
+		_v = new AHEAP[siz];
+		_size = siz	;
+		
+		for(size_t i=0; i<_size ; i++){
+    	_v[i].alloc(isiz,val);
+    }
+	}
+	
+	AHEAP_ID end(size_t n){ return _v[n].end();}
+	
+	AHEAP_ID findmin_head(size_t n){ 
+		return _v[n].findmin_head();
+	}
+
+	WEIGHT H(size_t n,AHEAP_ID i){
+		return _v[n].H(i);
+	}
+	void chg (size_t n,AHEAP_ID i, AHEAP_KEY a){
+		return _v[n].chg(i,a);
+	
+	}
+	
+	size_t size(void){ return _size;}
+	
+	
+	
+};
+	
+
+
 
 
 

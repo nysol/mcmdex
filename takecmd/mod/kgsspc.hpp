@@ -35,32 +35,6 @@
 #include "problem.hpp"
 #include "itemset.hpp"
 
-class TrsactParams{
-	// _TT
-  int _tFlag;
-	double _row_lb_;
-	int _row_lb;
-	double _row_ub_;
-	int _row_ub;
-	double _clm_lb_;
-	double _w_lb;
-	double _clm_ub_;
-	double _w_ub;
-};
-
-class ItemsetParams{
-	// _TT
-  int _tFlag;
-	double _row_lb_;
-	int _row_lb;
-	double _row_ub_;
-	int _row_ub;
-	double _clm_lb_;
-	double _w_lb;
-	double _clm_ub_;
-	double _w_ub;
-};
-
 class KGSSPC{
 
 	// receive parameter
@@ -70,40 +44,24 @@ class KGSSPC{
 	int _problem;
   double _th2;
 	double _th;
+
 	char *_output_fname2;
 	char *_table_fname;
 	char *_outperm_fname;
 	char *_output_fname;
 
-	// _II
-  int _iFlag;
-	int _topk_k;
+	bool _progressFlag;
+
 	LONG _itemtopk_item;
 	LONG _itemtopk_item2;
 	LONG _itemtopk_end;
-	int _len_lb;
-	int _len_ub;
-	int _multi_core;
-	int _max_solutions;
-	char _separator;
-	double _frq_lb;
 
-	// _TT
-  int _tFlag;
-	double _row_lb_;
-	int _row_lb;
-	double _row_ub_;
-	int _row_ub;
-	double _clm_lb_;
-	double _w_lb;
-	double _clm_ub_;
-	double _w_ub;
+	ItemSetParams _ipara;
+	TrsactParams _tpara;
+
+
 
   int _sep;
-	char *_wfname;
-	char *_item_wfname;
-	char *_fname;
-  char *_fname2;
 
 	int _siz;
 
@@ -137,27 +95,17 @@ class KGSSPC{
 	int setArgs(int argc, char *argv[]);
 
  	void help();
-
+	
 	public :
 	KGSSPC():
-	  _iFlag(0),_tFlag(0),
 		_root(0),_dir(0),_problem(0),_siz(0),
-		_th(0),_th2(0),
+		_th(0),_th2(0),_progressFlag(false),
 		_output_fname(NULL),_output_fname2(NULL),
 		_outperm_fname(NULL),_table_fname(NULL),
 		_positPERM(NULL),_vecchr(NULL),
 		_occ_w(NULL),_itemary(NULL),
 		_buf_end(0),_sep(0),
-		_row_lb_(0.0),_row_lb(0),
-		_row_ub_(0.0),_row_ub(QUEUE_IDHUGE),
-		_clm_lb_(0.0),_w_lb(-WEIGHTHUGE),
-		_clm_ub_(0.0),_w_ub(WEIGHTHUGE),
-		// _II
-		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0),
-		_len_ub(INTHUGE),_len_lb(0),_topk_k(0),
-		_multi_core(1),_max_solutions(0),_separator(' '),
-		_fname(NULL),_wfname(NULL),_item_wfname(NULL),
-		_fname2(NULL)
+		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0)
 		{}
 
 	int run(int argc ,char* argv[]);
@@ -180,4 +128,47 @@ class KGSSPC{
 //LONG _ip_l3;
 //LONG _ip_l1;
 //	void list_comp();
+
+	// _II
+//  int _iFlag;
+//	int _topk_k;
+//	LONG _itemtopk_item;
+//	LONG _itemtopk_item2;
+//	LONG _itemtopk_end;
+//	int _len_lb;
+//	int _len_ub;
+//	int _multi_core;
+//	int _max_solutions;
+//	char _separator;
+//	double _frq_lb;
+
+	//  _iFlag(0),_topk_k(0),
+	//	,
+	//	_len_ub(INTHUGE),_len_lb(0),
+	//	_multi_core(1),_max_solutions(0),_separator(' '),
+	//_tFlag(0),
+	//	_row_lb_(0.0),_row_lb(0),
+	//	_row_ub_(0.0),_row_ub(QUEUE_IDHUGE),
+	//	_clm_lb_(0.0),_w_lb(-WEIGHTHUGE),
+	//	_clm_ub_(0.0),_w_ub(WEIGHTHUGE),
+	//	_fname(NULL),_wfname(NULL),_item_wfname(NULL),
+	//	_fname2(NULL),
+	// _TT
+/*
+	char *_wfname;
+	char *_item_wfname;
+	char *_fname;
+  char *_fname2;
+
+  int _tFlag;
+	double _row_lb_;
+	int _row_lb;
+	double _row_ub_;
+	int _row_ub;
+	double _clm_lb_;
+	double _w_lb;
+	double _clm_ub_;
+	double _w_ub;
+*/
+
 

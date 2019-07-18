@@ -99,9 +99,10 @@ struct ItemSetParams {
 	LONG _topk_k;
 
 	// SSPC
-	LONG _itemtopk_end;
-	LONG _itemtopk_item;
-	LONG _itemtopk_item2;
+	//LONG _itemtopk_end; //あとで整理
+	//LONG _itemtopk_item;
+	//LONG _itemtopk_item2;
+
 	int _multi_core;
 
 	//LCM LCMSEQ
@@ -119,7 +120,8 @@ struct ItemSetParams {
 		_prob_ub(1),_prob_lb(0),
 		_ratio_ub(1),_ratio_lb(0),
 		_len_ub(INTHUGE),_len_lb(0),
-		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0),
+		//_itemtopk_item(0),_itemtopk_item2(0),
+		//_itemtopk_end(0),
 		_multi_core(0),		
 		_topk_k(0),
 		_frq_ub(WEIGHTHUGE),_frq_lb(-WEIGHTHUGE),	
@@ -222,7 +224,10 @@ class ITEMSET{
   LONG *_multi_iters;   //iterations
   LONG *_multi_solutions;  // number of solutions output
 
-  AHEAP *_itemtopk;  // heap for topk mining. valid if topk->h is not NULL
+
+	// heap for topk mining. valid if topk->h is not NULL
+  AHEAPARY _itemtopk;  
+
   AHEAP _topk; 
 
 	//これはあとで
@@ -275,8 +280,6 @@ class ITEMSET{
 	void solution_iter (KGLCMSEQ_QUE *occ, int core_id);
 	void output_rule ( KGLCMSEQ_QUE *occ, double p1, double p2, size_t item, int core_id);
 
-
-
 	public:
 					
 	ITEMSET(void):	  
@@ -286,23 +289,24 @@ class ITEMSET{
 		_topk_sign(1) ,_itemtopk_sign(1),  // initialization ; max topk
 		_itemflag(NULL),_perm(NULL),_item_frq(NULL),
 		_sc(NULL),_sc2(NULL),
-		_itemtopk_ary(NULL),
   	_set_weight(NULL),_set_occ(NULL),
 		_multi_outputs(NULL),_multi_iters(NULL),
 		_multi_solutions(NULL),_multi_fp(NULL),
-		_itemtopk(NULL),
+		_itemtopk_ary(NULL),
 		_rows_org(0),_trperm(NULL)
 		{}
 	
 	
 	~ITEMSET(void){
 
-		for(LONG i=0;i<_params._itemtopk_end;i++){
-		  _itemtopk[i].end();
-    	if ( _itemtopk_ary ) delete [] _itemtopk_ary[i];
-	  }
-	 	delete [] _itemtopk; 
-  	delete [] _itemtopk_ary; 
+		if ( _itemtopk_ary ){ // _itemtopk_aryを_itemtopk.に入れる?
+			for(LONG i=0;i< _itemtopk.size() ; i++){
+				delete [] _itemtopk_ary[i];
+			}	  
+	  	delete [] _itemtopk_ary; 
+	 	}
+
+
 	 	delete [] _sc;
   	delete [] _sc2;
   	delete [] _item_frq;
@@ -331,94 +335,10 @@ class ITEMSET{
 
 	}
 
-	// SSPC
-	void setParams(
-		int iFlag, WEIGHT frq_lb,int len_ub,int len_lb,
-		LONG topk_k,LONG itemtopk_item,LONG itemtopk_item2,
-		LONG itemtopk_end , int multi_core, LONG max_solutions,char separator
-	){
-		_params._flag   = iFlag;
-		_params._frq_lb = frq_lb;
-		_params._len_ub = len_ub;
-		_params._len_lb = len_lb;
-		_params._topk_k = topk_k;
-		_params._itemtopk_item = itemtopk_item;
-		_params._itemtopk_item2 = itemtopk_item2;
-		_params._itemtopk_end = itemtopk_end;
-		_params._multi_core = multi_core;
-		_params._max_solutions = max_solutions;
-		_params._separator = separator;
-
-	}
-	// LCM
-	void setParams(
-		int flag , WEIGHT frq_lb , WEIGHT frq_ub , int lb , int  ub , QUEUE_INT target ,
-		double ratio_lb , double ratio_ub , double prob_lb , double prob_ub,
-		WEIGHT nega_lb , WEIGHT nega_ub,
-		WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
-		char separator , LONG digits
-	){
-		_params._flag = flag;
-		_params._frq_lb = frq_lb;
-		_params._frq_ub = frq_ub;
-		_params._lb = lb;
-		_params._ub = ub;
-		_params._target = target;
-		_params._ratio_lb = ratio_lb;
-		_params._ratio_ub = ratio_ub;
-		_params._prob_lb = prob_lb;
-		_params._prob_ub = prob_ub;
-		_params._nega_lb = nega_lb;
-		_params._nega_ub = nega_ub;
-		_params._posi_lb = posi_lb;
-		_params._posi_ub = posi_ub;
-		_params._topk_k = topk_k;
-		_params._max_solutions = max_solutions;
-		_params._separator = separator;
-		_params._digits = digits;	
+	void setParams(ItemSetParams ipara ){
+		_params = ipara;
 	}
 
-	// LCMSEQ
-	void setParams(
-		int flag , WEIGHT frq_lb , WEIGHT frq_ub , int lb , int  ub , QUEUE_INT target ,
-		double ratio_lb , double ratio_ub , double prob_lb , double prob_ub,
-		WEIGHT nega_lb , WEIGHT nega_ub,
-		WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
-		char separator ,  WEIGHT frq,  WEIGHT pfrq, int len_ub ,WEIGHT setrule_lb
-	){
-		_params._flag = flag;
-		_params._frq_lb = frq_lb;
-		_params._frq_ub = frq_ub;
-		_params._lb = lb;
-		_params._ub = ub;
-		_params._target = target;
-		_params._ratio_lb = ratio_lb;
-		_params._ratio_ub = ratio_ub;
-		_params._prob_lb = prob_lb;
-		_params._prob_ub = prob_ub;
-		_params._nega_lb = nega_lb;
-		_params._nega_ub = nega_ub;
-		_params._posi_lb = posi_lb;
-		_params._posi_ub = posi_ub;
-		_params._topk_k = topk_k;
-		_params._max_solutions = max_solutions;
-		_params._separator = separator;
-		_params._pfrq = pfrq;
-		_params._frq = frq;
-		_params._len_ub = len_ub;
-		_params._setrule_lb = setrule_lb;
-	}
-
-	// MACE
-	void setParams(
-		int iFlag, int lb,int ub, LONG max_solutions,char separator
-	){
-		_params._flag   = iFlag;
-		_params._lb = lb;
-		_params._ub = ub;
-		_params._max_solutions = max_solutions;
-		_params._separator = separator;
-	}
 		
 #ifdef MULTI_CORE
 	pthread_spinlock_t get_lock_counter(){return _lock_counter;}
@@ -447,7 +367,6 @@ class ITEMSET{
 		}
 	}
 
-
 	QUEUE_ID iadd_get_t(){ return _add.get_t();}
 	QUEUE_ID item_get_t(){ return _itemset.get_t();}
 
@@ -473,9 +392,21 @@ class ITEMSET{
 	}
 
 	QUEUE_INT get_target(void){ return _params._target;}
+	
+	void adjustTarget(QUEUE_ID siz){
+		if( _params._target < siz && _perm ){
+     	for(size_t j=0; j< _item_max ;j++){
+      	if ( _params._target == _perm[j] ){ 
+      		_params._target = j ; 
+      		break; 
+      	} 
+      }
+		}
+		return;
+	}
+	
+	
 	QUEUE_INT get_item_max(void){ return _item_max;}
-	LONG get_itemtopk_end(void){ return _params._itemtopk_end;}
-	LONG get_itemtopk_item(void){ return _params._itemtopk_item;}
 
 	AHEAP_ID get_topk_end(){ return _topk.end();}
 
@@ -571,33 +502,43 @@ class ITEMSET{
 
 	void alloc(char *fname, PERM *perm, QUEUE_INT item_max, size_t item_max_org);
 
+	//sspc
+	void alloc(char *fname, PERM *perm, QUEUE_INT item_max,size_t item_max_org,
+						LONG _itk_end ,LONG _itk_item, LONG _itk_item2);
+
+
 	void QueMemCopy(QUEUE &from){
 		_itemset.MemCopy(from);
 	}
 
-	/* output an itemset to the output file */
-	void output_itemset(QUEUE *occ, int core_id);
-	void output_itemset(KGLCMSEQ_QUE *occ, int core_id);
+	// for lcm
+	void output_itemset_( 
+		QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ,  
+		int core_id);
+
+	// for lcm seq
+	void output_itemset_(
+		QUEUE *itemset, WEIGHT frq, WEIGHT pfrq ,KGLCMSEQ_QUE *occ, 
+		int core_id);
+
+	/* output an itemset to the output file for sspc */
+	void output_itemset_(
+		QUEUE *itemset, WEIGHT frq, WEIGHT pfrq,
+		int core_id);
+
+	/* output an itemset to the output file for sspc -k */
+	void output_itemset_k(
+		QUEUE *itemset, WEIGHT frq, WEIGHT pfrq,
+		QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, 
+		int core_id);
+
 
 	// for mace
 	void output_itemset(int core_id);
 
-	void output_itemset_( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq,  QUEUE *occ,  int core_id);
-
-	// lcm
-	void output_itemset_( 
-		QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, 
-		QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
-
-	// lcmseq
-	void output_itemset_(
-		QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, 
-		QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
-
-	// for sspc
-	void output_itemset_(
-		QUEUE *itemset, WEIGHT frq, WEIGHT pfrq,
-		QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, int core_id);
+	/* output an itemset to the output file */
+	void output_itemset(QUEUE *occ, int core_id);
+	void output_itemset(KGLCMSEQ_QUE *occ, int core_id);
 
 
 	/*******************************************************************/
@@ -659,6 +600,7 @@ class ITEMSET{
 	//char *_ERROR_MES;
 	//	_multi_outputs2(NULL),
 	//,_ERROR_MES(NULL)
+//		_itemtopk(NULL),_itkSize(0),
 
 	
 //	WEIGHT get_rposi_lb(){ return _rposi_lb;} 
@@ -698,6 +640,95 @@ class ITEMSET{
 // これでいいような気がする
 // void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, int core_id);
 // void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, int core_id);
+
+//	LONG get_itemtopk_end(void){ return _params._itemtopk_end;}
+//	LONG get_itemtopk_item(void){ return _params._itemtopk_item;}
+
+	void setParams(
+		int iFlag, WEIGHT frq_lb,int len_ub,int len_lb,
+		LONG topk_k,LONG itemtopk_item,LONG itemtopk_item2,
+		LONG itemtopk_end , int multi_core, LONG max_solutions,char separator
+	){
+		_params._flag   = iFlag;
+		_params._frq_lb = frq_lb;
+		_params._len_ub = len_ub;
+		_params._len_lb = len_lb;
+		_params._topk_k = topk_k;
+		//_params._itemtopk_item = itemtopk_item;
+		//_params._itemtopk_item2 = itemtopk_item2;
+		//_params._itemtopk_end = itemtopk_end;
+		_params._multi_core = multi_core;
+		_params._max_solutions = max_solutions;
+		_params._separator = separator;
+
+	}
+	// LCMSEQ
+	void setParams(
+		int flag , WEIGHT frq_lb , WEIGHT frq_ub , int lb , int  ub , QUEUE_INT target ,
+		double ratio_lb , double ratio_ub , double prob_lb , double prob_ub,
+		WEIGHT nega_lb , WEIGHT nega_ub,
+		WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
+		char separator ,  WEIGHT frq,  WEIGHT pfrq, int len_ub ,WEIGHT setrule_lb
+	){
+		_params._flag = flag;
+		_params._frq_lb = frq_lb;
+		_params._frq_ub = frq_ub;
+		_params._lb = lb;
+		_params._ub = ub;
+		_params._target = target;
+		_params._ratio_lb = ratio_lb;
+		_params._ratio_ub = ratio_ub;
+		_params._prob_lb = prob_lb;
+		_params._prob_ub = prob_ub;
+		_params._nega_lb = nega_lb;
+		_params._nega_ub = nega_ub;
+		_params._posi_lb = posi_lb;
+		_params._posi_ub = posi_ub;
+		_params._topk_k = topk_k;
+		_params._max_solutions = max_solutions;
+		_params._separator = separator;
+		_params._pfrq = pfrq;
+		_params._frq = frq;
+		_params._len_ub = len_ub;
+		_params._setrule_lb = setrule_lb;
+	}
+	// LCM
+	void setParams(
+		int flag , WEIGHT frq_lb , WEIGHT frq_ub , int lb , int  ub , QUEUE_INT target ,
+		double ratio_lb , double ratio_ub , double prob_lb , double prob_ub,
+		WEIGHT nega_lb , WEIGHT nega_ub,
+		WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
+		char separator , LONG digits
+	){
+		_params._flag = flag;
+		_params._frq_lb = frq_lb;
+		_params._frq_ub = frq_ub;
+		_params._lb = lb;
+		_params._ub = ub;
+		_params._target = target;
+		_params._ratio_lb = ratio_lb;
+		_params._ratio_ub = ratio_ub;
+		_params._prob_lb = prob_lb;
+		_params._prob_ub = prob_ub;
+		_params._nega_lb = nega_lb;
+		_params._nega_ub = nega_ub;
+		_params._posi_lb = posi_lb;
+		_params._posi_ub = posi_ub;
+		_params._topk_k = topk_k;
+		_params._max_solutions = max_solutions;
+		_params._separator = separator;
+		_params._digits = digits;	
+	}
+	// MACE
+	void setParams(
+		int iFlag, int lb,int ub, LONG max_solutions,char separator
+	){
+		_params._flag   = iFlag;
+		_params._lb = lb;
+		_params._ub = ub;
+		_params._max_solutions = max_solutions;
+		_params._separator = separator;
+	}
 
 */
 

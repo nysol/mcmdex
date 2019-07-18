@@ -91,17 +91,20 @@ int KGSSPC::setArgs(int argc, char *argv[]){
 
   _th = 0; 
   _th2 = 0;
-  _multi_core =1;
 
+  _ipara._multi_core =1;
+	
+	int iflag = 0;
+	int tflag = LOAD_INCSORT;
   int c=1;
-
+	//_tpara._flag  |= LOAD_INCSORT;
   if ( argc < c+3 ){  help(); return 1; }
 
-  if ( !strchr (argv[c], '_') ){ _iFlag |= SHOW_MESSAGE; _tFlag|= SHOW_MESSAGE; }
-  if ( strchr (argv[c], '%') ) _iFlag |= SHOW_PROGRESS;
-  if ( strchr (argv[c], '+') ) _iFlag |= ITEMSET_APPEND;
-  if ( strchr (argv[c], 'f') ) _iFlag |= ITEMSET_FREQ;
-  if ( strchr (argv[c], 'Q') ) _iFlag |= ITEMSET_PRE_FREQ;
+  if ( !strchr (argv[c], '_') ){ iflag |= SHOW_MESSAGE; tflag|= SHOW_MESSAGE; }
+  if ( strchr (argv[c], '%') ) { iflag |= SHOW_PROGRESS; _progressFlag= true;}
+  if ( strchr (argv[c], '+') ) iflag |= ITEMSET_APPEND;
+  if ( strchr (argv[c], 'f') ) iflag |= ITEMSET_FREQ;
+  if ( strchr (argv[c], 'Q') ) iflag |= ITEMSET_PRE_FREQ;
 
   if ( strchr (argv[c], 'i') )      _problem = SSPC_INCLUSION;
   else if ( strchr (argv[c], 'I') ) _problem = SSPC_SIMILARITY;
@@ -123,51 +126,52 @@ int KGSSPC::setArgs(int argc, char *argv[]){
   if ( strchr (argv[c], 'Y') ) _problem |= SSPC_POLISH;
   if ( strchr (argv[c], 'y') ) _problem |= SSPC_POLISH2;
 
-  if ( !strchr (argv[c], 't') ) _tFlag |= LOAD_TPOSE;
-  if ( strchr (argv[c], 'E') )  _tFlag |= LOAD_ELE;
-  if ( strchr (argv[c], 'w') )  _tFlag |= LOAD_EDGEW;
-  if ( strchr (argv[c], '1') )  _tFlag |= LOAD_RM_DUP;
-  if ( strchr (argv[c], '0') )_problem |= SSPC_COMP_ITSELF;
+  if ( !strchr (argv[c], 't') ) tflag |= LOAD_TPOSE;
+  if ( strchr (argv[c], 'E') )  tflag |= LOAD_ELE;
+  if ( strchr (argv[c], 'w') )  tflag |= LOAD_EDGEW;
+  if ( strchr (argv[c], '1') )  tflag |= LOAD_RM_DUP;
+  if ( strchr (argv[c], '0') ) _problem |= SSPC_COMP_ITSELF;
   c++;
   
   while ( argv[c][0] == '-' ){
     switch (argv[c][1]){
 
 			case 'K': 
-				_topk_k = atoi(argv[c+1]);
+				_ipara._topk_k = atoi(argv[c+1]);
 
     	break; case 'k': 
+    		//_ipara.
     		_itemtopk_item  = atoi(argv[c+1]); 
-    		_itemtopk_item2 = 1;
+				_itemtopk_item2 = 1;
 
 			break; case 'L': 
-      	if ( argv[c][2] == 'L' ) _row_lb_ = atof(argv[c+1]);
-        else 										 _row_lb  = atoi(argv[c+1]); 
+      	if ( argv[c][2] == 'L' ) _tpara._limVal._row_lb_ = atof(argv[c+1]);
+        else 										 _tpara._limVal._row_lb  = atoi(argv[c+1]); 
 
 			break; case 'U':  
-      	if ( argv[c][2] == 'U' ) _row_ub_ = atof(argv[c+1]);
-        else									   _row_ub  = atoi(argv[c+1]);
+      	if ( argv[c][2] == 'U' ) _tpara._limVal._row_ub_ = atof(argv[c+1]);
+        else									   _tpara._limVal._row_ub  = atoi(argv[c+1]);
 
 			break; case 'l':  
-      	if ( argv[c][2] == 'l' ) _clm_lb_ = atof(argv[c+1]);
-        else                     _w_lb    = atof(argv[c+1]);
+      	if ( argv[c][2] == 'l' ) _tpara._limVal._clm_lb_ = atof(argv[c+1]);
+        else                     _tpara._limVal._w_lb    = atof(argv[c+1]);
 
 			break; case 'u': 
-      	if ( argv[c][2] == 'u' ) _clm_ub_ = atof(argv[c+1]);
-        else                     _w_ub    = atof(argv[c+1]);
+      	if ( argv[c][2] == 'u' ) _tpara._limVal._clm_ub_ = atof(argv[c+1]);
+        else                     _tpara._limVal._w_ub    = atof(argv[c+1]);
 
       break; case 'w': 
-      	_wfname = argv[c+1];
+      	_tpara._wfname = argv[c+1];
 
       break; case 'W':
-      	_item_wfname = argv[c+1];
+      	_tpara._iwfname = argv[c+1];
  
       break; case 'c': 
 				_dir = 1; 
 				_sep = _root = atoi(argv[c+1]) ;
 
       break; case '2': 
-      	_fname2 = argv[c+1];
+      	_tpara._fname2 = argv[c+1];
 
       break; case '9': 
       	_th2 = atof(argv[c+1]);
@@ -175,10 +179,10 @@ int KGSSPC::setArgs(int argc, char *argv[]){
       	_output_fname2 = argv[c+1];
 
       break; case 'b': 
-      	_len_lb = atoi(argv[c+1]);
+      	_ipara._len_lb = atoi(argv[c+1]);
 
       break; case 'B': 
-      	_len_ub = atoi(argv[c+1]);
+      	_ipara._len_ub = atoi(argv[c+1]);
 
       break; case 'T': 
       	_th = atoi(argv[c+1]);
@@ -189,13 +193,13 @@ int KGSSPC::setArgs(int argc, char *argv[]){
 			  	fprintf(stderr,"number of cores has to be in 1 to: %d\n",atoi(argv[c+1]));
 			  	return 1;
 				}
-				_multi_core = atoi(argv[c+1]);
+				_ipara._multi_core = atoi(argv[c+1]);
           	
       break; case '#': 
-      	_max_solutions = atoi(argv[c+1]);
+      	_ipara._max_solutions = atoi(argv[c+1]);
 
       break; case ',': 
-      	_separator = argv[c+1][0];
+      	_ipara._separator = argv[c+1][0];
 
       break; case 'Q': 
       	_outperm_fname = argv[c+1];
@@ -211,9 +215,16 @@ int KGSSPC::setArgs(int argc, char *argv[]){
   }
 
   NEXT:;
-  _fname = argv[c];
-  _frq_lb = atof(argv[c+1]);
+  _tpara._fname = argv[c];
+  _ipara._frq_lb = atof(argv[c+1]);
   if ( argc>c+2 ) _output_fname = argv[c+2];
+
+	_ipara._flag = iflag;
+
+ 	if ( _ipara._len_ub < INTHUGE || _ipara._len_lb > 0 ){ //これはsetargsで
+ 		tflag |= (LOAD_SIZSORT+LOAD_DECROWSORT);
+ 	}
+	_tpara._flag = tflag;
 
 	return 0;
 
@@ -236,7 +247,7 @@ WEIGHT KGSSPC::comp ( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq)
   return (-WEIGHTHUGE);
 }
 
-void KGSSPC::output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id){
+void KGSSPC::output( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id){
 
   size_t b;
 	PERM *p = _positPERM;
@@ -291,10 +302,13 @@ void KGSSPC::output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset,
       if ( ii >= _sep ) itemset->minus_v(1,_root);
     }
 
-    if ( _II.get_itemtopk_end() > 0 ){
-      _II.output_itemset_ ( itemset, frq, frq,  i, ii, core_id);
+    if ( _itemtopk_end > 0 ){
+      _II.output_itemset_k ( itemset, frq, frq,  i, ii, core_id);
+      _II.output_itemset_k ( itemset, frq, frq,  ii, i, core_id);
     }
-      _II.output_itemset_ ( itemset, frq, frq,  ii, i, core_id);
+    else{
+      _II.output_itemset_ ( itemset, frq, frq,  core_id);
+    }
   }
 }
 
@@ -428,6 +442,7 @@ void *KGSSPC::iter (void *p){
 
   while (1){
 
+
     if ( i == i_ ){
 
       i_ = 100000000 / (_TT.get_eles() / _TT.get_clms());
@@ -442,7 +457,7 @@ void *KGSSPC::iter (void *p){
       i_ = MIN(_TT.get_clms(), i + 100);
       (*(SM->_lock_i)) = i_;
 
-      if ( _iFlag & SHOW_PROGRESS ){
+      if ( _progressFlag ){
         if ( (int)((i-1)*100/_TT.get_clms()) < (int)(i*100/_TT.get_clms()) )
             fprintf (stderr, "%d%%\n", (int)(i*100/_TT.get_clms()));
       }
@@ -522,7 +537,7 @@ void *KGSSPC::iter (void *p){
 
       c = occ_w[*x];
 
-      if ( _tFlag & LOAD_SIZSORT ){
+      if ( _tpara._flag & LOAD_SIZSORT ){
         for (oi=o[i],oj=o[*x] ; *oi<_II.get_len_lb() ; oi++ ){
           while ( *oj < *oi ) oj++;
           if ( *oi == *oj ) c += _TT.get_w(*oi);
@@ -546,6 +561,7 @@ void *KGSSPC::iter (void *p){
 
 		// selfcomparison
     if ((_problem & SSPC_COMP_ITSELF) && _dir == 0) {
+
         output (
         	&cnt, i, i, &itemset, 
         	((_problem&PROBLEM_NORMALIZE)&& _dir>0)? i- _sep: i, //_dir>0ありえない
@@ -556,8 +572,10 @@ void *KGSSPC::iter (void *p){
 
 		// data polish;  clear OQ, and marks
     if ( _problem & (SSPC_POLISH+SSPC_POLISH2) ){  
-      if ( _problem & SSPC_POLISH2 )
+
+      if ( _problem & SSPC_POLISH2 ){
           for (b=_itemary[i] ; b ; b=_buf[b]) _vecchr[_buf[b+1]] = 1;
+      }
 
       f = 0;
 
@@ -634,7 +652,7 @@ void KGSSPC::_SspcCore(){
 	#ifdef MULTI_CORE
   	void *tr;
 	#endif
-		
+
   SSPC_MULTI_CORE *SM = NULL;
   OFILE2 fp;  // file pointer for the second output file
 
@@ -664,7 +682,7 @@ void KGSSPC::_SspcCore(){
     
 	_TT.setOQend();
 
-	o = _TT.skipLaegeFreqItems(_len_lb);
+	o = _TT.skipLaegeFreqItems(_ipara._len_lb);
 
 	// selfcomparison
   if ((_problem & SSPC_COMP_ITSELF) && _dir == 0){ 
@@ -675,6 +693,7 @@ void KGSSPC::_SspcCore(){
 
   // for multi-core
 	SM = new SSPC_MULTI_CORE[_II.get_multi_core()]; //malloc2
+
 
 	for (i=_II.get_multi_core(); (i--) > 0 ; ){
     SM[i]._o = o;
@@ -700,7 +719,7 @@ void KGSSPC::_SspcCore(){
 #endif
 
   // termination これいる？
-	if ( _tFlag & LOAD_SIZSORT ){
+	if ( _tpara._flag & LOAD_SIZSORT ){
 		for(int i=1 ; i < _TT.get_clms(); i++){
     	_TT.sizSort(i,o);
     }
@@ -726,7 +745,7 @@ void KGSSPC::_preALLOC(){
 
 	PERM *perm = _TT.convPerm(_outperm_fname);
 
-	_II.alloc(_output_fname, perm, siz, 0);
+	_II.alloc(_output_fname, perm, siz, 0, _itemtopk_end,_itemtopk_item,_itemtopk_item2);
 
 	_TT.set_perm(NULL); // free対策？
 		
@@ -743,34 +762,30 @@ int KGSSPC::run (int argc ,char* argv[]){
 
 	if( setArgs(argc, argv) ) return 1;
 
-	_tFlag  |= LOAD_INCSORT;
 
- 	if ( _len_ub < INTHUGE || _len_lb > 0 ){	
- 		_tFlag |= (LOAD_SIZSORT+LOAD_DECROWSORT);
- 	}
 
-  if( 
-  	_TT.load(
-			_tFlag, _fname,_wfname,_item_wfname,_fname2,
-			_w_lb,_w_ub,_clm_lb_,_clm_ub_,
-			_row_lb,_row_ub,_row_lb_,_row_ub_)
-	){ 
-		return 1;
-	}
+	_TT.setParams(_tpara);
+
+  if( _TT.load()){ return 1; }
 
 	// _sep -cの指定がある時に利用される ここでOK？もとはTT.alloc
 	_sep = _TT.adjust_sep(_sep); // 
 
-  if ( _len_ub < INTHUGE ){ _len_lb = _TT.addjust_lenlb(_len_ub,_len_lb); }
+  if ( _ipara._len_ub < INTHUGE ){ _ipara._len_lb = _TT.addjust_lenlb(_ipara._len_ub,_ipara._len_lb); }
 
   if ( _itemtopk_item > 0 ){  _itemtopk_end= _TT.get_clms(); }
 
+
+	_II.setParams( _ipara );
+
+/*
 	_II.setParams(
 		_iFlag,_frq_lb,_len_ub,_len_lb,
 		_topk_k,
 		_itemtopk_item,_itemtopk_item2,_itemtopk_end,
 		_multi_core,_max_solutions,_separator
 	);
+*/
 
 	_preALLOC();
 	
@@ -780,14 +795,15 @@ int KGSSPC::run (int argc ,char* argv[]){
   _positPERM = _II.get_perm();
   _II.set_perm(NULL);
 
-  if ( _TT.get_clms()>1 ){  _SspcCore(); }
+  if ( _TT.get_clms()>1 ){  
+  	_SspcCore(); 
+  }
 
   _II.set_perm(_positPERM);
 
   _II.merge_counters();
 
-  if ( _II.get_topk_end() > 0 || _II.get_itemtopk_end ()> 0 ){
-  	
+  if ( _II.get_topk_end() > 0 || _itemtopk_end > 0 ){
   	 _II.last_output();
   }
   else{

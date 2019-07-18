@@ -59,30 +59,33 @@ t:transpose the input database (item i will be i-th transaction, and i-th transa
 int KGLCM::setArgs(int argc, char *argv[]){
 
   int c=1, f=0;
+  int iflag =0;
+  int tflag =0;
+  int tflag2 =0;
 
   if ( argc < c+3 ){ help(); return 1; }
   
-  if ( !strchr (argv[c], '_') ){ _iFlag |= SHOW_MESSAGE; _tFlag |= SHOW_MESSAGE; }
-  if ( strchr (argv[c], '%') ) _iFlag |= SHOW_PROGRESS;
-  if ( strchr (argv[c], '+') ) _iFlag |= ITEMSET_APPEND;
-  if ( strchr (argv[c], 'f') ) _iFlag |= ITEMSET_FREQ;
-  if ( strchr (argv[c], 'Q') ) _iFlag |= ITEMSET_PRE_FREQ;
-  if ( strchr (argv[c], 'R') ) _iFlag |= ITEMSET_RULE_ADD;
-  if ( strchr (argv[c], 'A') ) _iFlag |= ITEMSET_OUTPUT_POSINEGA;
+  if ( !strchr (argv[c], '_') ){ iflag |= SHOW_MESSAGE; tflag |= SHOW_MESSAGE; }
+  if ( strchr (argv[c], '%') ) { iflag |= SHOW_PROGRESS;  _progressFlag= true; }
+  if ( strchr (argv[c], '+') ) iflag |= ITEMSET_APPEND;
+  if ( strchr (argv[c], 'f') ) iflag |= ITEMSET_FREQ;
+  if ( strchr (argv[c], 'Q') ) iflag |= ITEMSET_PRE_FREQ;
+  if ( strchr (argv[c], 'R') ) iflag |= ITEMSET_RULE_ADD;
+  if ( strchr (argv[c], 'A') ) iflag |= ITEMSET_OUTPUT_POSINEGA;
 
-  if ( strchr (argv[c], 'C') )     { _problem |= PROBLEM_CLOSED;  _tFlag2 |= TRSACT_INTSEC;}
-  else if ( strchr (argv[c], 'F') ){ _problem |= PROBLEM_FREQSET; _iFlag  |= ITEMSET_ALL;  }
-  else if ( strchr (argv[c], 'M') ){ _problem |= PROBLEM_MAXIMAL; _tFlag2 |= TRSACT_UNION; }
+  if ( strchr (argv[c], 'C') )     { _problem |= PROBLEM_CLOSED;   tflag2 |= TRSACT_INTSEC;}
+  else if ( strchr (argv[c], 'F') ){ _problem |= PROBLEM_FREQSET;  iflag  |= ITEMSET_ALL;  }
+  else if ( strchr (argv[c], 'M') ){ _problem |= PROBLEM_MAXIMAL;  tflag2 |= TRSACT_UNION; }
   else {
   	fprintf(stderr,"one of F, C, M has to be given");
   	return 1;
   }
 
   if ( strchr (argv[c], 'P') ) _problem |= LCM_POSI_EQUISUPP;
-  if ( strchr (argv[c], 'I') ) _iFlag |= ITEMSET_TRSACT_ID;
-  if ( strchr (argv[c], 'i') ) _iFlag |= ITEMSET_NOT_ITEMSET;
-  if ( strchr (argv[c], 's') ) _iFlag |= ITEMSET_RULE_SUPP;
-  if ( strchr (argv[c], 't') ) _tFlag |= LOAD_TPOSE;
+  if ( strchr (argv[c], 'I') ) iflag |= ITEMSET_TRSACT_ID;
+  if ( strchr (argv[c], 'i') ) iflag |= ITEMSET_NOT_ITEMSET;
+  if ( strchr (argv[c], 's') ) iflag |= ITEMSET_RULE_SUPP;
+  if ( strchr (argv[c], 't') ) tflag |= LOAD_TPOSE;
 
   c++;
   
@@ -93,26 +96,26 @@ int KGLCM::setArgs(int argc, char *argv[]){
           fprintf(stderr,"M command and -K option can not be given simltaneously");
           return 1;
         }
-        _topk_k = (LONG)atof(argv[c+1]);
+        _ipara._topk_k = (LONG)atof(argv[c+1]);
 
       break; case 'm': 
       	_pfname = argv[c+1] ;
 
       break; case 'M': 
       	_pfname = argv[c+1]; 
-      	_tFlag2 |= TRSACT_WRITE_PERM;
+      	tflag2 |= TRSACT_WRITE_PERM;
 
       break; case 'l': 
-				_lb = atoi(argv[c+1]);
+				_ipara._lb = atoi(argv[c+1]);
 
       break; case 'u':
-				_ub = atoi(argv[c+1]);
+				_ipara._ub = atoi(argv[c+1]);
        
       break; case 'U': 
-      	_frq_ub = (WEIGHT)atof(argv[c+1]);
+      	_ipara._frq_ub = (WEIGHT)atof(argv[c+1]);
 
       break; case 'w': 
-      	_wfname = argv[c+1];
+      	_tpara._wfname = argv[c+1];
 
       break; case 'c': 
       	_sgfname = argv[c+1];
@@ -122,94 +125,94 @@ int KGLCM::setArgs(int argc, char *argv[]){
       	_problem |= LCM_UNCONST;
 
       break; case 'f': 
-      	_prob_lb = atof(argv[c+1]);
-      	if ( !RANGE (0, _prob_lb, 1) ){
+      	_ipara._prob_lb = atof(argv[c+1]);
+      	if ( !RANGE (0, _ipara._prob_lb, 1) ){
           fprintf(stderr,"ratio has to be in [0,1] %f",atof(argv[c+1]));
           return 1;
         }
-        _iFlag |= ITEMSET_RFRQ; 
+        iflag |= ITEMSET_RFRQ; 
         f++;
 
       break; case 'F': 
-      	_prob_ub = atof(argv[c+1]);
-      	if ( !RANGE (0, _prob_ub, 1) ){
+      	_ipara._prob_ub = atof(argv[c+1]);
+      	if ( !RANGE (0, _ipara._prob_ub, 1) ){
           fprintf(stderr,"ratio has to be in [0,1] %f",atof(argv[c+1]));
           return 1;
         }
-        _iFlag |= ITEMSET_RINFRQ; 
+        iflag |= ITEMSET_RINFRQ; 
         f++;
 
       break; case 'i': 
-      	_target = atoi(argv[c+1]);
+      	_ipara._target = atoi(argv[c+1]);
 
       break; case 'a': 
-	      _ratio_lb = atof(argv[c+1]);
-      	if ( !RANGE (0, _ratio_lb , 1) ){
+	      _ipara._ratio_lb = atof(argv[c+1]);
+      	if ( !RANGE (0, _ipara._ratio_lb , 1) ){
           fprintf(stderr,"ratio has to be in [0,1] %f",atof(argv[c+1]));
           return 1;
 				}
-        _iFlag |= ITEMSET_RULE_FRQ; 
+        iflag |= ITEMSET_RULE_FRQ; 
         f|=1;
 
       break; case 'A': 
-      	_ratio_ub = atof(argv[c+1]);
-      	if ( !RANGE (0, _ratio_ub, 1) ){
+      	_ipara._ratio_ub = atof(argv[c+1]);
+      	if ( !RANGE (0, _ipara._ratio_ub, 1) ){
           fprintf(stderr,"ratio has to be in [0,1] %f",atof(argv[c+1]));
           return 1;
         }
-        _iFlag |= ITEMSET_RULE_INFRQ;
+        iflag |= ITEMSET_RULE_INFRQ;
         f|=1;
 
       break; case 'r': // a,rは同時に指定できない？
-      	_ratio_lb = atof(argv[c+1]);
-      	if ( !RANGE (0, _ratio_lb, 1) ){
+      	_ipara._ratio_lb = atof(argv[c+1]);
+      	if ( !RANGE (0, _ipara._ratio_lb, 1) ){
           fprintf(stderr,"ratio has to be in [0,1] %f",atof(argv[c+1]));
           return 1;
         }
-        _iFlag |= ITEMSET_RULE_RFRQ; 
+        iflag |= ITEMSET_RULE_RFRQ; 
         f|=2;
 
       break; case 'R': // A,Rは同時に指定できない
-      	_ratio_ub = atof(argv[c+1]);
-      	if ( !RANGE (0, _ratio_ub, 1) ){
+      	_ipara._ratio_ub = atof(argv[c+1]);
+      	if ( !RANGE (0, _ipara._ratio_ub, 1) ){
           fprintf(stderr,"ratio has to be in [0,1] %f",atof(argv[c+1]));
           return 1;
         }
-        _iFlag |= ITEMSET_RULE_RINFRQ; 
+        iflag |= ITEMSET_RULE_RINFRQ; 
         f|=2;
       
       break; case 'P': 
-      	_iFlag |= ITEMSET_POSI_RATIO; 
-      	_iFlag |= ITEMSET_IGNORE_BOUND; 
+	      _pRatioFlg = true;
+      	iflag |= ITEMSET_IGNORE_BOUND; 
       	_rposi_ub = atof(argv[c+1]); 
       	f|=4;
 
       break; case 'p': 
-      	_iFlag |= ITEMSET_POSI_RATIO; 
-      	_iFlag |= ITEMSET_IGNORE_BOUND; 
+	      _pRatioFlg = true;
+      	iflag |= ITEMSET_IGNORE_BOUND; 
       	_rposi_lb = atof(argv[c+1]); 
       	f|=4;
 
       break; case 'n': 
-      	_nega_lb = atof(argv[c+1]);
+      	_ipara._nega_lb = atof(argv[c+1]);
       
       break; case 'N': 
-      	_nega_ub = atof(argv[c+1]);
+      	_ipara._nega_ub = atof(argv[c+1]);
       
       break; case 'o': 
-      	_posi_lb = atof(argv[c+1]);
+      	_ipara._posi_lb = atof(argv[c+1]);
       
       break; case 'O': 
-      	_posi_ub = atof(argv[c+1]);
+      	_ipara._posi_ub = atof(argv[c+1]);
       
       break; case '#': 
-      	_max_solutions = atoi(argv[c+1]);
+      	_ipara._max_solutions = atoi(argv[c+1]);
       
       break; case ',': 
-      	_separator = argv[c+1][0] ;
+      	_ipara._separator = argv[c+1][0] ;
       
       break; case '.': 
-      	_digits = atoi(argv[c+1]);
+      	_ipara._digits = atoi(argv[c+1]);
       
       break; case 'Q': 
       	_outperm_fname = argv[c+1];
@@ -228,8 +231,8 @@ int KGLCM::setArgs(int argc, char *argv[]){
   	return 1; 
   }
 
-  if ( f && (_iFlag & ITEMSET_PRE_FREQ) ){
-  	_iFlag -= ( _iFlag & ITEMSET_PRE_FREQ );
+  if ( f && (iflag & ITEMSET_PRE_FREQ) ){
+  	iflag -= ( iflag & ITEMSET_PRE_FREQ );
   }
 
   if ( ( _problem & PROBLEM_CLOSED ) && _sgfname ){
@@ -237,24 +240,41 @@ int KGLCM::setArgs(int argc, char *argv[]){
    	return 1; 
  }
 
-  if ( (_problem & PROBLEM_FREQSET) && (_iFlag & (ITEMSET_RULE + ITEMSET_RFRQ + ITEMSET_RINFRQ)) ){
+  if ( (_problem & PROBLEM_FREQSET) && (iflag & (ITEMSET_RULE + ITEMSET_RFRQ + ITEMSET_RINFRQ)) ){
     _problem |= PROBLEM_CLOSED; 
     _problem -= (_problem & PROBLEM_FREQSET );
-  	_iFlag -= ( _iFlag & ITEMSET_ALL );
+  	iflag -= ( iflag & ITEMSET_ALL );
 
   }
 
-  _fname = argv[c];
-  _frq_lb = (WEIGHT)atof(argv[c+1]);
+  _tpara._fname = argv[c];
+  _ipara._frq_lb = (WEIGHT)atof(argv[c+1]);
 
   if ( argc>c+2 ) _output_fname = argv[c+2];
 
-	/* LAMPべつに
-  if ( iFlag2 & ITEMSET_LAMP ){ 
-  	_th = atof(argv[c+1]); 
-  	_frq_lb = 1; 
+  tflag  |= (LOAD_PERM +LOAD_DECSORT +LOAD_RM_DUP);
+
+
+  tflag2 |= TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC + 
+  							((iflag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
+
+  if ( iflag & ITEMSET_RULE ){ _tpara._limVal._w_lb = -WEIGHTHUGE; } 
+  else											 { _tpara._limVal._w_lb = _ipara._frq_lb;}
+
+	iflag |= (ITEMSET_ITEMFRQ + ITEMSET_ADD); 
+
+  if (!_tpara._wfname){// なぜwegihtがない時だけ
+    if( _ipara._topk_k > 0 ) iflag |= ITEMSET_SC2; 
   }
-  */
+
+  // Fが指定されていて かつ -A ,-a -r -R が指定されていない時
+	_clmsFlag = ((_problem&PROBLEM_FREQSET)&&(iflag&ITEMSET_RULE)==0);
+
+	_ipara._flag  = iflag;
+	_tpara._flag  = tflag;
+	_tpara._flag2 = tflag2;
+
+
   return 0;
 }
 
@@ -373,11 +393,8 @@ QUEUE_INT KGLCM::maximality_check (
 /*************************************************************************/
 void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
-  int bnum     = _TT.get_bnum();
-  int bblock   = _TT.get_bblock();
-  int wnum     = _TT.get_wnum();
-  int wblock   = _TT.get_wblock();
-  VEC_ID new_t = _TT.get_new_t();
+	BaseStatusWithWeight bStsSave  = _TT.getBaseStsW();
+
 
   QUEUE_INT cnt, f, *x, m, e;
 
@@ -396,7 +413,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
 	// -P , -p
   WEIGHT rposi=0.0;
-  if ( _iFlag&ITEMSET_POSI_RATIO && pfrq!=0 ) {
+  if ( _pRatioFlg && pfrq!=0 ) {
   	rposi = pfrq / (pfrq + pfrq - _II.get_frq());
   }
 
@@ -436,8 +453,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
   if ( !(_problem&PROBLEM_MAXIMAL) || f >= _TT.get_clms() || _occ_w[f] < _II.get_frq_lb() ){
 
-    if ( !(_II.get_flag() & ITEMSET_POSI_RATIO) || 
-    			(rposi<=_rposi_ub && rposi>=_rposi_lb) ){
+    if ( !_pRatioFlg || (rposi<=_rposi_ub && rposi>=_rposi_lb) ){
     			
       _II.check_all_rule ( _occ_w, occ, _TT.getp_jump(), _TT.get_total_pw_org(), 0);     
 
@@ -486,12 +502,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
 			_II.addCurrent(e);
 		  if ( _sgfname  ){ _SG.itemCntUp(e); }
-
-
       LCMCORE( e, _TT.getp_OQ(e), _occ_w2[e], _occ_pw2[e]); // recursive call
-
-			if ( _ERROR_MES ) return;
-
 			_II.delCurrent();
 		  if ( _sgfname  ){ _SG.itemCntDown(e); }
 			
@@ -502,17 +513,13 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
     _occ_w[e] = _occ_pw[e] = -WEIGHTHUGE;  // unnecessary?
     
-    if ( (_iFlag & SHOW_PROGRESS) && (_II.item_get_t() == 0 ) ){
+    if ( _progressFlag && (_II.item_get_t() == 0 ) ){
       f++; 
       fprintf(stderr,"%d/%d (" LONGF " iterations)\n", f, cnt, _II.get_iters());
     }
   }
 	
-  _TT.set_new_t(new_t);
-  _TT.set_bnum(bnum);
-  _TT.set_bblock(bblock);
-  _TT.set_wnum(wnum);
-  _TT.set_wblock(wblock);
+	_TT.setBaseStsW(bStsSave);
 
 
  END:;
@@ -534,67 +541,45 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 /*************************************************************************/
 int KGLCM::run (int argc, char *argv[]){
 
-  // read_param (argc, argv);
 
 	if( setArgs(argc, argv) ) return 1;
 
-  _tFlag  |= (LOAD_PERM +LOAD_DECSORT +LOAD_RM_DUP);
-
-  //_tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC +TRSACT_ALLOC_OCC + 
-  //							((_iFlag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
-
-  _tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC + 
-  							((_iFlag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
+	_TT.setParams(_tpara);
 
 
-  if ( _iFlag & ITEMSET_RULE ){ _w_lb = -WEIGHTHUGE; } 
-  else												{ _w_lb = _frq_lb;}
-
-
-  if( 
-	  //_TT.load(
-		//	_tFlag,_tFlag2,
-		//	_fname,_wfname,_item_wfname,_fname2,
-		//	_w_lb,_w_ub,_clm_lb_,_clm_ub_,
-		//	_row_lb,_row_ub,_row_lb_,_row_ub_)
-	  _TT.load(
-			_tFlag,_tFlag2,
-			_fname,_wfname,NULL,NULL,
-			_w_lb,WEIGHTHUGE
-		)
-	){
-		return 1;
-	}
+  if( _TT.load() ){ return 1; }
 
 	if ( _sgfname ){ 
 		if (_SG.loadEDGE(LOAD_EDGE + LOAD_RC_SAME , _sgfname)) return 1;
   }
-  
-	_iFlag |= (ITEMSET_ITEMFRQ + ITEMSET_ADD); 
 
-  if (!_wfname){// adjust なぜwegihtがない時だけ
 
-	  ENMIN(_frq_ub, (WEIGHT)_TT.get_t());
-  
-    if( _topk_k > 0 ) _iFlag |= ITEMSET_SC2; 
-
+  if (!_TT.exist_wfname()){// adjust なぜwegihtがない時だけ
+		ENMIN(_ipara._frq_ub, (WEIGHT)_TT.get_t());
   }
 
-	_II.setParams(
+	_II.setParams(_ipara );
+ 
+  if ( _TT.get_clms()>0 ){
+    _init();
+		LCMCORE(_TT.get_clms(), &_oo, _TT.get_total_w_org(), _TT.get_total_pw_org());
+    _II.last_output();
+  }
+
+  return 0;
+}
+
+
+  //_tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC +TRSACT_ALLOC_OCC + 
+  //							((_iFlag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
+
+//    if( _topk_k > 0 ) _iFlag |= ITEMSET_SC2; 
+/*setParams(
 		_iFlag,_frq_lb,_frq_ub,_lb,_ub,_target,
 		_ratio_lb,_ratio_ub,_prob_lb,_prob_ub,
 		_nega_lb,_nega_ub,_posi_lb,_posi_ub,
 		_topk_k,_max_solutions,_separator,_digits
 	);
- 
-  if ( !_ERROR_MES && _TT.get_clms()>0 ){
-    _init();
-    if ( !_ERROR_MES ) LCMCORE(_TT.get_clms(), &_oo, _TT.get_total_w_org(), _TT.get_total_pw_org());
-    _II.last_output();
-  }
 
-  return (_ERROR_MES?1:0);
-}
-
-
+*/
 

@@ -128,7 +128,7 @@ int FILE_COUNT::_file_count_T(IFILE2 &fp,char *wf){
 		_eles_org += k;
 
 		// LOAD_TPOSEの時はこの条件
-		if ( !RANGE( _w_lb, s, _w_ub) || !RANGE (_clm_lb, k, _clm_ub) ){
+		if( !_limVal.clmOK(s,k) ){
 			for(int i0 = 0 ; i0 < k ; i0++){
 				_clmt[jump[i0]]--; 
 			}
@@ -213,7 +213,7 @@ int FILE_COUNT::_file_count(IFILE2 &fp, char *wf){
 		_eles_org += k;
 
 		// NOT LOAD_TPOSEの時はこの条件
-		if( !RANGE (_row_lb, k, _row_ub) ){
+		if( !_limVal.rowOK(k) ){
 			for(int i0=0 ; i0 < k ; i0++ ){
 				_clmt[jump[i0]]--; 
 			}
@@ -265,7 +265,7 @@ int FILE_COUNT::file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2
 
 	}
 
-	_setBoundsbyRate();
+	_limVal.setBoundsbyRate(_rows_org,_clms_org);
 
 	return 0;
 
@@ -494,11 +494,98 @@ void FILE_COUNT::countSG(IFILE2 *rfp,int fe)
 }
 
 //void FILE_COUNT::initCperm(VEC_ID ttt , PERM *p ,QUEUE_INT c_end , bool flag){
-
 // pfname :filename
 // wflg : true:write to pfname file   false: read from pfname file
-
 // このクラス_crpermはいらない？
+void FILE_COUNT::initCperm(int tflag,int tflag2){
+
+	// ttt :perm Size 
+	VEC_ID ttt_max = _clms_org;
+	VEC_ID ttt = _clms_org;
+  PERM *p=NULL;
+
+  // LOAD_PERM TRSACT_FRQSORT  デフォルトでセットされる(LCM) //この辺りも分ける？
+  // LOAD_INCSORTはセットされない(sgflagにセットされるかのうせいあり)
+	if ( tflag&LOAD_PERM ){ 
+		if ( tflag2&TRSACT_FRQSORT ){ 
+			p = _clmw_perm_sort((tflag&LOAD_INCSORT)?1:-1);
+		}
+		else {
+			p = _clmt_perm_sort((tflag&LOAD_INCSORT)?1:-1);
+		}
+	}
+	
+	_clms_end = MAX(_clms_org, ttt_max);
+	_c_eles=0;
+	_c_clms=0;
+
+	_cperm = new PERM[_clms_org+1]; // malloc2
+	for(size_t i =0 ;i<_clms_org;i++){ 
+		_cperm[i] = _clms_org+1; 
+	}
+	VEC_ID tt =0 ;
+	for(size_t t=0; t < ttt; t++){
+		tt = p? p[t]: t;
+		if ( tt >= _clms_org ) continue;
+		    
+		if( _limVal.clmOK(_cw[tt],_clmt[tt]) ){
+			_c_eles += _clmt[tt];
+			_cperm[tt] = _c_clms++ ;
+		}
+		else{
+			_cperm[tt] = _clms_end+1 ;
+		}
+	}
+	delete [] p;
+	return ;
+}
+
+
+//void FILE_COUNT::initRperm(PERM *p , size_t base_clm, size_t base_ele){
+void FILE_COUNT::initRperm(int tflag){
+
+  PERM *p=NULL;
+
+  if( tflag& LOAD_SIZSORT){ //( tflag&(LOAD_SIZSORT+LOAD_WSORT) )
+		p = _rowt_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
+  }
+ 
+	_rperm = new PERM[_rows_org];//malloc2
+			
+	// compute #elements according to rowt, and set rperm
+	VEC_ID tt=0;
+	for( VEC_ID t=0 ; t<_rows_org ; t++){
+		tt = p? p[t]: t; 
+		if(_limVal.rowOK(_rowt[tt])){
+			_rperm[tt] = _r_clms++;
+			_r_eles += _rowt[tt];
+		}
+		else{
+			_rperm[tt] = _rows_org+1;
+		}
+	}
+	return;
+}
+	
+
+void FILE_COUNT::makePerm(int tflag,int tflag2){
+
+	initCperm(tflag,tflag2);
+	if ( _c_clms == 0 ) throw ("there is no frequent item");
+	initRperm( tflag ); 
+
+	return ;
+}
+
+
+/*
+//		if( !RANGE (_row_lb, k, _row_ub) ){
+		//if ( !RANGE( _w_lb, s, _w_ub) || !RANGE (_clm_lb, k, _clm_ub) ){
+		//if(RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) ){
+		//if ( RANGE(_row_lb, _rowt[tt], _row_ub) ){
+
+
+pfnameが必要なら復活させる
 void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
 
 	// ttt :perm Size 
@@ -562,33 +649,6 @@ void FILE_COUNT::initCperm(char *pfname,int tflag,int tflag2){
 	return ;
 }
 
-
-//void FILE_COUNT::initRperm(PERM *p , size_t base_clm, size_t base_ele){
-void FILE_COUNT::initRperm(int tflag){
-
-  PERM *p=NULL;
-
-  if( tflag& LOAD_SIZSORT){ //( tflag&(LOAD_SIZSORT+LOAD_WSORT) )
-		p = _rowt_perm_sort((tflag&LOAD_DECROWSORT)?-1:1);
-  }
- 
-	_rperm = new PERM[_rows_org];//malloc2
-			
-	// compute #elements according to rowt, and set rperm
-	VEC_ID tt=0;
-	for( VEC_ID t=0 ; t<_rows_org ; t++){
-		tt = p? p[t]: t; 
-		if ( RANGE(_row_lb, _rowt[tt], _row_ub) ){
-			_rperm[tt] = _r_clms++;
-			_r_eles += _rowt[tt];
-		}
-		else{
-			_rperm[tt] = _rows_org+1;
-		}
-	}
-	return;
-}
-	
 void FILE_COUNT::makePerm(char *pfname,int tflag,int tflag2){
 
 	initCperm(pfname,tflag,tflag2);
@@ -600,7 +660,7 @@ void FILE_COUNT::makePerm(char *pfname,int tflag,int tflag2){
 
 	return ;
 }
-
+*/
 
 	/* LOAD_WSORTがセットされることがないので
   if ( tflag&(LOAD_SIZSORT+LOAD_WSORT) ){
