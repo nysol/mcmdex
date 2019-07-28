@@ -28,7 +28,6 @@ using namespace std;
 #define TRSACT_INTSEC 2097152 // take intersection of transactions, at the database reduction
 #define TRSACT_MAKE_NEW 4194304  // make new transaction for each 
 #define TRSACT_DELIV_SC 16777216  // look T->sc when delivery
-#define TRSACT_NEGATIVE 33554432  // flag for whether some transaction weights are negative or not 
 #define TRSACT_WRITE_PERM 67108864  // write item-order to file
 #define TRSACT_1ST_SHRINK 134217728  // write item-order to file
 
@@ -81,6 +80,8 @@ struct BaseStatus{//for lcmseq
   VEC_ID _new_t;
 };
 
+
+
 // LCM LCMseqで分ける
 class TRSACT {
 
@@ -94,11 +95,11 @@ class TRSACT {
   WEIGHT *_pw;  // weight/positive-weight of transactions
 
 	// #items in original file, max size of clms, and max of (original item, internal item)
-  QUEUE_INT _clms_org, _clm_max, _clms_end; 
+  QUEUE_INT  _clm_max; 
 
-  VEC_ID  _row_max; // #transactions in the original file
+	// #transactions in the original file
+  VEC_ID  _row_max; 
 
-  size_t _eles_org;  // #elements in the original file
   WEIGHT _total_pw; 
   WEIGHT _th;  // threshold for frequency of items
   PERM *_perm, *_trperm; // original item permutation loaded from permutation file (and inverse)
@@ -159,6 +160,7 @@ class TRSACT {
 	void merge_trsact(QUEUE_INT end);
 
 	void removeDupTrsacts();
+	void removeDupTrsacts(KGLCMSEQ_QUE *o);
 
 	/**************************************************************/
 	/* Find identical transactions in a subset of transactions, by radix-sort like method */
@@ -173,20 +175,44 @@ class TRSACT {
 	/* remove the unified transactions from occ (consider T->occ_unit) */
 	void reduce_occ (QUEUE *occ);
 
+	void Mque_allocELE(VECARY<VEC_ID> &p){
+		size_t cmn_size_t = 0;
+
+		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
+			cmn_size_t += p[cmm_vecid];
+		}
+
+		_OQELE = new KGLCMSEQ_QUE[_T.get_clms()+1];
+
+		char *cmn_pnt;
+		try{ //malloc2
+			if(!( cmn_pnt = (char *)malloc(sizeof(char)* ((cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)))  ))){
+				throw("memory allocation error : malloc2");
+			}
+		}catch(...){
+			delete[] _OQELE;
+			throw;
+		}
+
+		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
+			_OQELE[cmm_vecid].set_end(p[cmm_vecid]);
+			_OQELE[cmm_vecid].set_v((KGLCMSEQ_ELM *)cmn_pnt);
+			cmn_pnt += sizeof(KGLCMSEQ_ELM) * (p[cmm_vecid]+(1));
+		}
+	}
+
 
 	public:
 
 	TRSACT(void):
-  	_clms_org(0),_clm_max(0),_clms_end(0), _row_max(0),
+  	_clm_max(0), _row_max(0),_total_pw(0),
   	_perm(NULL), _trperm(NULL),_pw(NULL),
-  	_eles_org(0),_total_pw(0),
 		_th(1),_mark(NULL),_shift(NULL),_OQ(NULL),_sc(NULL),_new_t(0)
 		{}
 		
 		
 	~TRSACT(){}
 
-	int loadMain(bool elef=false);
 
 	// use by sspc 
 	VEC_ID adjust_sep(VEC_ID sep){
@@ -209,9 +235,7 @@ class TRSACT {
 	  _C.setLimit(_params._limVal);
 	}
 	
-	int load(){
-		return loadMain(_params._eleflg);
-	}
+	int load(void);
 
 	// using only sspc 
 	void initialQueSet(){
@@ -323,7 +347,6 @@ class TRSACT {
 	void set_perm(PERM * perm){ _perm = perm;}
 
 	PERM * get_perm(void){ return _perm;}
-	PERM   get_perm(int i){ return _perm[i];}
 
 
 	VEC_ID get_clms(void){ return _T.get_clms();}
@@ -332,7 +355,6 @@ class TRSACT {
 	VEC_ID get_rows_org(void){ return _C.rows();}//_rows_org;}
 
 
-	PERM get_trperm(int i) { return _trperm[i]; }
 	PERM* get_trperm(void) { return _trperm; } //かり
 
 	char * get_sc(){return _sc; }
@@ -340,7 +362,7 @@ class TRSACT {
 	WEIGHT get_total_pw_org(void){ return _C.get_total_pw_org();}
 
 
-	bool incNega(){ return (_params._flag2 & TRSACT_NEGATIVE); }
+	bool incNega(){ return _C.existNegative(); }
 
 	bool isShrink(){ return (_params._flag2 & TRSACT_SHRINK ); }
 
@@ -348,7 +370,6 @@ class TRSACT {
 	WEIGHT get_w(int i){ return _w[i];}
 
 	WEIGHT * beginTw(int i){ return _T.get_w(i);}
-	WEIGHT * endTw(int i)  { return _T.get_w(i)  + _T.get_vt(i);}
 
 
 	QUEUE_INT * beginTv(int i){ return _T.get_vv(i);}
@@ -371,9 +392,6 @@ class TRSACT {
 	void set_Tvv(int i,int j,QUEUE_INT v) { _T.set_vv(i,j,v);}
 	char  get_sc(int i){return _sc[i]; }
 	void set_sc(int i , char v){ _sc[i]=v; }
-  void inc_OQt(int e){	_OQ[e].inc_t(); }
-	int get_OQ_end(int i){ return _OQ[i].get_end(); }
-  void inc_OQend(int e){	_OQ[e].inc_end(); }
 
   void inc_OQtELE(int e){	_OQELE[e].inc_t(); }
   void inc_OQendELE(int e){	_OQELE[e].inc_end(); }
@@ -382,8 +400,6 @@ class TRSACT {
 	VEC_ID get_mark(int i){ return _mark[i]; }
 
 	QUEUE_ID get_Tvt(int i) { return _T.get_vt(i);}
-	QUEUE* get_OQ(){ return  _OQ;} 
-	QUEUE_INT* get_OQ_v(int i){ return _OQ[i].get_v(); }
 
 	KGLCMSEQ_ELM * get_OQ_vELE(int i){ return _OQELE[i].get_v(); }
 	KGLCMSEQ_QUE *  get_OQELE(){ return  _OQELE;} 
@@ -399,7 +415,7 @@ class TRSACT {
 
 	//再考
 	bool exist_Tw(void)	{ return _T.exist_w();} 
-	bool exist_trperm(void) { return _trperm!=NULL; }
+
 	bool exist_perm(void) { return _perm!=NULL; }
 	bool exist_sc(void) { return _sc!=NULL; }
 	bool exist_wfname(void) { return _params._wfname!=NULL; }
@@ -510,7 +526,6 @@ class TRSACT {
 	//void merge_trsact (QUEUE *o, QUEUE_INT end);
 	void merge_trsact(KGLCMSEQ_QUE *o, QUEUE_INT end);
 
-	void removeDupTrsacts(KGLCMSEQ_QUE *o);
 
 	void dbReduction(QUEUE *occ, QUEUE_INT item){
 
@@ -519,31 +534,6 @@ class TRSACT {
     reduce_occ(occ);
 	}
 
-	void Mque_allocELE(VECARY<VEC_ID> &p){
-		size_t cmn_size_t = 0;
-
-		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
-			cmn_size_t += p[cmm_vecid];
-		}
-
-		_OQELE = new KGLCMSEQ_QUE[_T.get_clms()+1];
-
-		char *cmn_pnt;
-		try{ //malloc2
-			if(!( cmn_pnt = (char *)malloc(sizeof(char)* ((cmn_size_t+(_T.get_clms())+2)*(sizeof(KGLCMSEQ_ELM)))  ))){
-				throw("memory allocation error : malloc2");
-			}
-		}catch(...){
-			delete[] _OQELE;
-			throw;
-		}
-
-		for(VEC_ID cmm_vecid=0; cmm_vecid < _T.get_clms() ; cmm_vecid++){
-			_OQELE[cmm_vecid].set_end(p[cmm_vecid]);
-			_OQELE[cmm_vecid].set_v((KGLCMSEQ_ELM *)cmn_pnt);
-			cmn_pnt += sizeof(KGLCMSEQ_ELM) * (p[cmm_vecid]+(1));
-		}
-	}
 
 	void printMes(const char *frm ,...){
 
@@ -554,144 +544,21 @@ class TRSACT {
 				va_end(ap);
 			}
 		}
-	
-	
+		
 } ;
 
-
-//	void set_sc(char* v){_sc=v;}
-
-//_str_num(0),
-//  VEC_ID _str_num;  // number of database (itemset stream/string datasets) in T
-  
-
-	/*****************************************/
-	/* scan file "fp" with weight file wfp and count #items, #transactions in the file. */
-	/*   count weight only if wfp!=NULL                                      */
-	/* T->rows_org, clms_org, eles_org := #items, #transactions, #all items  */
-	/*   ignore the transactions of size not in range T->clm_lb - clm_ub     */ 
-	/* T->total_w, total_pw := sum of (positive) weights of transactions     */
-	/* C.clmt[i],C.cw[i] := the number/(sum of weights) of transactions including i  */
-	/****************************************/
-	//int file_count (FILE_COUNT *C, FILE2 *fp, char *wf);
-	//void _file_read( FILE2 *fp, FILE_COUNT *C, VEC_ID *t, int flag, char *iwfname);
+//#define TRSACT_NEGATIVE 33554432  // flag for whether some transaction weights are negative or not 
+//, _clms_end;_clms_end(0),_clms_org,_clms_org(0),
+//  size_t _eles_org;  // #elements in the original file
+//	QUEUE* get_OQ(){ return  _OQ;} 
+//	QUEUE_INT* get_OQ_v(int i){ return _OQ[i].get_v(); }
+//	bool exist_trperm(void) { return _trperm!=NULL; }
 
 
-/*
-  int _flag;      
-  int _flag2;  // <= いる？
-  char *_fname,*_fname2;	// input file name
-	char *_wfname;      		// weight file name 
-	char *_item_wfname;  		// item-weight file name
-  char *_pfname; 					// item-permutation file name //つかってない？
-*/
+//  void inc_OQt(int e){	_OQ[e].inc_t(); }
+//	int get_OQ_end(int i){ return _OQ[i].get_end(); }
+//  void inc_OQend(int e){	_OQ[e].inc_end(); }
 
-/*
-	void set_bnum(int v){return _buf.set_num(v);}  
-	void set_bblock(int v){return _buf.set_block_num(v);} 
-	void set_wnum(int v){return _wbuf.set_num(v);}  
-	void set_wblock(int v){return _wbuf.set_block_num(v);} 
-	void set_new_t(VEC_ID v){ _new_t=v;}
-	int get_bnum(void){return _buf.get_num();}  
-	int get_bblock(void){return _buf.get_block_num();} 
-	int get_wnum(void){return _wbuf.get_num();}  
-	int get_wblock(void){return _wbuf.get_block_num();} 
-	VEC_ID get_new_t(){ return _new_t;}
-*/
-
-
-	/* occurrence deliver (only counting) */
-	/* WARNING: next cell of the last item of each transaction must be INTHUGE */
-	/* compute occurrence for items less than max item, in the database induced
-	 by occ */
-
-	/* if jump!=0, all i with non-zero occ[i].t will be inserted to jump */
-	/* be careful for overflow of jump */
-	/* if occ==NULL, scan all transactions */
-	/* flag&1: count only positive weights */
-	//void delivery_iter ( WEIGHT *w, WEIGHT *pw, VEC_ID t, QUEUE_INT m);
-	//void delivery (QUEUE *jump, WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m);
-
-//#define TRSACT_ALLOC_OCC 8388608  // make new transaction for each 
-//#define TRSACT_INIT_SHRINK 65536  // allocate memory for database reduction
-//PERM * _cPerm, * _rPerm;
-//,*_wfname2 <-必要なら復活させる 
-//, *_item_wfname2 <-必要なら復活させる // item-weight file name
-// VEC_ID _rows_org, _row_max; // #transactions in the original file
-//_flag(0),_flag2(0),
-// _clm_lb(0),_clm_ub(VEC_ID_END),_row_lb(0),_row_ub(QUEUE_IDHUGE),
-// _clm_lb_(0.0),_clm_ub_(0.0),_row_lb_(0.0),_row_ub_(0.0),
-// _w_lb(-WEIGHTHUGE), _w_ub(WEIGHTHUGE),	/*_rows_org(0),*/
-// _sep(0),_end1(0),
-
-	//VEC_ID get_sep(){ return _sep;}
-
-  // VEC_ID _end1 _sep #trsact in 1st file, the ID of the last permed trsact of 1st file
-
-// _total_w使ってない
-// WEIGHT _total_w, 
-//_total_w(0),
-//	WEIGHT get_total_w(void){ return _total_w;}
-
-  // lower/upper bound of #elements in a column/row. 
-  // colunmn or row of out of range will be ignored
-//  	_fname(NULL),_wfname(NULL),_item_wfname(NULL),_fname2(NULL),_pfname(NULL),
-  /*
-  WEIGHT   _w_lb, _w_ub;
-  double   _clm_lb_, _clm_ub_;
-  QUEUE_ID _row_lb, _row_ub;
-  double   _row_lb_, _row_ub_;  
-  VEC_ID _clm_lb, _clm_ub; 
-
-  */
-	// デストラクタへ
-	//void end (void){}
-
-
-/*	
-	int load( // lcm lcmseq
-		int flag ,int flag2 ,
-		char *fname,char *wfname,char *iwfname,char *fname2,
-		WEIGHT w_lb,WEIGHT w_ub,bool eleflg=false
-	){
-	
-		_params._flag = flag;
-		_params._flag2 = flag2;
-		_params._fname = fname;
-		_params._wfname = wfname;
-		_params._iwfname = iwfname;
-		_params._fname2 = fname2; 
-
-	  _C.setLimit( w_lb , w_ub );
-
-		return loadMain(eleflg);
-		
-	}
-*/
-
-/*
-
-	// load transaction file to TRSACT 
-	int load( //sspc
-		int flag ,
-		char *fname,char *wfname,char *iwfname,char *fname2,
-		WEIGHT w_lb,WEIGHT w_ub,
-		double clm_lb_  , double clm_ub_ ,
-		QUEUE_ID row_lb , QUEUE_ID row_ub ,
-		double row_lb_  , double row_ub_
-	){
-		_params._flag = flag;
-		_params._fname = fname;
-		_params._wfname = wfname;
-		_params._iwfname = iwfname;
-		_params._fname2 = fname2; 
-
-	  _C.setLimit(
-	  	w_lb   , w_ub   ,
-	  	clm_lb_, clm_ub_,
-	  	row_lb , row_ub ,
-	  	row_lb_, row_ub_
-	  );
-		return loadMain();
-	}
-*/
+// 	PERM get_trperm(int i) { return _trperm[i]; }
+//	PERM   get_perm(int i){ return _perm[i];}
+//	WEIGHT * endTw(int i)  { return _T.get_w(i)  + _T.get_vt(i);}

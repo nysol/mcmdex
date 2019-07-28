@@ -166,9 +166,9 @@ int KGSSPC::setArgs(int argc, char *argv[]){
       break; case 'W':
       	_tpara._iwfname = argv[c+1];
  
-      break; case 'c': 
-				_dir = 1; 
-				_sep = _root = atoi(argv[c+1]) ;
+      //break; case 'c':  //別途考える
+			//	_dir = 1; 
+			//	_sep = _root = atoi(argv[c+1]) ;
 
       break; case '2': 
       	_tpara._fname2 = argv[c+1];
@@ -221,7 +221,7 @@ int KGSSPC::setArgs(int argc, char *argv[]){
 
 	_ipara._flag = iflag;
 
- 	if ( _ipara._len_ub < INTHUGE || _ipara._len_lb > 0 ){ //これはsetargsで
+ 	if ( _ipara._len_ub < INTHUGE || _ipara._len_lb > 0 ){ 
  		tflag |= (LOAD_SIZSORT+LOAD_DECROWSORT);
  	}
 	_tpara._flag = tflag;
@@ -278,6 +278,7 @@ void KGSSPC::output( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, 
       SPIN_UNLOCK (_II.get_multi_core(), _II.get_lock_counter());  // unlock!!
 
     }
+
   } 
   else if ( _problem & SSPC_COUNT ){
   	(*cnt)++;
@@ -296,11 +297,12 @@ void KGSSPC::output( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, 
     	itemset->set_v(0, _positPERM[i]); 
     	itemset->set_v(1,_positPERM[ii]); 
     }
-  
+    /*
     if ( (_problem&PROBLEM_NORMALIZE)&& _dir>0 ){
       if ( i  >= _sep ) itemset->minus_v(0,_root);
       if ( ii >= _sep ) itemset->minus_v(1,_root);
     }
+    */
 
     if ( _itemtopk_end > 0 ){
       _II.output_itemset_k ( itemset, frq, frq,  i, ii, core_id);
@@ -327,11 +329,12 @@ void KGSSPC::comp2 (
 
   if ( !_table_fname ){ x_ = _positPERM[x_]; i_ = _positPERM[i_]; }
 
+	/*
   if ( (_problem&PROBLEM_NORMALIZE)&& _dir>0 ){
     if ( i_ >= _sep ) i_ -= _root;
     if ( x_ >= _sep ) x_ -= _root;
   }
-
+	*/
 	// threshold for the intersection size 
   if ( c < _th ) return;  
 
@@ -423,7 +426,9 @@ void *KGSSPC::iter (void *p){
   QUEUE_ID ii=0, t, m;
   QUEUE_INT i=0, i_=0, ff;
   QUEUE_INT *OQend,  *x, *oi, *oj;
-  QUEUE_INT cnt = ((_problem&SSPC_COMP_ITSELF) && _dir == 0)?1:0;
+  //QUEUE_INT cnt = ((_problem&SSPC_COMP_ITSELF) && _dir == 0)?1:0;
+	QUEUE_INT cnt = ( _problem&SSPC_COMP_ITSELF )?1:0;
+
 
   WEIGHT *occ_w,  c, *y;
   WEIGHT yy=0, wi=0, wx=0;
@@ -468,7 +473,9 @@ void *KGSSPC::iter (void *p){
     if ( (_problem & SSPC_INNERPRODUCT) && !_TT.exist_Tw() ) sq = sqrt (w[i]);
 
     if ( _problem & (SSPC_POLISH+SSPC_POLISH2) ) m = _TT.get_clms();
-    else m = (_dir>0)?_sep:i;
+  	else m = i;
+
+  	//else m = (_dir>0)?_sep:i;
 
     jump.setEndByStart(); //jump.set_t(jump.get_s());
 
@@ -560,14 +567,18 @@ void *KGSSPC::iter (void *p){
     }
 
 		// selfcomparison
-    if ((_problem & SSPC_COMP_ITSELF) && _dir == 0) {
-
-        output (
-        	&cnt, i, i, &itemset, 
-        	((_problem&PROBLEM_NORMALIZE)&& _dir>0)? i- _sep: i, //_dir>0ありえない
-        	core_id
-        );
-        
+    //if ((_problem & SSPC_COMP_ITSELF) && _dir == 0) {
+    //    output (
+    //    	&cnt, i, i, &itemset, 
+    //    	((_problem&PROBLEM_NORMALIZE)&& _dir>0)? i- _sep: i, //_dir>0ありえない
+    //    	core_id
+    //    );
+		//	}
+		
+    
+		// selfcomparison
+    if ((_problem & SSPC_COMP_ITSELF) ) {
+        output ( &cnt, i, i, &itemset, i, core_id );
     }
 
 		// data polish;  clear OQ, and marks
@@ -576,7 +587,6 @@ void *KGSSPC::iter (void *p){
       if ( _problem & SSPC_POLISH2 ){
           for (b=_itemary[i] ; b ; b=_buf[b]) _vecchr[_buf[b+1]] = 1;
       }
-
       f = 0;
 
       for(QUEUE_INT *iq = _TT.startOQv(i) ; iq < _TT.endOQv(i) ; iq++ ){
@@ -658,7 +668,8 @@ void KGSSPC::_SspcCore(){
 
 
   QUEUE_ID i; 
-  QUEUE_ID begin = (_problem&(SSPC_POLISH+SSPC_POLISH2))?0:(_dir>0?_sep:0);
+  //QUEUE_ID begin = (_problem&(SSPC_POLISH+SSPC_POLISH2))?0:(_dir>0?_sep:0);
+  QUEUE_ID begin =0;
   QUEUE_INT **o=NULL;
   WEIGHT *w;
   int cnt;
@@ -685,7 +696,8 @@ void KGSSPC::_SspcCore(){
 	o = _TT.skipLaegeFreqItems(_ipara._len_lb);
 
 	// selfcomparison
-  if ((_problem & SSPC_COMP_ITSELF) && _dir == 0){ 
+  //if ((_problem & SSPC_COMP_ITSELF) && _dir == 0){ 
+  if ((_problem & SSPC_COMP_ITSELF)){ 
  		QUEUE itemset(2,2);
 		output( &cnt, 0, 0, &itemset, 0, 0);
     itemset.clear();
@@ -768,8 +780,8 @@ int KGSSPC::run (int argc ,char* argv[]){
 
   if( _TT.load()){ return 1; }
 
-	// _sep -cの指定がある時に利用される ここでOK？もとはTT.alloc
-	_sep = _TT.adjust_sep(_sep); // 
+	//_sep -cの指定がある時に利用される ここでOK？もとはTT.alloc
+	//_sep = _TT.adjust_sep(_sep); // 
 
   if ( _ipara._len_ub < INTHUGE ){ _ipara._len_lb = _TT.addjust_lenlb(_ipara._len_ub,_ipara._len_lb); }
 
@@ -778,18 +790,10 @@ int KGSSPC::run (int argc ,char* argv[]){
 
 	_II.setParams( _ipara );
 
-/*
-	_II.setParams(
-		_iFlag,_frq_lb,_len_ub,_len_lb,
-		_topk_k,
-		_itemtopk_item,_itemtopk_item2,_itemtopk_end,
-		_multi_core,_max_solutions,_separator
-	);
-*/
 
 	_preALLOC();
 	
-	_TT.printMes("separated at "VEC_IDF"\n", _sep);
+	//_TT.printMes("separated at "VEC_IDF"\n", _sep);
 
   _buf_end = 2;
   _positPERM = _II.get_perm();
@@ -820,144 +824,3 @@ vector<LONG> KGSSPC::mrun(int argc ,char* argv[]){
 	mod.run(argc,argv);
 	return mod.iparam();
 }
-
-
-/*
-//   if ( strchr (argv[c], 'M') ) _problem |= SSPC_MATRIX; (SSPCmat)
-//   あとで実装
-      break; case 'P': 
-      	_table_fname = argv[c+1];
-        if ( _tFlag & LOAD_TPOSE ) _tFlag -= LOAD_TPOSE; 
-        else                       _tFlag |= LOAD_TPOSE;
-
-    // HELPにもなにので後回し
-		if ( _table_fname ){ list_comp(); }
-    else if(_problem&SSPC_MATRIX){ SSPCmat();  }// HELPにもなにので後回し
-    else {
-    }
-    //
-
-// unify & SIZSORT & itemweigts are not yer implemented  
-// not yet checked -L,-U option, -l.-u, -i,-I options 
-void KGSSPC::list_comp(){
-
-  LONG i, j;
-  QUEUE_INT *x, *y, *yy;
-  WEIGHT *xw=0, *yw=0, c, *w, wx, wi;
-  FILE2 fp;
-  OFILE2 fp2;
-  
-  int cnt=0;
-
-	// for outputting usual numbers in ITEMSET_output_itemset, 
-	// that are not items (o.w., will be permuted by II->perm)
-  PERM *p = _II.get_perm();
-  _II.set_perm(NULL); 
-
-
-  if ( _output_fname2 ) fp2.open(_output_fname2);
-
-  _II.set_itemset_t(2);
-
-  w = new WEIGHT[_TT.get_t()]();  //calloc2
-
-  if ( (_problem & SSPC_INNERPRODUCT) && !_TT.exist_Tw() ){
-		_TT.multipule_w();
-  }
-
-  for(i=0; i < _TT.get_t() ;i++ ){
-    w[i] = 0;
-    if ( (_problem & SSPC_INNERPRODUCT) && _TT.exist_Tw()){
-
-			for ( WEIGHT * yw =_TT.beginTw(i) ; yw < _TT.endTw(i) ; yw++){
-				w[i] += (*yw)*(*yw);
-			}
-      w[i] = sqrt (w[i]);
-			for ( WEIGHT * yw =_TT.beginTw(i) ; yw < _TT.endTw(i) ; yw++){
-				(*yw) /= w[i];
-			}
-
-    } else {
-
-			for(x=_TT.beginTv(i) ; x < _TT.endTv(i) ; x++){
-				w[i] += _TT.get_w(*x);		
-			}
-
-    }
-  }
-
-	fp.open( _table_fname, "r");
-  do {
-
-    if ( fp.read_pair ( &i, &j, &c, 0) ) continue;
-
-    y  = _TT.beginTv(j);
-    yy = _TT.endTv(j); 
-
-    c = 0; wi = w[i], wx = w[j];
-
-    if ( _TT.exist_Tw() ){ 
-    	xw = _TT.beginTw(i); 
-    	yw = _TT.beginTw(j); 
-    }
-
-    if (_problem & SSPC_NO_NEIB){
-
-      //MQUE_FLOOP_CLS (_TT.get_Tv(i), x){
-			for(x=_TT.beginTv(i);x<_TT.endTv(i) ; x++){
-
-        if ( *x == j ) {
-        	wi -= (_problem & SSPC_INNERPRODUCT)?  (*xw) * (*xw): _TT.get_w(*x);
-        }
-        while (*y < *x){
-          if ( *y == i ) {
-	          wx -= (_problem & SSPC_INNERPRODUCT)?  (*yw) * (*yw): _TT.get_w(*y);
-	        }
-          y++; yw++;
-          if ( y == yy ) goto END2;
-        }
-        if ( *x == *y && *x != j && *y != i ){  // for usual
-          if ( _TT.exist_Tw() ){
-            if (_problem & SSPC_INNERPRODUCT){
-              c += (*xw) * (*yw);
-            } else c += *yw;
-          } else c += _TT.get_w(*x);
-        }
-        xw++;
-        END2:;
-      }
-      while (y != yy){
-        if ( *y == i ) wx -= (_problem & SSPC_INNERPRODUCT)?  (*yw) * (*yw): _TT.get_w(*y);
-        y++; yw++;
-      }
-    } else {
-
-			for(x=_TT.beginTv(i);x<_TT.endTv(i) ; x++){
-
-        while (*y < *x){
-          y++; yw++;
-          if ( y == yy ) goto END;
-        }
-
-        if ( *x == *y ){  
-          if ( _TT.exist_Tw() ){
-            if (_problem & SSPC_INNERPRODUCT){
-              c += (*xw) * (*yw);
-            } else c += *yw;
-          } else c += _TT.get_w(*x);
-        }
-      }
-      xw++;
-      END:;
-    }
-    comp2( i, j, c, wi, wx, sqrt(w[i]), &cnt, &fp2, _II.getp_itemset(), 0);
-
-  } while ( fp.NotEof() );
-  
-  _II.set_perm(p);
-
-	delete [] w;
-
-}
-
-*/

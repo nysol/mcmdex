@@ -97,19 +97,16 @@ void TRSACT::_alloc(){
 
   if ( _params._flag2&TRSACT_SHRINK ) _params._flag |= LOAD_DBLBUF;
 
-	_clms_end = _C.c_end();
-
 	_T.setSize(_C,_params._flag); // _Tのバッファ _v _bufもセットされる
 
   _w.malloc2( _T.get_end());
 
-  if ( _params._flag2&TRSACT_NEGATIVE ) { 	// たぶんこう？
+  if ( _C.existNegative() ){
   	_pw = new WEIGHT[_T.get_end()]; //malloc2
   }
   else{
   	_pw = NULL;
   }
-
 
   _perm = new PERM[_T.get_clms()+1](); //calloc2 
 
@@ -161,12 +158,11 @@ void TRSACT::_alloc(){
 	
   // make the inverse perm of items
   for(VEC_ID t =0 ; t < _C.clms() ; t++ ){
-    if ( _C.cperm(t) <= _clms_end ){
+    if ( _C.cperm(t) <= _C.c_end() ){
       _perm[_C.cperm(t)] = t;
     }
   }
 
-	// _sep = _C.adjust_sep(_sep,_end1,_flag&LOAD_TPOSE);
   _new_t = _T.get_t();
 
   return ;
@@ -184,11 +180,7 @@ void TRSACT::_file_read (IFILE2 &fp, IFILE2 &fp2,  int flag)
 
   if ( flag ) {  _T.setVBuffer(0, 0); }
 
-  fp.reset();
-  if(_params._flag&(LOAD_GRAPHNUM)){
-  	fp.read_until_newline(); 
-  }
-	  
+  fp.reset();	  
   if( _params._iwfname ){ // sspcでitem weightを指定した時のみ
 	  IFILE2 wfp(_params._iwfname);
 		_T.file_read( fp , wfp, _C , &t , flag , _params._flag);
@@ -201,9 +193,6 @@ void TRSACT::_file_read (IFILE2 &fp, IFILE2 &fp2,  int flag)
 	// fp2にアイテムファイルは指定できないようになってたので
 	if( fp2.exist() ){
 		fp2.reset();
-	  if(_params._flag&(LOAD_GRAPHNUM)){
-  		fp2.read_until_newline (); 
-  	}
 		_T.file_read( fp2 , _C , &t , flag , _params._flag);
 	}
 
@@ -353,7 +342,7 @@ void TRSACT::_sortELE(){
 }
 
 // load transaction file and its weight 
-int TRSACT::loadMain(bool elef){
+int TRSACT::load(void){
 
   IFILE2 fp(_params._fname) , fp2(_params._fname2) ;
 
@@ -366,8 +355,6 @@ int TRSACT::loadMain(bool elef){
 	  fprintf(stderr,"file_count ERROR");
   	return 1;
   }
-
-	if( _C.existNegative()){ _params._flag2 |= TRSACT_NEGATIVE; }
 	
  	_C.makePerm(_params._flag ,_params._flag2); //cperm, rperm
 
@@ -382,12 +369,10 @@ int TRSACT::loadMain(bool elef){
   
   _alloc();
 
-  VEC_ID t=0;
-
   _file_read( fp , fp2 , f);
 
-  if(elef){ _sortELE(); }
-	else    { _sort   (); }
+  if(_params._eleflg){ _sortELE(); }
+	else               { _sort   (); }
 
   prop_print();
 
@@ -406,7 +391,7 @@ void TRSACT::delivery (WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m){
     		w, pw, *b, m ,
     		&_jump,_OQ,
     		_w,_pw,
-    		_params._flag2&TRSACT_NEGATIVE
+    		_C.existNegative()
     	);
 	  }
 
@@ -417,7 +402,8 @@ void TRSACT::delivery (WEIGHT *w, WEIGHT *pw, QUEUE *occ, QUEUE_INT m){
     	_T.delivery_iter( 
     		w, pw, t, m ,
     		&_jump,_OQ, _w,_pw,
-    		_params._flag2&TRSACT_NEGATIVE);
+    		_C.existNegative()
+    	);
     }
 	}
 }
@@ -643,7 +629,7 @@ void TRSACT::copy ( VEC_ID tt, VEC_ID t, QUEUE_INT end){
 
   _T.set_vv(tt, buf);
   _w[tt] = _w[t];
-  if ( _params._flag2&TRSACT_NEGATIVE ) _pw[tt] = _pw[t];
+  if ( _C.existNegative() ) _pw[tt] = _pw[t];
 
 	for(x=_T.get_vv(t); *((QUEUE_INT *)x)<(end) ; x++){
     if ( !_sc[*x] ){
@@ -947,28 +933,4 @@ void TRSACT::print ( QUEUE *occ, PERM *p){
   }
 }
 
-/*****************************************/
-/* load transaction file and its weight  */
-// _fname
-// _wfname (-w:sspcの場合) 
-// _item_wfname (-W:sspcの場合)
-// _fname2  (-2:sspcの場合)
-// 以下二つは指定される事がない
-// 必要であれば追加する
-// _wfname2  
-// _item_wfname2
-/*****************************************/
-//int TRSACT::loadMain(bool elef){
-
-
-////QQ[_T.get_clms()].dec_t();
-//_mark[QQ[_T.get_clms()].get_v(QQ[_T.get_clms()].get_t())] = 1;
-//  =>	_mark[QQ[_T.get_clms()].pop_back()] = 1;
-
- //	_C.makePerm(_pfname ,_params._flag ,_params._flag2); //cperm, rperm
-
-// if(_pfname)      { fprintf(stderr," ,item-order-file %s", _pfname); }
-      //if ( T->T.w ) printf ("(" WEIGHTF ")", T->T.w[t][j]);
-    //if ( T->w ) printf (" :" WEIGHTF " ", T->w[t]);
-    //printf (" (" QUEUE_INTF ")\n", T->T.v[t].end);
 

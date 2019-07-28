@@ -27,14 +27,23 @@
  #endif
 #endif
 
+//, *_buf2
+//	char *_ERROR_MES;
+//_buf2(NULL),
+//,_unit(sizeof(QUEUE_INT))
+//  char *_fname;  // input file name
+//_fname(NULL),
 
 class SETFAMILY{
 
-  char *_fname;  // input file name
-  int _flag;         // flag
+  int _flag;
+  // check
+  // LOAD_DBLBUF LOAD_ARC ,LOAD_INCSORT ,LOAD_DECSORT
+  // LOAD_SIZSORT LOAD_WSORT LOAD_DECROWSORT
+
   VEC_ID _end;
   VEC_ID _t;
-  QUEUE_INT *_buf, *_buf2;
+  QUEUE_INT *_buf;
   VEC_ID _clms;
   size_t _eles, _ele_end;
   WEIGHT *_rw, **_w, *_wbuf;
@@ -46,7 +55,6 @@ class SETFAMILY{
 
   QUEUE *_v;
   
-	char *_ERROR_MES;
 
 	//void _flie_load(FILE2 &fp, FILE_COUNT &C);
 	void _flie_load(IFILE2 &fp);
@@ -54,54 +62,38 @@ class SETFAMILY{
 	void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
 
 
-		void any_INVPERMUTE_rw(PERM * rperm){
+	void any_INVPERMUTE_rw(PERM * rperm){
 
-		  WEIGHT w;
+		WEIGHT w;
 
-			char  * cmm_p;
-			int i1,i2;
+		int i1,i2;
+		char  *cmm_p =  new char[_t](); //calloc2
 
-			//cmm_p = calloc2(cmm_p,_t);
-			cmm_p = new char[_t]();
-
-			for(i1=0; i1 < _t ; i1++){
-				if ( cmm_p[i1]==0 ){ 
-					w = _rw[i1]; 
-					do{ 
-						i2 = i1;
-						i1 = rperm[i1];
-						_rw[i2] = _rw[i1];
-						cmm_p[i2] = 1 ;
-					} while(cmm_p[i1]==0) ;
-					_rw[i2] = w; 
-				}
+		for(i1=0; i1 < _t ; i1++){
+			if ( cmm_p[i1]==0 ){ 
+				w = _rw[i1]; 
+				do{ 
+					i2 = i1;
+					i1 = rperm[i1];
+					_rw[i2] = _rw[i1];
+					cmm_p[i2] = 1 ;
+				} while(cmm_p[i1]==0) ;
+				_rw[i2] = w; 
 			}
-			delete [] cmm_p; 
 		}
-
- /*
- 	必要なら考える
-	int __qqsort_cmp_(const void *x, const void *y){
-		if (_v[*(PERM *)(x)] < _v[*(PERM *)(y)]) return (-1); 
-		else return ( _v[*(PERM *)(x)] > _v[*(PERM *)(y)] ); 
+		delete [] cmm_p; 
 	}
-
-	int __qqsort_cmp__(const void *x, const void *y){
-		if ( _v[*(PERM *)(x)] > _v[*(PERM *)(y)] ) return (-1); 
-		else return (_v[*(PERM *)(x)] < _v[*(PERM *)(y)] ); 
-	}
-	*/
 
 	public:
 
 		SETFAMILY():
-			_fname(NULL), _flag(0),_v(NULL),
-			_end(0),_t(0),_buf(NULL),_buf2(NULL),_clms(0),_eles(0),_ele_end(0),
-			_rw(NULL),_w(NULL),_wbuf(NULL),_unit(sizeof(QUEUE_INT)),
-  		_rperm(NULL),_cperm(NULL),_ERROR_MES(NULL){}
+			 _flag(0),_v(NULL),
+			_end(0),_t(0),_buf(NULL),_clms(0),_eles(0),_ele_end(0),
+			_rw(NULL),_w(NULL),_wbuf(NULL),
+  		_rperm(NULL),_cperm(NULL){}
 
 		~SETFAMILY(){
-			mfree (_buf2, _rw, _wbuf, _w, _cperm);
+			mfree ( _rw, _wbuf, _w, _cperm);
 			delete []  _rperm;
 			delete []  _buf;
 			delete []  _v;
@@ -111,15 +103,11 @@ class SETFAMILY{
 		void sort();
 		void sort(int flag);
 
-		void alloc_w (){ _w = new WEIGHT*[_end]();}  //calloc2 (_w, _end, EXIT)
-
+		void alloc_w (){ 
+			_w = new WEIGHT*[_end]();//calloc2
+		}
 		void alloc_weight (FILE_COUNT &fc);
 
-		void show(){
-			for(int i=0;i<_end;i++){
-				_v[i].show();
-			}
-		}
 
 		//void load(int flag , char *fname);
 		//void load (FILE2 &fp, FILE_COUNT &C, int flag);
@@ -129,7 +117,8 @@ class SETFAMILY{
 		void file_read(IFILE2 &fp,            FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 		void file_read(IFILE2 &fp,IFILE2 &wfp, FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 
-
+		//readFile(IFILE2 &fp, IFILE2 &fp2, int flag);
+		
 		void clrMark(int i,char* mark){
 			_v[i].clrMark(mark);
 		}
@@ -273,7 +262,8 @@ class SETFAMILY{
 		  _v = new QUEUE[_end];  //malloc2(_v, _end);
 		}
 		void alloc_buf(){
-		  _buf = new QUEUE_INT[_eles+_end+1]; //malloc2 (buf,(_eles+_end+1)*_unit);
+			//malloc2 (buf,(_eles+_end+1)*_unit);
+		  _buf = new QUEUE_INT[_eles+_end+1]; 
 		}
 
 		void setSize(FILE_COUNT &_C,int flag){			
@@ -460,8 +450,9 @@ class SETFAMILY{
 
   	VEC_ID get_t(void){ return _t; }
   	VEC_ID get_clms(void){ return _clms; }
-  	size_t get_eles(void){ return _eles; }
   	VEC_ID get_end(void){ return _end; }
+
+  	size_t get_eles(void){ return _eles; }
 
   	void set_w(int i,int j,WEIGHT w){ _w[i][j]=w;}
   	void set_w(int i,WEIGHT *w){ _w[i]=w;}
@@ -472,6 +463,10 @@ class SETFAMILY{
 		void setInvPermute(PERM *rperm,PERM *trperm,int flag);
 		void replace_index(PERM *perm, PERM *invperm);
 
+
+};
+
+/*
 		void printMes(char *frm ,...){
 
 			if( _flag&1 ){
@@ -482,7 +477,24 @@ class SETFAMILY{
 			}
 		}
 
-};
+		void show(){
+			for(int i=0;i<_end;i++){
+				_v[i].show();
+			}
+		}
+*/
+ /*
+ 	必要なら考える
+	int __qqsort_cmp_(const void *x, const void *y){
+		if (_v[*(PERM *)(x)] < _v[*(PERM *)(y)]) return (-1); 
+		else return ( _v[*(PERM *)(x)] > _v[*(PERM *)(y)] ); 
+	}
+
+	int __qqsort_cmp__(const void *x, const void *y){
+		if ( _v[*(PERM *)(x)] > _v[*(PERM *)(y)] ) return (-1); 
+		else return (_v[*(PERM *)(x)] < _v[*(PERM *)(y)] ); 
+	}
+	*/
 
 
 /*

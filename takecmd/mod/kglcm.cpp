@@ -570,16 +570,3 @@ int KGLCM::run (int argc, char *argv[]){
 }
 
 
-  //_tFlag2 |=  TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC +TRSACT_ALLOC_OCC + 
-  //							((_iFlag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
-
-//    if( _topk_k > 0 ) _iFlag |= ITEMSET_SC2; 
-/*setParams(
-		_iFlag,_frq_lb,_frq_ub,_lb,_ub,_target,
-		_ratio_lb,_ratio_ub,_prob_lb,_prob_ub,
-		_nega_lb,_nega_ub,_posi_lb,_posi_ub,
-		_topk_k,_max_solutions,_separator,_digits
-	);
-
-*/
-

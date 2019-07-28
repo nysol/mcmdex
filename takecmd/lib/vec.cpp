@@ -26,7 +26,6 @@ void SETFAMILY::alloc (VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles){
   ]();
 
   try {
-	 //_v = malloc2 (_v, rows+1 );
 	 _v = new QUEUE[rows+1];
 	} catch(...){
 		free(_buf);
@@ -127,22 +126,7 @@ void SETFAMILY::sort(){
 			_v[i].rm_dup_WEIGHT( _w?_w[i]:NULL);
 		}
   }
-
 }
-/*
-必要なら考える
-PERM *SETFAMILY::__qsort_perm_v(int unit){
-
-	PERM *sortPerm = new PERM[_t];
-	for(size_t i=0 ; i<_t; i++){ sortPerm[i]=i; }
-	if ( unit == 1 || unit==-1 ) unit *= sizeof(QUEUE);
-
- 	if (unit<0) qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp__);
-	else        qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp_);
-
-	return sortPerm;
-}
-*/
 
 void SETFAMILY::sort(int sflag){
 	
@@ -308,7 +292,7 @@ void SETFAMILY::file_read(
 
     if ( fp.Null() ) goto LOOP_END; //FILE_err&4
 
-  	if( tflag & LOAD_ID1 ){ y--; x--; }
+  	//if( tflag & LOAD_ID1 ){ y--; x--; }
 
 	  if ( (tflag & LOAD_TPOSE) || ((tflag&LOAD_EDGE) && x > y) ){
   		SWAP_<LONG>(&x, &y);
@@ -352,8 +336,6 @@ void SETFAMILY::file_read(
     if ( fp.Null() ) goto LOOP_END; //FILE_err&4
 
     if ( C.rperm(x)<=C.rows() && C.cperm(y) <= C.c_end() ){
-      // _T.push_back( C->get_rperm(x) ,C->get_cperm(y));
-      // _T.setwByIW( C->get_rperm(x), w);
   		_w[ C.rperm(x) ][ _v[C.rperm(x)].get_t() ] = w;
       _v[ C.rperm(x) ].push_back( C.cperm(y) );
 
@@ -490,7 +472,51 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 }
 
 
+/*
+必要なら考える
+PERM *SETFAMILY::__qsort_perm_v(int unit){
 
+	PERM *sortPerm = new PERM[_t];
+	for(size_t i=0 ; i<_t; i++){ sortPerm[i]=i; }
+	if ( unit == 1 || unit==-1 ) unit *= sizeof(QUEUE);
+
+ 	if (unit<0) qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp__);
+	else        qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp_);
+
+	return sortPerm;
+}
+*/
+
+/* load the file to allocated memory according to permutation */
+// flag ( _C.r_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
+/*
+void SETFAMILY::readFile(IFILE2 &fp, IFILE2 &fp2,  int flag)
+{ 
+
+  QUEUE_ID tt;
+  VEC_ID t=0;
+
+  if ( flag ) {  setVBuffer(0, 0); }
+
+  fp.reset();	  
+  if( _params._iwfname ){ // sspcでitem weightを指定した時のみ
+	  IFILE2 wfp(_params._iwfname);
+		_T.file_read( fp , wfp, _C , &t , flag , _params._flag);
+ }
+  else{
+		_T.file_read( fp , _C , &t ,flag , _params._flag);
+	}
+
+	// fp2にアイテムファイルは指定できないようになってたので
+	if( fp2.exist() ){
+		fp2.reset();
+		_T.file_read( fp2 , _C , &t , flag , _params._flag);
+	}
+
+	_T.initQUEUEs();
+
+}
+*/
 /*
 
 // smat をつかうなら復活させる

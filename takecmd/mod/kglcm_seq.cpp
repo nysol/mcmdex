@@ -623,21 +623,3 @@ int KGLCMSEQ::run(int argc, char *argv[]){
 
 }
 
-
-
-/*
-	init_v
-	occ->set_v(new KGLCMSEQ_ELM[_TT.get_t()]); // malloc2
-  occ->set_end(_TT.get_clm_max()); 
-  occ->set_s(0);
-  occ->set_t(0);
-
-	_II.setParams(
-		_iFlag,_frq_lb,_frq_ub,_lb,_ub,_target,
-		_ratio_lb,_ratio_ub,_prob_lb,_prob_ub,
-		_nega_lb,_nega_ub,_posi_lb,_posi_ub,
-		_topk_k,_max_solutions,_separator,
-		_TT.get_total_w_org(),_TT.get_total_pw_org(), // frq, pfrq
-		_len_ub,_setrule_lb
-	);
-*/

@@ -39,8 +39,6 @@ class KGSSPC{
 
 	// receive parameter
 	// SSPC
-  int _dir; 
-  int _root; 
 	int _problem;
   double _th2;
 	double _th;
@@ -59,19 +57,30 @@ class KGSSPC{
 	ItemSetParams _ipara;
 	TrsactParams _tpara;
 
-
-
-  int _sep;
+	// Trsact
+	/*
+  FILE_COUNT _C;
+  SETFAMILY _T;   // transaction
+  VECARY<WEIGHT> _w;
+  WEIGHT *_pw;  // weight/positive-weight of transactions
+	PERM *_perm;
+  QUEUE _jump, *_OQ;   
+*/
 
 	int _siz;
 
 	PERM *_positPERM; // ( org _position_fname)
-	char  *_vecchr;
 	WEIGHT *_occ_w;
+
+	// POLISH2のときのみ利用
+	//（y:output elements of each set that 
+	// contribute to no similarity (fast with much memory use)）
   QUEUE_INT *_itemary;
 	VECARY <QUEUE_INT> _buf;
-
   size_t _buf_end;
+
+	// POLISH or POLISH2の時のみ
+	char  *_vecchr;  
 
 	ITEMSET _II;
 	TRSACT _TT;
@@ -95,16 +104,16 @@ class KGSSPC{
 	int setArgs(int argc, char *argv[]);
 
  	void help();
-	
+
 	public :
 	KGSSPC():
-		_root(0),_dir(0),_problem(0),_siz(0),
+		_problem(0),_siz(0),
 		_th(0),_th2(0),_progressFlag(false),
 		_output_fname(NULL),_output_fname2(NULL),
 		_outperm_fname(NULL),_table_fname(NULL),
 		_positPERM(NULL),_vecchr(NULL),
 		_occ_w(NULL),_itemary(NULL),
-		_buf_end(0),_sep(0),
+		_buf_end(0),
 		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0)
 		{}
 
@@ -120,55 +129,11 @@ class KGSSPC{
 	static vector<LONG> mrun(int argc ,char* argv[]);
 
 };
-//  QUEUE_ID _i;
-//,_i(0)
-//iparamで
-// gloval value in org
-// LONG _ip_l2;
-//LONG _ip_l3;
-//LONG _ip_l1;
-//	void list_comp();
 
-	// _II
-//  int _iFlag;
-//	int _topk_k;
-//	LONG _itemtopk_item;
-//	LONG _itemtopk_item2;
-//	LONG _itemtopk_end;
-//	int _len_lb;
-//	int _len_ub;
-//	int _multi_core;
-//	int _max_solutions;
-//	char _separator;
-//	double _frq_lb;
+//		_root(0),_dir(0),	_sep(0),
+//  int _dir; 
+//  int _root; 
+//  int _sep;
 
-	//  _iFlag(0),_topk_k(0),
-	//	,
-	//	_len_ub(INTHUGE),_len_lb(0),
-	//	_multi_core(1),_max_solutions(0),_separator(' '),
-	//_tFlag(0),
-	//	_row_lb_(0.0),_row_lb(0),
-	//	_row_ub_(0.0),_row_ub(QUEUE_IDHUGE),
-	//	_clm_lb_(0.0),_w_lb(-WEIGHTHUGE),
-	//	_clm_ub_(0.0),_w_ub(WEIGHTHUGE),
-	//	_fname(NULL),_wfname(NULL),_item_wfname(NULL),
-	//	_fname2(NULL),
-	// _TT
-/*
-	char *_wfname;
-	char *_item_wfname;
-	char *_fname;
-  char *_fname2;
-
-  int _tFlag;
-	double _row_lb_;
-	int _row_lb;
-	double _row_ub_;
-	int _row_ub;
-	double _clm_lb_;
-	double _w_lb;
-	double _clm_ub_;
-	double _w_ub;
-*/
 
 
