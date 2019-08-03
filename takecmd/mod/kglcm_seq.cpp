@@ -113,7 +113,7 @@ int KGLCMSEQ::setArgs(int argc, char *argv[]){
       	_gap_ub = atoi(argv[c+1]);
 
       break; case 'G': 
-      	_ipara._len_ub = atoi(argv[c+1]);
+      	_len_ub = atoi(argv[c+1]);
       	
       break; case 'w': 
       	_tpara._wfname = argv[c+1];
@@ -205,7 +205,7 @@ int KGLCMSEQ::setArgs(int argc, char *argv[]){
 		iflag -= ( iflag & ITEMSET_PRE_FREQ );  
   }
 
-  if ( _ipara._len_ub < INTHUGE || _gap_ub < INTHUGE ) {
+  if ( _len_ub < INTHUGE || _gap_ub < INTHUGE ) {
 		_problem -= ( _problem & LCMSEQ_LEFTMOST );
   }
 
@@ -219,8 +219,8 @@ int KGLCMSEQ::setArgs(int argc, char *argv[]){
 	//TRSACT_ALLOC_OCC + 
 	tflag2 |=  TRSACT_MAKE_NEW +  ( (iflag & (ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ) ? 0 : (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
 
-  _tpara._limVal._w_lb =  
-  	(((iflag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) && (_problem & PROBLEM_FREQSET)) || (iflag&ITEMSET_RULE) || _gap_ub<INTHUGE || _ipara._len_ub<INTHUGE )? -WEIGHTHUGE: _ipara._frq_lb;
+  _limVal._w_lb =  
+  	(((iflag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT)) && (_problem & PROBLEM_FREQSET)) || (iflag&ITEMSET_RULE) || _gap_ub<INTHUGE || _len_ub<INTHUGE )? -WEIGHTHUGE: _ipara._frq_lb;
 
 	iflag |= (ITEMSET_USE_ORG +ITEMSET_ITEMFRQ);
 
@@ -253,7 +253,7 @@ void KGLCMSEQ::occ_delivery (KGLCMSEQ_QUE *occ, int flag){
 
 	for( u =  occ->begin() ; u < occ->end() ; u++){
 
-    m = MAX (MAX(0, u->_s - _gap_ub), u->_org -(_II.get_len_ub()-1));
+    m = MAX (MAX(0, u->_s - _gap_ub), u->_org -(_len_ub-1));
 
     w = _TT.get_w(u->_t);
 
@@ -569,8 +569,7 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
 	  }
 	}
 
-  if ( _II.get_len_ub() >= INTHUGE ) _II.set_len_ub(_TT.get_row_max());
-
+  if ( _len_ub >= INTHUGE ) _len_ub = _TT.get_row_max();
   if ( _gap_ub >= INTHUGE ) _gap_ub = _TT.get_row_max();
 
   _II.set_total_weight( _TT.get_total_w_org());
@@ -587,10 +586,10 @@ void KGLCMSEQ::_init (KGLCMSEQ_QUE *occ){
   }
 
 	// flag for shrink or not
-  _dir = (_problem&LCMSEQ_LEFTMOST) && _II.get_len_ub()>=_TT.get_row_max() && !(_II.get_flag()&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT));   
+  _dir = (_problem&LCMSEQ_LEFTMOST) && _len_ub >= _TT.get_row_max() && !(_II.get_flag()&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT));   
 
 	 // flag for removing infrequent item or not
-  _root = _gap_ub >= _TT.get_row_max() && _II.get_len_ub()>=_TT.get_row_max();  
+  _root = _gap_ub >= _TT.get_row_max() && _len_ub >=_TT.get_row_max();  
 
   _th = _II.get_frq_lb();
 }
@@ -604,7 +603,7 @@ int KGLCMSEQ::run(int argc, char *argv[]){
 
   setArgs (argc, argv);
 
-	_TT.setParams(_tpara);
+	_TT.setParams(_tpara,_limVal);
 
 	if( _TT.load() ){ return 1; }
 

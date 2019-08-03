@@ -56,9 +56,6 @@ struct TrsactParams {
 	//lcmseq
 	bool _eleflg;
 
-	// filecountで必要
-	LimitVal _limVal;
-
 	TrsactParams():
 		_flag(0),_flag2(0),
   	_fname(NULL),_fname2(NULL),_wfname(NULL),_iwfname(NULL),
@@ -212,95 +209,21 @@ class TRSACT {
 		
 		
 	~TRSACT(){}
-
-
-	// use by sspc 
-	VEC_ID adjust_sep(VEC_ID sep){
-		if(_params._flag&LOAD_TPOSE){ return _C.adjust_ClmSep(sep);}
-		else                { return _C.adjust_RowSep(sep);}
-	}
-
-	int addjust_lenlb(int ub,int lb){
-
-	  for (VEC_ID i=0 ; i<_T.get_t() ; i++){
-    	if ( _T.get_vt(i) <= ub ){ lb = i; break; }
-    }
-    return lb;
-	}
-
 	
+	void setParams(TrsactParams tpara,LimitVal limVal)
+	{
+		_params = tpara;
+	  _C.setLimit(limVal);
+	}
+
 	void setParams(TrsactParams tpara)
 	{
 		_params = tpara;
-	  _C.setLimit(_params._limVal);
 	}
+
 	
 	int load(void);
 
-	// using only sspc 
-	void initialQueSet(){
-
-		VEC_ID i, e;
- 		QUEUE_INT *x;
-
-		QUEUE *occ = &_OQ[_T.get_clms()];
-		QUEUE_INT M= _T.get_clms();
-
-		for (i=0 ; i< occ->get_t() ; (i)++){ // occ? occ->get_t(): t
-   		e = occ->get_v(i);
-			for ( x=_T.get_vv(e) ; *x < M ; x++){ 
-				_OQ[*x].push_back(e);
-			}
-		}
-
-
-	}
-
-
-	// using only sspc 
-	QUEUE_INT **skipLaegeFreqItems(int len_lb)
-  {
-	  QUEUE_INT **o=NULL;
-
-		// skipping items of large frequencies
-		if ( _params._flag & LOAD_SIZSORT ){
-
-			o = new QUEUE_INT *[_T.get_clms()];
-
-			for ( QUEUE_ID i =0 ; i < _T.get_clms() ; i++){
-				o[i] = _OQ[i].get_v();
-				_OQ[i].set_v( _OQ[i].get_t(),INTHUGE);// 別メソッドにできる
-
-				QUEUE_ID j;
-	      for (j=0 ; _OQ[i].get_v(j) < len_lb ; j++); //skip
-	      _OQ[i].move(j);
-			}
-	  }
-  	return o;
-  }
-
-
-
-	
-  void multipule_w(){
-		for(QUEUE_INT i =0 ; i < _T.get_clms(); i++){
-			_w[i] *= _w[i];
-		}
-	}
-
-	void setOQend(){
-		for(QUEUE_INT i =0 ;i < _T.get_clms();i++){
-			_OQ[i].set_end(0);
-		}
-	}
-
-	void clrMark_T(int i,char *mark){
-		_T.clrMark(i,mark);
-	}
-	
-	void clrMark_Q(int i,char *mark){
-		_OQ[i].clrMark(mark);
-	}
 
 	void clrOQend(int i){ _OQ[i].endClr(); }
 	void clrOQt(int i)  { _OQ[i].tClr(); }
@@ -320,28 +243,6 @@ class TRSACT {
 	void clrOQendELE(int i){ _OQELE[i].endClr(); }
 	void clrOQtELE(int i){ _OQELE[i].tClr(); }
 
-	PERM * convPerm(char* fname){ 
-
-		if ( fname ){ 
-
-			PERM *p = NULL;
-
-			IFILE2::ARY_Load( p ,fname);
-
-			if ( _perm ){
-				for(int j =0 ;j < _T.get_clms() ; j++){
-					_perm[j] = p[_perm[j]];
-      	}
-	    	delete [] p;
-	    }
-		  else {
-    		_perm = p;
-    	}
-		}
-		return _perm;
-	}
-
-
 	//アクセッサ
 
 	void set_perm(PERM * perm){ _perm = perm;}
@@ -350,8 +251,6 @@ class TRSACT {
 
 
 	VEC_ID get_clms(void){ return _T.get_clms();}
-	size_t get_eles(void){ return _T.get_eles();}
-	QUEUE_INT get_clms_org(void){ return _C.clms();}// _clms_org;}
 	VEC_ID get_rows_org(void){ return _C.rows();}//_rows_org;}
 
 
@@ -369,16 +268,9 @@ class TRSACT {
 	VEC_ID get_t(void){ return _T.get_t();}
 	WEIGHT get_w(int i){ return _w[i];}
 
-	WEIGHT * beginTw(int i){ return _T.get_w(i);}
 
 
 	QUEUE_INT * beginTv(int i){ return _T.get_vv(i);}
-	QUEUE_INT * endTv(int i)  { return _T.get_vv(i) + _T.get_vt(i);}
-
-
-	QUEUE_INT * beginOQv(int i){ return _OQ[i].get_v();}
-	QUEUE_INT * endOQv  (int i){ return _OQ[i].get_v()+ _OQ[i].get_t();}
-	QUEUE_INT * startOQv(int i){ return _OQ[i].get_v()+_OQ[i].get_s();}
 
 
 	void resizeOQ(int i,int v){ _OQ[i].resize(v); }
@@ -410,11 +302,6 @@ class TRSACT {
 	void swap_Tvv(int i,int j){ _T.swap_vv(i,j); }
 
 	//	==== use in seq	====
-
-
-
-	//再考
-	bool exist_Tw(void)	{ return _T.exist_w();} 
 
 	bool exist_perm(void) { return _perm!=NULL; }
 	bool exist_sc(void) { return _sc!=NULL; }
@@ -463,38 +350,6 @@ class TRSACT {
 
 	QUEUE dup_OQ(int i){
 		return _OQ[i].dup();
-	}
-
-	void sizSort(int i,QUEUE_INT **o){
-    _OQ[i].add_t ( _OQ[i].get_v() - o[i]);
-    _OQ[i].set_v ( o[i]);
-  }
-	void reallocW(void){
-		VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
-		_w.realloc2(size);
-		for(size_t i=0; i<size;i++){ _w[i] = 1;}
-	}
-
-	// normalize the vectors for inner product
-	//sspc
-	void normalize(WEIGHT *w){
-		// org ARY_FILL
-	  for(QUEUE_INT i=0; i<_T.get_clms() ; i++){ w[i] = 0; } 
-		
-		for (VEC_ID i=0 ; i < _T.get_t();i++){
-			WEIGHT *y =_T.get_w(i);
-			for(QUEUE_INT *x = _T.get_vv(i); x < _T.get_vv(i)+_T.get_vt(i);x++){
-				w[*x] += (*y)*(*y); y++;
-			}
-		}
-		for(QUEUE_INT i=0;i<_T.get_clms();i++){ w[i] = sqrt(w[i]); }
-
-		for(VEC_ID i=0 ; i<_T.get_t();i++){
-  	  WEIGHT *y = _T.get_w(i);
-			for(QUEUE_INT *x=_T.get_vv(i);x<_T.get_vv(i)+_T.get_vt(i); x++){
-				 *y /= w[*x]; y++;
-			}
-		}
 	}
 
 	void calloc_sc(VEC_ID sise){
@@ -546,6 +401,122 @@ class TRSACT {
 		}
 		
 } ;
+
+
+
+	// use by sspc 
+//	VEC_ID adjust_sep(VEC_ID sep){
+//		if(_params._flag&LOAD_TPOSE){ return _C.adjust_ClmSep(sep);}
+//		else                { return _C.adjust_RowSep(sep);}
+//	}
+
+//	int addjust_lenlb(int ub,int lb){
+//	  for (VEC_ID i=0 ; i<_T.get_t() ; i++){
+//    	if ( _T.get_vt(i) <= ub ){ lb = i; break; }
+//    }
+//    return lb;
+//	}
+
+	// using only sspc 
+//	void initialQueSet(){
+//		VEC_ID i, e;
+// 		QUEUE_INT *x;
+//		QUEUE *occ = &_OQ[_T.get_clms()];
+//		QUEUE_INT M= _T.get_clms();
+//		for (i=0 ; i< occ->get_t() ; (i)++){ // occ? occ->get_t(): t
+//   		e = occ->get_v(i);
+//			for ( x=_T.get_vv(e) ; *x < M ; x++){ 
+//				_OQ[*x].push_back(e);
+//			}
+//		}
+//	}
+	// using only sspc 
+//	QUEUE_INT **skipLaegeFreqItems(int len_lb)
+//  {
+//	  QUEUE_INT **o=NULL;
+//		// skipping items of large frequencies
+//		if ( _params._flag & LOAD_SIZSORT ){
+//			o = new QUEUE_INT *[_T.get_clms()];
+//			for ( QUEUE_ID i =0 ; i < _T.get_clms() ; i++){
+//				o[i] = _OQ[i].get_v();
+//				_OQ[i].set_v( _OQ[i].get_t(),INTHUGE);// 別メソッドにできる
+//				QUEUE_ID j;
+//	      for (j=0 ; _OQ[i].get_v(j) < len_lb ; j++); //skip
+//	      _OQ[i].move(j);
+//			}
+//	  }
+// 	return o;
+//  }
+//  void multipule_w(){
+//		for(QUEUE_INT i =0 ; i < _T.get_clms(); i++){
+//			_w[i] *= _w[i];
+//		}
+//	}
+//	void setOQend(){
+//		for(QUEUE_INT i =0 ;i < _T.get_clms();i++){
+//			_OQ[i].set_end(0);
+//		}
+//	}
+//	void clrMark_T(int i,char *mark){
+//		_T.clrMark(i,mark);
+//	}
+//	void clrMark_Q(int i,char *mark){
+//		_OQ[i].clrMark(mark);
+//	}
+//	PERM * convPerm(char* fname){ 
+//		if ( fname ){ 
+//			PERM *p = NULL;
+//			IFILE2::ARY_Load( p ,fname);
+//			if ( _perm ){
+//				for(int j =0 ;j < _T.get_clms() ; j++){
+//					_perm[j] = p[_perm[j]];
+//      	}
+//	    	delete [] p;
+//	    }
+//		  else {
+//    		_perm = p;
+//    	}
+//		}
+//		return _perm;
+//	}
+//	size_t get_eles(void){ return _T.get_eles();}
+//	QUEUE_INT get_clms_org(void){ return _C.clms();}// _clms_org;}
+//	WEIGHT * beginTw(int i){ return _T.get_w(i);}
+//	QUEUE_INT * endTv(int i)  { return _T.get_vv(i) + _T.get_vt(i);}
+//	QUEUE_INT * beginOQv(int i){ return _OQ[i].get_v();}
+//	QUEUE_INT * endOQv  (int i){ return _OQ[i].get_v()+ _OQ[i].get_t();}
+//	QUEUE_INT * startOQv(int i){ return _OQ[i].get_v()+_OQ[i].get_s();}
+//	bool exist_Tw(void)	{ return _T.exist_w();} 
+//	void sizSort(int i,QUEUE_INT **o){
+//    _OQ[i].add_t ( _OQ[i].get_v() - o[i]);
+//    _OQ[i].set_v ( o[i]);
+//  }
+//	void reallocW(void){
+//		VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
+//		_w.realloc2(size);
+//		for(size_t i=0; i<size;i++){ _w[i] = 1;}
+//	}
+//	// normalize the vectors for inner product
+//	//sspc
+//	void normalize(WEIGHT *w){
+//		// org ARY_FILL
+//	  for(QUEUE_INT i=0; i<_T.get_clms() ; i++){ w[i] = 0; } 	
+//		for (VEC_ID i=0 ; i < _T.get_t();i++){
+//			WEIGHT *y =_T.get_w(i);
+//			for(QUEUE_INT *x = _T.get_vv(i); x < _T.get_vv(i)+_T.get_vt(i);x++){
+//				w[*x] += (*y)*(*y); y++;
+//			}
+//		}
+//		for(QUEUE_INT i=0;i<_T.get_clms();i++){ w[i] = sqrt(w[i]); }
+//		for(VEC_ID i=0 ; i<_T.get_t();i++){
+//  	  WEIGHT *y = _T.get_w(i);
+//			for(QUEUE_INT *x=_T.get_vv(i);x<_T.get_vv(i)+_T.get_vt(i); x++){
+//				 *y /= w[*x]; y++;
+//			}
+//		}
+//	}
+
+
 
 //#define TRSACT_NEGATIVE 33554432  // flag for whether some transaction weights are negative or not 
 //, _clms_end;_clms_end(0),_clms_org,_clms_org(0),

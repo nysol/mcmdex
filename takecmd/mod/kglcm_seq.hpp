@@ -29,6 +29,10 @@ class KGLCMSEQ{
 
 	ItemSetParams _ipara;
 	TrsactParams _tpara;
+	// filecountで必要
+	LimitVal _limVal;
+
+
 	bool _pRatioFlg;
 
 	int _root,_dir;
@@ -42,7 +46,8 @@ class KGLCMSEQ{
 	char *_outperm_fname;
 	
 	int _gap_ub;
-
+	int _len_ub;
+	
 	//機能してない？
 	double _rposi_ub,_rposi_lb;
 
@@ -107,7 +112,7 @@ class KGLCMSEQ{
 
 	KGLCMSEQ():
 		_problem(0),_root(0),_dir(0),_th(0),_occ_w(NULL),_occ_pw(NULL),
-		_outperm_fname(NULL),_output_fname(NULL),
+		_outperm_fname(NULL),_output_fname(NULL),_len_ub(INTHUGE),
 		_rposi_lb(0),_rposi_ub(1),_gap_ub(INTHUGE),_pRatioFlg(false)
 		{};
 

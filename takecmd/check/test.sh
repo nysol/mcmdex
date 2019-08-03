@@ -44,6 +44,8 @@ smallSAMP2=${sDPATH1}tests.dat
 smallSAMP3=${sDPATH1}testm.dat
 smallSAMP4=${sDPATH1}testme.dat
 smallCONST=${sDPATH1}constraints.dat
+smallSAMPT=${sDPATH1}testt.dat
+smallSAMPE=${sDPATH1}teste.dat
 
 sample0=${sDPATH1}samp0.dat
 strain0=${sDPATH1}strain0.dat
@@ -56,8 +58,8 @@ mkdir ${rDPATH0}
 
 function lcmminiRUN() {
 
-${preCMD} ${MLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outmsamp0c.dat 
-${preCMD} ${TLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outtsamp0c.dat 
+#${preCMD} ${MLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outmsamp0c.dat 
+#${preCMD} ${TLCM} F -c ${strain0} ${sample0} 1 ${rDPATH0}outtsamp0c.dat 
 
 ${preCMD} ${MLCM} F ${sample0} 1 ${rDPATH0}outmsampF0.dat 
 ${preCMD} ${TLCM} F ${sample0} 1 ${rDPATH0}outtsampF0.dat 
@@ -165,6 +167,42 @@ ${preCMD} ${TSSPC} C ${tra100} 0.1 ${rDPATH0}outtsspcC.dat
 ${preCMD} ${MSSPC} C -2 ${smallSAMP} ${tra100} 0.1 ${rDPATH0}outmsspcC2.dat 
 #${preCMD} ${TSSPC} C -2 ${smallSAMP} ${tra100} 0.1 ${rDPATH0}outtsspcC2.dat 
 
+${preCMD} ${MSSPC} Rt -k 3 ${smallSAMP} 0.1 ${rDPATH0}outmsspck3.dat 
+${preCMD} ${TSSPC} Rt -k 3 ${smallSAMP} 0.1 ${rDPATH0}outtsspck3.dat 
+
+${preCMD} ${MSSPC} Rt -K 3 ${smallSAMP} 0.1 ${rDPATH0}outmsspcLK3.dat 
+${preCMD} ${TSSPC} Rt -K 3 ${smallSAMP} 0.1 ${rDPATH0}outtsspcLK3.dat 
+
+
+${preCMD} ${MSSPC} RfE ${smallSAMPE} 0.1 ${rDPATH0}outmsspce.dat 
+${preCMD} ${TSSPC} RfE ${smallSAMPE} 0.1 ${rDPATH0}outtsspce.dat 
+
+${preCMD} ${MSSPC} Rf ${smallSAMPE} 0.1 ${rDPATH0}outmsspce0.dat 
+${preCMD} ${TSSPC} Rf ${smallSAMPE} 0.1 ${rDPATH0}outtsspce0.dat 
+
+}
+function sspcminiRUN() {
+
+${preCMD} ${MSSPC} Rft  ${smallSAMP} 0.1 ${rDPATH0}outmsspcnw.dat 
+${preCMD} ${TSSPC} Rft  ${smallSAMP} 0.1 ${rDPATH0}outtsspcnw.dat 
+
+${preCMD} ${MSSPC} Rf  ${smallSAMPT} 0.1 ${rDPATH0}outmsspcntw.dat 
+${preCMD} ${TSSPC} Rf  ${smallSAMPT} 0.1 ${rDPATH0}outtsspcntw.dat 
+
+
+${preCMD} ${MSSPC} Rft -w ${sDPATH1}weight.dat ${smallSAMP} 0.1 ${rDPATH0}outmsspcw.dat 
+${preCMD} ${TSSPC} Rft -w ${sDPATH1}weight.dat ${smallSAMP} 0.1 ${rDPATH0}outtsspcw.dat 
+
+
+${preCMD} ${MSSPC} Rf -W ${sDPATH1}weightt.dat ${smallSAMPT} 0.1 ${rDPATH0}outmsspcwt.dat 
+${preCMD} ${TSSPC} Rf -W ${sDPATH1}weightt.dat ${smallSAMPT} 0.1 ${rDPATH0}outtsspcwt.dat 
+
+${preCMD} ${MSSPC} RfE ${smallSAMPE} 0.1 ${rDPATH0}outmsspce.dat 
+${preCMD} ${TSSPC} RfE ${smallSAMPE} 0.1 ${rDPATH0}outtsspce.dat 
+
+${preCMD} ${MSSPC} Rf ${smallSAMPE} 0.1 ${rDPATH0}outmsspce0.dat 
+${preCMD} ${TSSPC} Rf ${smallSAMPE} 0.1 ${rDPATH0}outtsspce0.dat 
+
 
 }
 
@@ -253,7 +291,27 @@ diff ${DIFFSIMPLE} ${rDPATH0}outmsspcR.dat ${rDPATH0}outtsspcR.dat
 diff ${DIFFSIMPLE} ${rDPATH0}outmsspcC.dat ${rDPATH0}outtsspcC.dat 
 diff ${DIFFSIMPLE} ${rDPATH0}outmsspcC2.dat ${rDPATH0}outtsspcC2.dat 
 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspck3.dat ${rDPATH0}outtsspck3.dat 
+
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcLK3.dat ${rDPATH0}outtsspcLK3.dat 
+
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspce.dat ${rDPATH0}outtsspce.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspce0.dat ${rDPATH0}outtsspce0.dat 
+
 }
+
+function sspcminiCHK() {
+
+
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcw.dat ${rDPATH0}outtsspcw.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcnw.dat ${rDPATH0}outtsspcnw.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcntw.dat ${rDPATH0}outtsspcntw.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcwt.dat ${rDPATH0}outtsspcwt.dat 
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspce.dat ${rDPATH0}outtsspce.dat 
+
+
+}
+
 
 function grhfilCHK() {
 
@@ -304,15 +362,23 @@ simsetCHK
 
 }
 
+#${preCMD} ${MSSPC} Rt -k 3 -K 3 ${smallSAMP} 0.1 ${rDPATH0}outmsspcRb10Kk.dat 
+#${preCMD} ${TSSPC} Rt -k 3 -K 3 ${smallSAMP} 0.1 ${rDPATH0}outtsspcRb10Kk.dat 
 
+sspcminiRUN
 allRUN
+#lcmminiRUN
+#lcmRUN
 #lcmseqRUN
 #sspcRUN
 #maceRUN
 #simsetRUN
 
 echo vvvvvvvv1
+#sspcminiCHK
 allCHK
+#lcmminiCHK
+#lcmCHK
 #lcmseqCHK
 #sspcCHK
 #maceCHK

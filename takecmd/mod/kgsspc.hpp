@@ -31,9 +31,87 @@
 #define SSPC_COMP_ITSELF 262144
 
 #include <vector>
-#include "trsact.hpp"
+//#include "trsact.hpp"
+#include"vec.hpp"
 #include "problem.hpp"
 #include "itemset.hpp"
+#include"file2.hpp"
+#include"filecount.hpp"
+
+class OQueue{
+
+	QUEUE * _oq;
+	size_t _size; //必要ないかも
+	
+	public:
+
+	OQueue(void):_oq(NULL),_size(0){}
+	
+	QUEUE_INT* start(size_t i){ return _oq[i].start(); }
+	QUEUE_INT* begin(size_t i){ return _oq[i].begin(); }
+	QUEUE_INT* end(size_t i)  { return _oq[i].end(); }
+	QUEUE_INT * get_v(size_t i){ return _oq[i].get_v(); }
+	QUEUE_INT get_v(size_t i,size_t j){ return _oq[i].get_v(j); }
+
+
+	void clrMark(size_t i,char *mark)	{ _oq[i].clrMark(mark); }
+	void endClr(size_t i)  { return _oq[i].endClr(); }
+	void set_end(size_t i,int v){ _oq[i].set_end(v); }
+	void set_sentinel(size_t i){ _oq[i].set_v( _oq[i].get_t(),INTHUGE);}
+	void move(size_t i,size_t j){ return _oq[i].move(j); }
+
+	void setfromT(SETFAMILY &T){
+		QUEUE_INT M = T.get_clms();
+		for (VEC_ID i=0 ; i< _oq[M].get_t() ; i++){ 
+	  	VEC_ID e = _oq[M].get_v(i);
+			for ( QUEUE_INT * x = T.get_vv(e) ; *x < M ; x++){ 
+				_oq[*x].push_back(e);
+			}
+		}
+	}
+
+	// 仮
+	QUEUE * getOQ(void){ return _oq; }
+
+	void alloc(SETFAMILY &T){
+		VEC_ID *p = T.counting();
+		QUEUE_INT clm_max = p[0];
+		size_t cmmsize = p[0];
+		for(int cmm = 1 ; cmm < T.get_clms() ;cmm++ ){
+			cmmsize += p[cmm];
+			if( clm_max < p[cmm]){ clm_max = p[cmm]; }
+		}
+		
+		_oq = new QUEUE[T.get_clms()+1]; 
+		_size = T.get_clms()+1;
+
+		QUEUE_INT *cmn_pnt;
+		try{
+			cmn_pnt = new QUEUE_INT[cmmsize+T.get_clms()+2]; //malloc2
+		}catch(...){
+			delete[] _oq;
+			throw;
+		}
+		size_t posx=0;
+		for(VEC_ID cmmv =0; cmmv < T.get_clms() ; cmmv++){
+			_oq[cmmv].alloc( p[cmmv],cmn_pnt+posx );
+			posx += p[cmmv]+1;
+		}
+		_oq[T.get_clms()].alloc( MAX(T.get_t(), clm_max));
+
+		for(size_t i=0 ; i < T.get_clms()+1 ; i++ ){
+			_oq[i].endClr();
+		}
+		_oq[T.get_clms()].initVprem(T.get_t());  //ARY_INIT_PERM
+		delete [] p;
+	}
+	void prefin(size_t i ,QUEUE_INT * o){
+	  _oq[i].add_t( _oq[i].get_v() - o);
+  	_oq[i].set_v ( o);
+  }
+
+};
+
 
 class KGSSPC{
 
@@ -49,25 +127,40 @@ class KGSSPC{
 	char *_output_fname;
 
 	bool _progressFlag;
+	bool _showFlag;
+	bool _rowSortDecFlag; // for using -b -B  LOAD_SIZSORT+LOAD_DECROWSORT
+	bool _rmDupFlag;      // for using para : 1
+
 
 	LONG _itemtopk_item;
 	LONG _itemtopk_item2;
 	LONG _itemtopk_end;
 
 	ItemSetParams _ipara;
-	TrsactParams _tpara;
 
-	// Trsact
-	/*
+
+	int _len_ub;
+	int _len_lb;
+
+
+	// filecountで必要
+	LimitVal _limVal;
+
   FILE_COUNT _C;
   SETFAMILY _T;   // transaction
   VECARY<WEIGHT> _w;
   WEIGHT *_pw;  // weight/positive-weight of transactions
-	PERM *_perm;
-  QUEUE _jump, *_OQ;   
-*/
+	PERM *_perm,*_trperm;
+  QUEUE _jump;
+  OQueue _OQ;
 
-	int _siz;
+	char *_wfname;
+	char *_iwfname;
+	char *_fname2;
+	int _tflag;
+	char *_fname;
+
+	int _siz; // intersection size
 
 	PERM *_positPERM; // ( org _position_fname)
 	WEIGHT *_occ_w;
@@ -76,14 +169,13 @@ class KGSSPC{
 	//（y:output elements of each set that 
 	// contribute to no similarity (fast with much memory use)）
   QUEUE_INT *_itemary;
-	VECARY <QUEUE_INT> _buf;
+	VECARY<QUEUE_INT> _buf;
   size_t _buf_end;
 
 	// POLISH or POLISH2の時のみ
 	char  *_vecchr;  
 
 	ITEMSET _II;
-	TRSACT _TT;
 
 	void output ( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id);
 
@@ -107,33 +199,41 @@ class KGSSPC{
 
 	public :
 	KGSSPC():
-		_problem(0),_siz(0),
-		_th(0),_th2(0),_progressFlag(false),
+		_problem(0),_siz(0),_trperm(NULL),_perm(NULL),
+		_th(0),_th2(0),_progressFlag(false),_showFlag(false),
 		_output_fname(NULL),_output_fname2(NULL),
 		_outperm_fname(NULL),_table_fname(NULL),
-		_positPERM(NULL),_vecchr(NULL),
-		_occ_w(NULL),_itemary(NULL),
-		_buf_end(0),
+		_positPERM(NULL),_vecchr(NULL),_rowSortDecFlag(false),
+		_occ_w(NULL),_itemary(NULL),_pw(NULL),
+		_buf_end(0),_tflag(LOAD_INCSORT),_rmDupFlag(false),
+		_wfname(NULL),_iwfname(NULL),_fname2(NULL),_fname(NULL),
+		_len_ub(INTHUGE),_len_lb(0),
 		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0)
 		{}
 
 	int run(int argc ,char* argv[]);
 	
-	vector<LONG> iparam(){ 
-		vector<LONG> rtn(2);
+	std::vector<LONG> iparam(){ 
+		std::vector<LONG> rtn(2);
 		rtn[0] = _II.get_solutions(); 
-		rtn[1] = _TT.get_clms_org();
+		rtn[1] = _C.clms();
 		return rtn;
 	}
 	
-	static vector<LONG> mrun(int argc ,char* argv[]);
+	static std::vector<LONG> mrun(int argc ,char* argv[]);
 
 };
+//QUEUE *_OQ;   
+//  QUEUE_INT  _clm_max; // #items in original file, max size of clms, and max of (original item, internal item)
+//  VEC_ID  _row_max; 	// #transactions in the original file	
+// Trsact
+//	VEC_ID _new_t;
 
 //		_root(0),_dir(0),	_sep(0),
 //  int _dir; 
 //  int _root; 
 //  int _sep;
 
+//TRSACT _TT;
 
 

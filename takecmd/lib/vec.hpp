@@ -27,19 +27,10 @@
  #endif
 #endif
 
-//, *_buf2
-//	char *_ERROR_MES;
-//_buf2(NULL),
-//,_unit(sizeof(QUEUE_INT))
-//  char *_fname;  // input file name
-//_fname(NULL),
 
 class SETFAMILY{
 
   int _flag;
-  // check
-  // LOAD_DBLBUF LOAD_ARC ,LOAD_INCSORT ,LOAD_DECSORT
-  // LOAD_SIZSORT LOAD_WSORT LOAD_DECROWSORT
 
   VEC_ID _end;
   VEC_ID _t;
@@ -55,8 +46,6 @@ class SETFAMILY{
 
   QUEUE *_v;
   
-
-	//void _flie_load(FILE2 &fp, FILE_COUNT &C);
 	void _flie_load(IFILE2 &fp);
 
 	void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
@@ -100,21 +89,19 @@ class SETFAMILY{
 		}
 
 		// どっちか一方でいい？
+		// sgraph _edge.sort(flag) とprivate  load
 		void sort();
 		void sort(int flag);
 
-		void alloc_w (){ 
-			_w = new WEIGHT*[_end]();//calloc2
-		}
+		void alloc_w (){  _w = new WEIGHT*[_end](); }
+
 		void alloc_weight (FILE_COUNT &fc);
 
 
-		//void load(int flag , char *fname);
-		//void load (FILE2 &fp, FILE_COUNT &C, int flag);
 		void load (IFILE2 &fp, int flag);
 
 		// call from trsact.cpp
-		void file_read(IFILE2 &fp,            FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
+		void file_read(IFILE2 &fp,             FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 		void file_read(IFILE2 &fp,IFILE2 &wfp, FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 
 		//readFile(IFILE2 &fp, IFILE2 &fp2, int flag);
@@ -159,6 +146,7 @@ class SETFAMILY{
 		QUEUE_INT * get_vv(int i)      { return _v[i].get_v(); }
 		QUEUE_INT   get_vv(int i,int j){ return _v[i].get_v(j); }
 
+		QUEUE_INT *begin(int i) { return _v[i].begin(); }
 		QUEUE_INT * end(int i) { return _v[i].end(); }
 
 		QUEUE_ID get_vt(int i){ return _v[i].get_t(); }
@@ -257,14 +245,6 @@ class SETFAMILY{
 			_v[i].swap_v(j);
 		}
 
-		// 要確認
-		void alloc_v(){
-		  _v = new QUEUE[_end];  //malloc2(_v, _end);
-		}
-		void alloc_buf(){
-			//malloc2 (buf,(_eles+_end+1)*_unit);
-		  _buf = new QUEUE_INT[_eles+_end+1]; 
-		}
 
 		void setSize(FILE_COUNT &_C,int flag){			
 
@@ -276,14 +256,35 @@ class SETFAMILY{
  			}
 
 			_clms = _C.c_clms(); 
-			_t = _C.r_clms();
+			_t    = _C.r_clms();
 			
   		_ele_end = _eles;
   		_end = _t * ( (flag&LOAD_DBLBUF) ? 2 : 1 ) + 1  ;
 
-			// allocBuffer()
-		  _v   = new QUEUE[_end];  // malloc2 
-		  _buf = new QUEUE_INT[_eles+_end+1]; //malloc2
+		  _v   = new QUEUE[_end]; 
+		  _buf = new QUEUE_INT[_eles+_end+1];
+
+		  return ;
+
+		}
+
+		void setSize4sspc(FILE_COUNT &_C,bool tposeflag){			
+
+ 			if ( _C.r_eles() > _C.c_eles() && !(tposeflag) ){
+ 				_eles = _C.c_eles();
+ 			}
+ 			else{
+ 				_eles = _C.r_eles();
+ 			}
+
+			_clms = _C.c_clms(); 
+			_t    = _C.r_clms();
+			
+  		_ele_end = _eles;
+  		_end     = _t  + 1  ;
+
+		  _v   = new QUEUE[_end];
+		  _buf = new QUEUE_INT[_eles+_end+1];
 
 		  return ;
 
@@ -303,9 +304,11 @@ class SETFAMILY{
 		}
 
 		void queueSortALL(int flag){
+
 			for(size_t t=0 ; t < _t ; t++){
 				_v[t].queSort(flag);
 			}
+
 		}
 
 		void rmDup(){
@@ -467,6 +470,34 @@ class SETFAMILY{
 };
 
 /*
+//, *_buf2
+//	char *_ERROR_MES;
+//_buf2(NULL),
+//,_unit(sizeof(QUEUE_INT))
+//  char *_fname;  // input file name
+//_fname(NULL),
+//void _flie_load(FILE2 &fp, FILE_COUNT &C);
+
+// check
+// LOAD_DBLBUF LOAD_ARC ,LOAD_INCSORT ,LOAD_DECSORT
+// LOAD_SIZSORT LOAD_WSORT LOAD_DECROWSORT
+
+		// 要確認
+		void alloc_v(){
+		  _v = new QUEUE[_end];  //malloc2(_v, _end);
+		}
+
+		void alloc_buf(){
+			//malloc2 (buf,(_eles+_end+1)*_unit);
+		  _buf = new QUEUE_INT[_eles+_end+1]; 
+		}
+
+			// allocBuffer()
+
+		//void load(int flag , char *fname);
+		//void load (FILE2 &fp, FILE_COUNT &C, int flag);
+			//_end = _t * ( (flag&LOAD_DBLBUF) ? 2 : 1 ) + 1  ;
+
 		void printMes(char *frm ,...){
 
 			if( _flag&1 ){

@@ -328,7 +328,7 @@ int KGSIMSET::run (int argc ,char* argv[]){
 	char *f2  = "__tmp_out1__" ;
 	char *fn  = f1;
 	char ff  = 0;
-	vector<LONG> sspcrtn;
+	std::vector<LONG> sspcrtn;
 	
   sprintf (s1, "%s__tmp__", _workdir);  // write commands to string variables
   sprintf (s2, "%s__tmp_out2__", _workdir);
@@ -442,7 +442,7 @@ int KGSIMSET::run (int argc ,char* argv[]){
       _deg_lb, _deg_ub, _cores, _workdir, _th, _workdir, fn
     );
 		comm_str_decompose();
-		vector<LONG> sspcrtn = KGSSPC::mrun(_cmn_argc,_cmn_argv);
+		std::vector<LONG> sspcrtn = KGSSPC::mrun(_cmn_argc,_cmn_argv);
 
     unify_flag = 1; 
     _nodes = sspcrtn[1];//internal_params.l3;

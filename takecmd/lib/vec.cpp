@@ -82,9 +82,8 @@ void SETFAMILY::sort(){
 	
   int flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0);
   // sort items in each row
+
   if ( flag ){   
-    //malloc2 (p, _clms, EXIT);
-    // p = malloc2 (p, _clms);
     p = new PERM[_clms];
     for(i=0;i<_t;i++){
       _v[i].perm_WEIGHT( _w?_w[i]:NULL, p, flag);
@@ -271,6 +270,9 @@ void SETFAMILY::load (IFILE2 &fp,  int flag)
 
 }
 
+//void SETFAMILY::fileRead(IFILE2 &fp,VEC_ID *pos)
+
+
 //from Trsact (Not use weight)
 void SETFAMILY::file_read(
 	IFILE2 &fp, FILE_COUNT &C,
@@ -291,8 +293,6 @@ void SETFAMILY::file_read(
 	  y = fp.read_int(); // fp.read_item( &x, &y, tflag);
 
     if ( fp.Null() ) goto LOOP_END; //FILE_err&4
-
-  	//if( tflag & LOAD_ID1 ){ y--; x--; }
 
 	  if ( (tflag & LOAD_TPOSE) || ((tflag&LOAD_EDGE) && x > y) ){
   		SWAP_<LONG>(&x, &y);
@@ -470,6 +470,10 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 		}
 	}
 }
+
+
+
+
 
 
 /*

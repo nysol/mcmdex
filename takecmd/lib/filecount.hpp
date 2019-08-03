@@ -169,6 +169,10 @@ class FILE_COUNT{
 		// call from trsact.cpp
 		int file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 
+		int fileCountT(IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
+		int fileCount (IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
+
+
 		// call from sgraph.cpp 
 		void countSG (IFILE2 *rfp, int flag);
 		void countFST(IFILE2 *rfp, int flag);
@@ -260,6 +264,10 @@ class FILE_COUNT{
 		//void makePerm(char *pfname,int tflag,int tflag2);
 
 		void makePerm(int tflag,int tflag2);
+		PERM * makeCperm(void);
+		PERM * makeRperm(bool sflag);
+
+
 
 		//void initCperm(char *pfname,int tflag,int tflag2);
 		void initCperm(int tflag,int tflag2);

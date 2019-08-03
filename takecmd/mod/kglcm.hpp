@@ -40,6 +40,9 @@ class KGLCM{
 
 	ItemSetParams _ipara;
 	TrsactParams _tpara;
+	// filecountで必要
+	LimitVal _limVal;
+	
 
 	bool _progressFlag;
 	int _problem;

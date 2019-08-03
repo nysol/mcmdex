@@ -258,8 +258,8 @@ int KGLCM::setArgs(int argc, char *argv[]){
   tflag2 |= TRSACT_FRQSORT +TRSACT_MAKE_NEW +TRSACT_DELIV_SC + 
   							((iflag & ITEMSET_TRSACT_ID) ? 0: (TRSACT_SHRINK+TRSACT_1ST_SHRINK));
 
-  if ( iflag & ITEMSET_RULE ){ _tpara._limVal._w_lb = -WEIGHTHUGE; } 
-  else											 { _tpara._limVal._w_lb = _ipara._frq_lb;}
+  if ( iflag & ITEMSET_RULE ){ _limVal._w_lb = -WEIGHTHUGE; } 
+  else											 { _limVal._w_lb = _ipara._frq_lb;}
 
 	iflag |= (ITEMSET_ITEMFRQ + ITEMSET_ADD); 
 
@@ -544,7 +544,7 @@ int KGLCM::run (int argc, char *argv[]){
 
 	if( setArgs(argc, argv) ) return 1;
 
-	_TT.setParams(_tpara);
+	_TT.setParams(_tpara,_limVal);
 
 
   if( _TT.load() ){ return 1; }

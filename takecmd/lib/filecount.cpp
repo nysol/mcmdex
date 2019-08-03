@@ -270,6 +270,42 @@ int FILE_COUNT::file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2
 	return 0;
 
 }
+
+int FILE_COUNT::fileCountT( IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2){
+
+	if( _file_count_T(fp, wf) ) { return 1; }	
+	_end1 = _rows_org;
+
+	if( fp2.exist() ){
+		if( _file_count_T ( fp2, NULL) ) { return 1; }
+	}
+	// swap variables in the case of transpose
+	_tpose();
+
+	_limVal.setBoundsbyRate(_rows_org,_clms_org);
+	return 0;
+
+}
+
+int FILE_COUNT::fileCount( IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2){
+
+	if( _file_count( fp, wf) ){ return 1;	}
+	_end1 = _rows_org;
+
+	if( fp2.exist() ){
+		if( _file_count(fp2, NULL) ) { return 1;	}
+	}
+
+	_limVal.setBoundsbyRate(_rows_org,_clms_org);
+	return 0;
+
+}
+
+
+
+
+
+
 // fstar.cpp <<=kggrphfil.cpp
 void FILE_COUNT::countFS(IFILE2 *rfp,int flag, int int_clms)
 {
@@ -506,6 +542,8 @@ void FILE_COUNT::initCperm(int tflag,int tflag2){
 
   // LOAD_PERM TRSACT_FRQSORT  デフォルトでセットされる(LCM) //この辺りも分ける？
   // LOAD_INCSORTはセットされない(sgflagにセットされるかのうせいあり)
+  
+  // ここはLCM ONLY
 	if ( tflag&LOAD_PERM ){ 
 		if ( tflag2&TRSACT_FRQSORT ){ 
 			p = _clmw_perm_sort((tflag&LOAD_INCSORT)?1:-1);
@@ -566,6 +604,77 @@ void FILE_COUNT::initRperm(int tflag){
 	return;
 }
 	
+
+
+PERM *FILE_COUNT::makeCperm(){
+
+	// ttt :perm Size 
+	VEC_ID ttt_max = _clms_org;
+	VEC_ID ttt     = _clms_org;
+
+	
+	_clms_end = _clms_org;
+	_c_eles=0;
+	_c_clms=0;
+
+  PERM *cperm = new PERM[_clms_org+1]; 
+
+	for(size_t i =0 ;i<_clms_org;i++){ 
+		cperm[i] = _clms_org+1; 
+	}
+
+
+	for(size_t tt=0; tt < ttt; tt++){
+
+		if ( tt >= _clms_org ) continue;
+		    
+		if( _limVal.clmOK(_cw[tt],_clmt[tt]) ){
+			_c_eles += _clmt[tt];
+			cperm[tt] = _c_clms++ ;
+		}
+		else{
+			cperm[tt] = _clms_end+1 ;
+		}
+	}
+	if(_c_clms == 0){
+		delete [] cperm;
+		return NULL;
+	}
+	//_Cで管理したほうがいい？
+	_cperm = cperm;
+	return cperm;
+}
+
+PERM* FILE_COUNT::makeRperm(bool sflag){
+
+  PERM *p=NULL;
+
+	// SSPCのみ len 指定のみ
+	if( sflag ){ p = _rowt_perm_sort(-1); }
+
+	PERM *rperm = new PERM[_rows_org];//malloc2
+			
+	// compute #elements according to rowt, and set rperm
+	VEC_ID tt=0;
+	for( VEC_ID t=0 ; t<_rows_org ; t++){
+		tt = p? p[t]: t; 
+		if(_limVal.rowOK(_rowt[tt])){
+			rperm[tt] = _r_clms++;
+			_r_eles += _rowt[tt];
+		}
+		else{
+			rperm[tt] = _rows_org+1;
+		}
+	}
+	delete [] p;
+	//_Cで管理したほうがいい？
+
+	_rperm = rperm;
+
+	return rperm;
+}
+	
+
 
 void FILE_COUNT::makePerm(int tflag,int tflag2){
 
