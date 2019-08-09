@@ -416,8 +416,7 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 
 	qsort_perm__( _v, _t, rperm, flag); 
 
-	
-	cmm_p = new char[_t](); //calloc2(cmm_p,_t,EXIT);
+	cmm_p = new char[_t]();
 
 	for(cmm_i=0;cmm_i<_t;cmm_i++){
 		if ( cmm_p[cmm_i]==0 ){ 
@@ -436,7 +435,7 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 	if(_w){
 
 		WEIGHT *ww;
-		char  *cmm_p = new char[_t](); //calloc2(cmm_p,_t,EXIT);
+		char  *cmm_p = new char[_t]();
 
 		for(cmm_i=0;cmm_i<_t;cmm_i++){
 			if ( cmm_p[cmm_i]==0 ){ 
@@ -451,7 +450,6 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 			}
 		}
 		delete [] cmm_p; 
-
 	} 
 			
 	PERM pp;
@@ -470,108 +468,4 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 		}
 	}
 }
-
-
-
-
-
-
-/*
-必要なら考える
-PERM *SETFAMILY::__qsort_perm_v(int unit){
-
-	PERM *sortPerm = new PERM[_t];
-	for(size_t i=0 ; i<_t; i++){ sortPerm[i]=i; }
-	if ( unit == 1 || unit==-1 ) unit *= sizeof(QUEUE);
-
- 	if (unit<0) qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp__);
-	else        qsort(sortPerm, _t, sizeof(PERM), SETFAMILY::__qqsort_cmp_);
-
-	return sortPerm;
-}
-*/
-
-/* load the file to allocated memory according to permutation */
-// flag ( _C.r_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
-/*
-void SETFAMILY::readFile(IFILE2 &fp, IFILE2 &fp2,  int flag)
-{ 
-
-  QUEUE_ID tt;
-  VEC_ID t=0;
-
-  if ( flag ) {  setVBuffer(0, 0); }
-
-  fp.reset();	  
-  if( _params._iwfname ){ // sspcでitem weightを指定した時のみ
-	  IFILE2 wfp(_params._iwfname);
-		_T.file_read( fp , wfp, _C , &t , flag , _params._flag);
- }
-  else{
-		_T.file_read( fp , _C , &t ,flag , _params._flag);
-	}
-
-	// fp2にアイテムファイルは指定できないようになってたので
-	if( fp2.exist() ){
-		fp2.reset();
-		_T.file_read( fp2 , _C , &t , flag , _params._flag);
-	}
-
-	_T.initQUEUEs();
-
-}
-*/
-/*
-
-// smat をつかうなら復活させる
-void SETFAMILY::SMAT_alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles){
-  VEC_ID i;
-  if ( eles == 0 ) { _ele_end =  fc.sumRow(0, rows); }
-  else {  _ele_end = eles; } 
-
-  //calloc2 (_buf, _ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2, EXIT);
-  _buf = new QUEUE_INT[_ele_end*((_flag&LOAD_DBLBUF)?2:1) +rows +2]();
-
-	try{
-	  _v = new QUEUE[rows+1]; //_v = malloc2 (_v, rows+1);
-	}catch(...){
-		delete [] _buf;
-		throw;
-	}
-  //ARY_FILL (_v, 0, rows, SVEC() );
-
-	for(size_t _common_size_t =0;_common_size_t<rows;_common_size_t++){
-		_v[_common_size_t].set_end(0);
-	  _v[_common_size_t].set_t(0);
-	}
-
-  _end = rows;
-  _clms = clms;
-  if ( !fc.rowEmpty() ){
-    for(i=0;i<rows;i++){
-      _v[i].set_v( i? _v[i-1].get_v() + fc.get_rowt(i-1) +1: _buf);
-      _v[i].set_end(fc.get_rowt(i));
-    }
-  }
-}
-
-  if ( flag ) SMAT_alloc ( _t, C, _clms, 0);
-  else {
-  }
-
-	setsize_sg へ
-  //FILE_COUNT C;
-  C.count(
-  	fp,
-  	(_flag&(LOAD_ELE+LOAD_TPOSE+LOAD_RC_SAME+LOAD_EDGE)) | FILE_COUNT_ROWT, 
-  	0, 0, 0, (flag2&LOAD_EDGEW)?1:0, 0
-  );
-
-
-  if ( _clms == 0 ) _clms = C.get_clms();
-  if ( _t == 0 ) _t = C.get_rows();
-
-	alloc ( _t, C, _clms, 0);
-  if ( wflag ) alloc_weight ( C );
-*/
 

@@ -136,47 +136,38 @@ void ITEMSET::alloc(
 }
 
 
-
+// sspc用
 void ITEMSET::alloc(
 	char *fname, PERM *perm, QUEUE_INT item_max,size_t item_max_org,
 	LONG _itk_end ,LONG _itk_item, LONG _itk_item2
 ){
 
   LONG i, ii;
-  size_t siz = (_params._flag&ITEMSET_USE_ORG)?item_max_org+2: item_max+2;
+
+  // size_t siz = (_params._flag&ITEMSET_USE_ORG)?item_max_org+2: item_max+2;
+  // _params._frq = 0; // <<これOK? どっちもlcmseq用？
+
+  size_t siz = item_max+2;
+
   int j;
 
-  _prob = _ratio = 1.0;
-  _params._frq = 0; // <<これOK?
+  _prob = _ratio = 1.0; //これいる？
+ 
   _perm = perm;
 
   _itemset.alloc((QUEUE_ID)siz,(QUEUE_ID)siz);
 
-  if ( _params._flag&ITEMSET_ADD ) _add.alloc((QUEUE_ID)siz);
-
-	_sc = new LONG[siz+2](); // calloc2
-
-	// upper bound of frequency
-  if ( _params._flag  & ITEMSET_SC2 ) {
-		_sc2 = new LONG[int(_params._frq_ub+2)]();  // calloc2 
-  }
+	_sc = new LONG[siz+2]();
 
 	// allocate topk heap
   if ( _params._topk_k > 0 ){  
-    if (_params._flag & ITEMSET_SC2){
-      _params._frq_lb = 1; 
-      _topk_frq = 0;
-      _sc2[_topk_frq] = _params._topk_k;
-    } else {
-    	_topk.alloc(_params._topk_k,-WEIGHTHUGE);
-      _params._frq_lb = -WEIGHTHUGE * _topk_sign;
-    }
+		_topk.alloc(_params._topk_k,-WEIGHTHUGE);
+		_params._frq_lb = -WEIGHTHUGE * _topk_sign;
   }
 
 	// allocate topkheap for each element
   if ( _itk_end > 0 ){ 
-  	//_itkSize = _itk_end;
-    //_itemtopk. = new AHEAP[_itk_end];
+
     _itemtopk.setSize(_itk_end,_itk_item,-WEIGHTHUGE);
 
     if ( _itk_item2 > 0 ){
@@ -184,17 +175,6 @@ void ITEMSET::alloc(
 	    for(LONG i = 0 ; i<_itk_end ; i++){
         _itemtopk_ary[i] = new QUEUE_INT[_itk_item];   
       }
-    }
-  }
-  
-  if ( _params._flag&ITEMSET_SET_RULE ){
-
-		_set_weight = new WEIGHT[siz](); //calloc2
-
-    if ( _params._flag&(ITEMSET_TRSACT_ID+ITEMSET_MULTI_OCC_PRINT) ){
-
-        _set_occ    = new QUEUE*[siz](); //calloc2
-        _set_occELE = new KGLCMSEQ_QUE*[siz]();//calloc2
     }
   }
 
@@ -210,20 +190,13 @@ void ITEMSET::alloc(
     }
   } 
 
-  if ( _params._flag&ITEMSET_ITEMFRQ ){
-	  _item_frq =  new WEIGHT[item_max+2];
-	}
-  if ( _params._flag&ITEMSET_RULE ){
-    _itemflag = new char[item_max+2](); //calloc2
-  }
-
   _total_weight = 1;
+
   j = MAX(_params._multi_core,1);
 
-  _multi_iters = new LONG[j*3](); // calloc2
+  _multi_iters = new LONG[j*3](); 
   _multi_outputs = _multi_iters + j;
   _multi_solutions = _multi_outputs + j;
-  
   _multi_fp = OFILE2::makeMultiFp(j,_fp);
   
 
@@ -650,9 +623,6 @@ void ITEMSET::output_itemset_ (
   }
 }
 
-
-
-
 // for Mace 
 void ITEMSET::output_itemset(int core_id){
 
@@ -719,8 +689,6 @@ void ITEMSET::solution_iter (QUEUE *occ, int core_id){
   if ( _itemset.get_t() > _params._ub ) return;
   output_itemset( occ, core_id);
 
-	// if ( _ERROR_MES ) return; エラー処理考える
-	
   for(;_add.get_t()>0;){
 
     _itemset.push_back(_add.tail());
@@ -728,7 +696,6 @@ void ITEMSET::solution_iter (QUEUE *occ, int core_id){
 
     solution_iter ( occ, core_id);
 
-		// if ( _ERROR_MES ) return; エラー処理考える
     _itemset.dec_t();
   }
   _add.set_t(t);
@@ -1333,6 +1300,15 @@ void ITEMSET::check_all_rule ( WEIGHT *w, KGLCMSEQ_QUE *occ, QUEUE *jump, WEIGHT
 
 
 // つかってない？ 
+// sspcでつかっtない
+//  if ( _params._flag&ITEMSET_ITEMFRQ ){
+//	  _item_frq =  new WEIGHT[item_max+2];
+//	}
+// if ( _params._flag&ITEMSET_RULE ){
+//    _itemflag = new char[item_max+2](); //calloc2
+// }
+
+
 //  _item_max_org = (QUEUE_INT)item_max_org;つかってない？ 
 //    _solutions2 += _multi_solutions2[i];
 //  _multi_solutions2 = _multi_solutions + j;

@@ -38,7 +38,6 @@ VEC_ID FILE_COUNT::adjust_RowSep(VEC_ID sep){
   return sep;
 }
     
-    
 QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 
 	IFILE2 wfp;
@@ -49,7 +48,6 @@ QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 	#else
 		QUEUE_INT kk = wfp.ARY_Scan_INT();
 	#endif
-
 	kk += _rows_org;
 	_rw.realloc2(kk+1);
 
@@ -62,11 +60,8 @@ QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 
 	wfp.close();
 	
-	return kk;
-	
+	return kk;	
 }
-
-
 /*****************************************/
 /* scan file "fp" with weight file wfp and count #items, #transactions in the file. */
 /*   count weight only if wfp!=NULL                                      */
@@ -80,7 +75,7 @@ int FILE_COUNT::_file_count_T(IFILE2 &fp,char *wf){
 
 	QUEUE_INT item, kk=0, k;
 	VECARY<VEC_ID> jump;
-	WEIGHT w, s;
+	WEIGHT  s;
 
 	if ( wf ){ kk = _weight_Scan(wf); }
 
@@ -88,11 +83,9 @@ int FILE_COUNT::_file_count_T(IFILE2 &fp,char *wf){
 
 		s=0; k=0;
 
-		w = wf? (_rows_org<kk? _rw[_rows_org]: TRSACT_DEFAULT_WEIGHT): 1;
-
 		do {
 			
-			item = (QUEUE_INT)fp.read_int();
+			item = fp.read_int();
 
 			if ( fp.NotNull() && item < TRSACT_MAXNUM && item >= 0 ){ //(FILE_err&4)==0
 
@@ -101,7 +94,10 @@ int FILE_COUNT::_file_count_T(IFILE2 &fp,char *wf){
         	
 				jump.reallocx( k, 0); //これ0でOK？ 
 				jump[k] = item;
+
 				k++;
+
+				// チェック用 clmのwight用
 				s += wf? (item<kk? MAX(_rw[item],0): TRSACT_DEFAULT_WEIGHT): 1;
 
 	      // count/weight-sum for the transpose mode
@@ -142,6 +138,7 @@ int FILE_COUNT::_file_count_T(IFILE2 &fp,char *wf){
 		return 0; 
 	} 
 
+	// ここおかしくなりそう。。
 	_rw.reallocx(kk,_rows_org, TRSACT_DEFAULT_WEIGHT);
 
 	for(int i0 = 0 ; i0 < _rows_org ; i0++){
@@ -171,7 +168,7 @@ int FILE_COUNT::_file_count(IFILE2 &fp, char *wf){
 	do {
 
 		// s=0; 
-		k=0;
+		k=0; // clm 数
 
 		w = wf? (_rows_org<kk? _rw[_rows_org]: TRSACT_DEFAULT_WEIGHT): 1;
 
@@ -212,7 +209,8 @@ int FILE_COUNT::_file_count(IFILE2 &fp, char *wf){
 
 		_eles_org += k;
 
-		// NOT LOAD_TPOSEの時はこの条件
+		// NOT LOAD_TPOSEの時はこの条件		return ( RANGE (_row_lb, k, _row_ub) );
+
 		if( !_limVal.rowOK(k) ){
 			for(int i0=0 ; i0 < k ; i0++ ){
 				_clmt[jump[i0]]--; 
@@ -225,14 +223,13 @@ int FILE_COUNT::_file_count(IFILE2 &fp, char *wf){
 	// swap the variables in transpose mode
 	if ( _rw.empty() ){
 		_total_w_org = _total_pw_org = _rows_org; 
-		return 0; 
 	} 
-
-	kk = _rw.reallocx( kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
-
-	for(int i0=0 ; i0 < _rows_org ; i0++ ){
-		_total_w_org += _rw[i0];
-		_total_pw_org += MAX(_rw[i0],0);
+	else{
+		_rw.reallocx( kk, _rows_org, TRSACT_DEFAULT_WEIGHT);
+		for(int i0=0 ; i0 < _rows_org ; i0++ ){
+			_total_w_org += _rw[i0];
+			_total_pw_org += MAX(_rw[i0],0);
+		}
 	}
 	
 	return 0;
@@ -271,6 +268,9 @@ int FILE_COUNT::file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2
 
 }
 
+// ###############################
+// SSPC
+// ###############################
 int FILE_COUNT::fileCountT( IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2){
 
 	if( _file_count_T(fp, wf) ) { return 1; }	
@@ -554,8 +554,6 @@ void FILE_COUNT::initCperm(int tflag,int tflag2){
 	}
 	
 	_clms_end = MAX(_clms_org, ttt_max);
-	_c_eles=0;
-	_c_clms=0;
 
 	_cperm = new PERM[_clms_org+1]; // malloc2
 	for(size_t i =0 ;i<_clms_org;i++){ 
@@ -611,11 +609,7 @@ PERM *FILE_COUNT::makeCperm(){
 	// ttt :perm Size 
 	VEC_ID ttt_max = _clms_org;
 	VEC_ID ttt     = _clms_org;
-
-	
 	_clms_end = _clms_org;
-	_c_eles=0;
-	_c_clms=0;
 
   PERM *cperm = new PERM[_clms_org+1]; 
 

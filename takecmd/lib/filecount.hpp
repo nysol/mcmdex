@@ -84,11 +84,12 @@ class FILE_COUNT{
   VEC_ID    _rows_org;
   QUEUE_INT _clms_org;
   size_t    _eles_org;
+  
+  // 分ける必要ある？
+  FILE_COUNT_INT _clms , _rows , _eles;
 
   WEIGHT    _total_w_org,_total_pw_org;
 
-  FILE_COUNT_INT _clms , _rows , _eles;
-  WEIGHT _total_rw, _total_cw;         // WEIGHTs for rows/columns ... reserved.
 
   VEC_ID _end1; //2nd-trsact position
 
@@ -99,13 +100,6 @@ class FILE_COUNT{
   // lower/upper bound of #elements in a column/row. 
   // colunmn or row of out of range will be ignored
 	LimitVal _limVal;
-  /*
-  WEIGHT   _w_lb , _w_ub ;
-  VEC_ID   _clm_lb , _clm_ub; 
-	QUEUE_ID _row_lb , _row_ub;
-	double   _row_lb_, _row_ub_;
-	double   _clm_lb_, _clm_ub_;
-  */
   
   // size of each row/clmn
 	VECARY <FILE_COUNT_INT> _rowt;
@@ -160,7 +154,6 @@ class FILE_COUNT{
 			_clms_org(0) ,_rows_org(0) , 
 			_total_w_org(0) , _total_pw_org(0) ,
 			_eles_org(0) ,_clms(0) , _rows(0) , _eles(0),
-			 _total_rw(0), _total_cw(0),
 			 _rperm(NULL) , _cperm(NULL),_negaFLG(false),
 			_end1(0),_c_eles(0),_c_clms(0),_r_eles(0),_r_clms(0)
 			{}
@@ -185,6 +178,8 @@ class FILE_COUNT{
 		size_t c_eles(){ return _c_eles; }
 		size_t r_clms(){ return _r_clms; }
 		size_t r_eles(){ return _r_eles; }
+
+
 		size_t c_end() { return _clms_end; }
 
 
@@ -218,24 +213,6 @@ class FILE_COUNT{
   	void setLimit(LimitVal val){
 	  	_limVal = val;
   	}
-/*
-  	void setLimit(
-  		WEIGHT w_lb , WEIGHT w_ub ,
-  		double clm_lb_  = 0.0 , double clm_ub_  = 0.0, 
-  		QUEUE_ID row_lb = 0   , QUEUE_ID row_ub = QUEUE_IDHUGE,
-  		double row_lb_  = 0.0 , double row_ub_  = 0.0
-  	){
- 		 	_w_lb    = w_lb;
- 		 	_w_ub    = w_ub;
-	  	_clm_lb_ = clm_lb_; 
-	  	_clm_ub_ = clm_ub_; 
-			_row_lb  = row_lb;
-			_row_ub  = row_ub;
-			_row_lb_ = row_lb_;
-			_row_ub_ = row_ub_;
-
-  	};
-*/
 
 		bool rPermGErows(VEC_ID t){
 			return _rperm[t] <= _rows_org;
@@ -261,7 +238,6 @@ class FILE_COUNT{
     VEC_ID adjust_ClmSep(VEC_ID sep);
     VEC_ID adjust_RowSep(VEC_ID sep);
 
-		//void makePerm(char *pfname,int tflag,int tflag2);
 
 		void makePerm(int tflag,int tflag2);
 		PERM * makeCperm(void);
@@ -284,4 +260,27 @@ class FILE_COUNT{
 };
 
 
+
+//  WEIGHT   _w_lb , _w_ub ;
+//  VEC_ID   _clm_lb , _clm_ub; 
+//	QUEUE_ID _row_lb , _row_ub;
+//	double   _row_lb_, _row_ub_;
+//	double   _clm_lb_, _clm_ub_;
+//void makePerm(char *pfname,int tflag,int tflag2);
+//  	void setLimit(
+//  		WEIGHT w_lb , WEIGHT w_ub ,
+//  		double clm_lb_  = 0.0 , double clm_ub_  = 0.0, 
+//  		QUEUE_ID row_lb = 0   , QUEUE_ID row_ub = QUEUE_IDHUGE,
+//  		double row_lb_  = 0.0 , double row_ub_  = 0.0
+//  	){
+// 		 	_w_lb    = w_lb;
+// 		 	_w_ub    = w_ub;
+//	  	_clm_lb_ = clm_lb_; 
+//	  	_clm_ub_ = clm_ub_; 
+//			_row_lb  = row_lb;
+//			_row_ub  = row_ub;
+//			_row_lb_ = row_lb_;
+//			_row_ub_ = row_ub_;
+//
+// 	};
 

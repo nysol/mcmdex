@@ -65,7 +65,7 @@ FILE_LONG IFILE2::read_int(){
   }
 }
 
-double IFILE2::read_double (){
+double IFILE2::read_double(){
   double item, geta=1;
   int sign=1, ch, n=0, d, flag=0;
   _FILE_err = 0;

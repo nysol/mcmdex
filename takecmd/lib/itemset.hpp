@@ -138,35 +138,6 @@ struct ItemSetParams {
 };
 
 
-//	int _flag;
-//	//boundary  
-//  int _ub, _lb;   // upper/lower bounds for the itemset size
-//  int _len_ub, _len_lb;   // upper/lower bounds for the length of the pattern
-
-//
-// the size of itemtopk heaps;
-// specify topkheap to be used/the size of each in the initiaization
-// for sspc (-k)
-//  LONG  _itemtopk_item, _itemtopk_item2,_itemtopk_end; 
-
-//  LONG _topk_k,
-//  WEIGHT _frq, _pfrq,_frq_ub, _frq_lb;  // upper/lower bounds for the frequency
-//
-//  WEIGHT _posi_lb, _posi_ub; 
-// WEIGHT _nega_lb, _nega_ub;  // upper/lower bounds for the sum of positive/negative weights
-
-//  int _digits;  // #decimals to be output, for non-natural numbers
-	// for lcmseq
-//  WEIGHT _setrule_lb;  // frequency lower bound for set rule
-//  QUEUE_INT _target;  // target item for rule mining
-//  LONG _max_solutions; // maximum solutions to be output
-//  int _multi_core;  // number of processors
-//  // upper/lower bounds for confidence and independent probability
-//  double _ratio_ub, _ratio_lb;
-// double _prob_ub, _prob_lb;   
-//  char _separator; // separator of items output
-
-
 class ITEMSET{
 
 	ItemSetParams _params;
@@ -216,7 +187,7 @@ class ITEMSET{
 
 
 	// heap for topk mining. valid if topk->h is not NULL
-  AHEAPARY _itemtopk;  
+  AHEAPARY _itemtopk;   
 
   AHEAP _topk; 
 
@@ -276,7 +247,7 @@ class ITEMSET{
 		_progress(0),_iters(0),_solutions(0),
   	_item_max(0),_topk_frq(0),_total_weight(0),
 		_ratio(0.0),_prob(0.0),_th(0.0),
-		_topk_sign(1) ,_itemtopk_sign(1),  // initialization ; max topk
+		_topk_sign(1) ,_itemtopk_sign(1),  // initialization ; max topk << 常に1？
 		_itemflag(NULL),_perm(NULL),_item_frq(NULL),
 		_sc(NULL),_sc2(NULL),
   	_set_weight(NULL),_set_occ(NULL),
@@ -555,185 +526,6 @@ class ITEMSET{
 	}
 
 };
-
-
-// SSPC	
-//int _len_lb;
-// LCMSeq SSPC
-//	int _len_ub;
-	// SSPC
-	//LONG _itemtopk_end; //あとで整理
-	//LONG _itemtopk_item;
-	//LONG _itemtopk_item2;
-		//_len_ub(INTHUGE),_len_lb(0),
-		//_itemtopk_item(0),_itemtopk_item2(0),
-		//_itemtopk_end(0),
-
-/*
-//	itemsetで処理してないただ本来こっちでやっとほうがいい？
-//  WEIGHT _rposi_lb, _rposi_ub;
-//  for lcmseq
-//  int _gap_ub, _gap_lb;   // upper/lower bounds for the gaps in the pattern 
-// ,_gap_ub(INTHUGE),_gap_lb(0), _gap_lb=全くつかわれてない
-
-//_item_max_org使ってない？ lcmseqのときだけいるかも？
-//_item_max_org(0),
-//	void alloc(char *fname, PERM *perm, QUEUE_INT item_max, size_t item_max_org);
-// 
-//			_rposi_lb = rposi_lb;
-//			_rposi_ub = rposi_ub;
-// ,_flag2(0)
-//  int _dir;  // direction flag for AGRAPH & SGRAPH
-//_dir(0),
-//  LONG *_patn;  // cardinarity of each patten group
-//_patn(NULL),
-//_iters2, _iters3; 
-//, _flag2; // <=_flag2 (LAMPの時しか使われてないようなきが ）
-//	int get_flag2(){ return _flag2;} 
-// ,_outputs(0),_outputs2(0)_solutions2(0),_multi_solutions2(NULL),
-// ,_multi_iters2(NULL),_multi_iters3(NULL)
-//	 LONG *_multi_outputs2
-//	 LONG *_multi_iters2, *_multi_iters3;
-//	 LONG *_multi_solutions2;
-// LONG _outputs, _outputs2;
-// LONG  _solutions2
-	//char *_ERROR_MES;
-	//	_multi_outputs2(NULL),
-	//,_ERROR_MES(NULL)
-//		_itemtopk(NULL),_itkSize(0),
-//	int get_len_lb(){ return _params._len_lb;} 
-//	int get_len_ub(){ return _params._len_ub;} 
-
-//	void set_len_ub(int v){ _params._len_ub =v; }
-
-	
-//	WEIGHT get_rposi_lb(){ return _rposi_lb;} 
-//	WEIGHT get_rposi_ub(){ return _rposi_ub;} 
-// 	void set_maximum_frequency( WEIGHT v){ ENMIN (_frq_ub, v); }
-
-//	void set_itemtopk_item( LONG v){_itemtopk_item=v;}
-//	void set_itemtopk_item2( LONG v){_itemtopk_item2=v;}
-//	void set_multi_core( int v) { _multi_core=v;}
-//	void set_topk_k( LONG v){ _topk_k = v;}
-//	void set_itemtopk_end( LONG v){_itemtopk_end=v;}
-//	void set_len_lb(int v){ _len_lb =v; }
-//	void set_max_solutions( LONG v){ _max_solutions=v;}
-//	void set_separator(char v){ _separator = v;}
-//	void set_frq_lb(WEIGHT v){ _frq_lb= v;}
-//	void set_frq_ub(WEIGHT v){ _frq_ub= v;}
-//	void set_prob_lb(double v){ _prob_lb= v;}
-//	void set_prob_ub(double v){ _prob_ub= v;}
-//	void set_ratio_lb(double v){ _prob_lb= v;}
-//	void set_ratio_ub(double v){ _prob_ub= v;}
-//	void set_rposi_lb(WEIGHT v){ _rposi_lb= v;}
-//	void set_rposi_ub(WEIGHT v){ _rposi_ub= v;}
-//	void set_setrule_lb(WEIGHT v){_setrule_lb=v;}
-//	void set_posi_lb(WEIGHT v){ _posi_lb= v;}
-//	void set_posi_ub(WEIGHT v){ _posi_ub= v;}
-//	void set_nega_lb(WEIGHT v){ _nega_lb= v;}
-//	void set_nega_ub(WEIGHT v){ _nega_ub= v;}
-//	void set_digits(int v){ _digits= v;}
-//	void bitrm(int){ BITRM (_flag, ITEMSET_PRE_FREQ);}
-//	void union_flag(int flag){ _flag|=flag;}
-//	void union_flag2(int flag){ _flag2|=flag;}
-//	void sub_flag(int flag){ _flag-=flag;}
-//	int get_gap_ub(){return _gap_ub;}
-//	void set_gap_ub(int v){_gap_ub=v;}
-//	void iaddINS(QUEUE_INT v){ _add.push_back(v);}
-// 	void iadd_set_t(QUEUE_ID t){ _add.set_t(t);}
-// これでいいような気がする
-// void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, QUEUE *occ, int core_id);
-// void output_itemset_ ( QUEUE *itemset, WEIGHT frq, WEIGHT pfrq, KGLCMSEQ_QUE *occ, int core_id);
-
-//	LONG get_itemtopk_end(void){ return _params._itemtopk_end;}
-//	LONG get_itemtopk_item(void){ return _params._itemtopk_item;}
-
-//	void setParams(
-//		int iFlag, WEIGHT frq_lb,int len_ub,int len_lb,
-//		LONG topk_k,LONG itemtopk_item,LONG itemtopk_item2,
-//		LONG itemtopk_end , int multi_core, LONG max_solutions,char separator
-//	){
-//		_params._flag   = iFlag;
-//		_params._frq_lb = frq_lb;
-//		_params._len_ub = len_ub;
-//		_params._len_lb = len_lb;
-//		_params._topk_k = topk_k;
-		//_params._itemtopk_item = itemtopk_item;
-		//_params._itemtopk_item2 = itemtopk_item2;
-		//_params._itemtopk_end = itemtopk_end;
-//		_params._multi_core = multi_core;
-//		_params._max_solutions = max_solutions;
-//		_params._separator = separator;
-//	}
-// LCMSEQ
-//	void setParams(
-//		int flag , WEIGHT frq_lb , WEIGHT frq_ub , int lb , int  ub , QUEUE_INT target ,
-//		double ratio_lb , double ratio_ub , double prob_lb , double prob_ub,
-//		WEIGHT nega_lb , WEIGHT nega_ub,
-//		WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
-//		char separator ,  WEIGHT frq,  WEIGHT pfrq, int len_ub ,WEIGHT setrule_lb
-//	){
-//		_params._flag = flag;
-//		_params._frq_lb = frq_lb;
-//		_params._frq_ub = frq_ub;
-//		_params._lb = lb;
-//		_params._ub = ub;
-//		_params._target = target;
-//		_params._ratio_lb = ratio_lb;
-//		_params._ratio_ub = ratio_ub;
-//		_params._prob_lb = prob_lb;
-//		_params._prob_ub = prob_ub;
-//		_params._nega_lb = nega_lb;
-//		_params._nega_ub = nega_ub;
-//		_params._posi_lb = posi_lb;
-//		_params._posi_ub = posi_ub;
-//		_params._topk_k = topk_k;
-//		_params._max_solutions = max_solutions;
-//		_params._separator = separator;
-//		_params._pfrq = pfrq;
-//		_params._frq = frq;
-//		_params._len_ub = len_ub;
-//		_params._setrule_lb = setrule_lb;
-//	}
-	// LCM
-//	void setParams(
-//		int flag , WEIGHT frq_lb , WEIGHT frq_ub , int lb , int  ub , QUEUE_INT target ,
-//		double ratio_lb , double ratio_ub , double prob_lb , double prob_ub,
-//		WEIGHT nega_lb , WEIGHT nega_ub,
-//		WEIGHT posi_lb , WEIGHT posi_ub, LONG topk_k , LONG max_solutions ,
-//		char separator , LONG digits
-//	){
-//		_params._flag = flag;
-//		_params._frq_lb = frq_lb;
-//		_params._frq_ub = frq_ub;
-//		_params._lb = lb;
-//		_params._ub = ub;
-//		_params._target = target;
-//		_params._ratio_lb = ratio_lb;
-//		_params._ratio_ub = ratio_ub;
-//		_params._prob_lb = prob_lb;
-//		_params._prob_ub = prob_ub;
-//		_params._nega_lb = nega_lb;
-//		_params._nega_ub = nega_ub;
-//	_params._posi_lb = posi_lb;
-//		_params._posi_ub = posi_ub;
-//		_params._topk_k = topk_k;
-//		_params._max_solutions = max_solutions;
-//		_params._separator = separator;
-//		_params._digits = digits;	
-//	}
-	// MACE
-//	void setParams(
-//		int iFlag, int lb,int ub, LONG max_solutions,char separator
-//	){
-//		_params._flag   = iFlag;
-//		_params._lb = lb;
-//		_params._ub = ub;
-//		_params._max_solutions = max_solutions;
-//		_params._separator = separator;
-//	}
-
-*/
 
 
 

@@ -321,12 +321,10 @@ class QUEUE {
 	/* initialization, not fill the memory by 0 */
 	void alloc (QUEUE_ID siz){
 		_end =  siz+1;
-		//malloc2(_v, siz+1, EXIT);
 		_v = new QUEUE_ID[siz+1];
 
 	}
-	void alloc (QUEUE_ID siz , QUEUE_ID end){
-		//malloc2(_v, siz+1, EXIT);
+	void alloc(QUEUE_ID siz , QUEUE_ID end){
 		_v = new QUEUE_ID[siz+1];
 		_end =  end;
 	}
