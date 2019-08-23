@@ -58,10 +58,10 @@ void SETFAMILY::alloc_weight (FILE_COUNT &fc){
 
   VEC_ID i;
   
-	_w = new WEIGHT*[_end +1](); //calloc2 (_w, _end +1, EXIT);
+	_w = new WEIGHT*[_end +1]();
 
 	try{
-	  _wbuf = new WEIGHT[_ele_end*((_flag&LOAD_DBLBUF)?2:1)+1](); //calloc2
+	  _wbuf = new WEIGHT[_ele_end*((_flag&LOAD_DBLBUF)?2:1)+1]();
 	}catch(...){
 		delete [] _w;
 		throw;
@@ -294,7 +294,9 @@ void SETFAMILY::file_read(
 
     if ( fp.Null() ) goto LOOP_END; //FILE_err&4
 
+//	  if ( (tflag & LOAD_TPOSE) || ((tflag&LOAD_EDGE) && x > y) ){
 	  if ( (tflag & LOAD_TPOSE) || ((tflag&LOAD_EDGE) && x > y) ){
+
   		SWAP_<LONG>(&x, &y);
 	  }
 

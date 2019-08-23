@@ -38,7 +38,6 @@ class SETFAMILY{
   VEC_ID _clms;
   size_t _eles, _ele_end;
   WEIGHT *_rw, **_w, *_wbuf;
-  int _unit;
 
   PERM *_rperm, *_cperm;  // row permutation
   
@@ -104,7 +103,6 @@ class SETFAMILY{
 		void file_read(IFILE2 &fp,             FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 		void file_read(IFILE2 &fp,IFILE2 &wfp, FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 
-		//readFile(IFILE2 &fp, IFILE2 &fp2, int flag);
 		
 		void clrMark(int i,char* mark){
 			_v[i].clrMark(mark);
@@ -268,18 +266,12 @@ class SETFAMILY{
 
 		}
 
-		void setSize4sspc(FILE_COUNT &_C,bool tposeflag){			
+		// _eles 要素数 TPOSEの場合はtraでの件数優先
+		void setSize4sspc(FILE_COUNT &_C,bool tpose){			
 
- 			if ( _C.r_eles() > _C.c_eles() && !(tposeflag) ){
- 				_eles = _C.c_eles();
- 			}
- 			else{
- 				_eles = _C.r_eles();
- 			}
-
+			_eles = _C.OptimalEleSize(tpose);
 			_clms = _C.c_clms(); 
 			_t    = _C.r_clms();
-			
   		_ele_end = _eles;
   		_end     = _t  + 1  ;
 
@@ -466,116 +458,6 @@ class SETFAMILY{
 		void setInvPermute(PERM *rperm,PERM *trperm,int flag);
 		void replace_index(PERM *perm, PERM *invperm);
 
-
 };
 
-/*
-//, *_buf2
-//	char *_ERROR_MES;
-//_buf2(NULL),
-//,_unit(sizeof(QUEUE_INT))
-//  char *_fname;  // input file name
-//_fname(NULL),
-//void _flie_load(FILE2 &fp, FILE_COUNT &C);
-
-// check
-// LOAD_DBLBUF LOAD_ARC ,LOAD_INCSORT ,LOAD_DECSORT
-// LOAD_SIZSORT LOAD_WSORT LOAD_DECROWSORT
-
-		// 要確認
-		void alloc_v(){
-		  _v = new QUEUE[_end];  //malloc2(_v, _end);
-		}
-
-		void alloc_buf(){
-			//malloc2 (buf,(_eles+_end+1)*_unit);
-		  _buf = new QUEUE_INT[_eles+_end+1]; 
-		}
-
-			// allocBuffer()
-
-		//void load(int flag , char *fname);
-		//void load (FILE2 &fp, FILE_COUNT &C, int flag);
-			//_end = _t * ( (flag&LOAD_DBLBUF) ? 2 : 1 ) + 1  ;
-
-		void printMes(char *frm ,...){
-
-			if( _flag&1 ){
-				va_list ap;
-				va_start(ap,frm);
-				fprintf(stderr,frm,ap);
-				va_end(ap);
-			}
-		}
-
-		void show(){
-			for(int i=0;i<_end;i++){
-				_v[i].show();
-			}
-		}
-*/
- /*
- 	必要なら考える
-	int __qqsort_cmp_(const void *x, const void *y){
-		if (_v[*(PERM *)(x)] < _v[*(PERM *)(y)]) return (-1); 
-		else return ( _v[*(PERM *)(x)] > _v[*(PERM *)(y)] ); 
-	}
-
-	int __qqsort_cmp__(const void *x, const void *y){
-		if ( _v[*(PERM *)(x)] > _v[*(PERM *)(y)] ) return (-1); 
-		else return (_v[*(PERM *)(x)] < _v[*(PERM *)(y)] ); 
-	}
-	*/
-
-
-/*
-  	int get_unit(void){ return _unit; }
-
-  	VEC_ID postinc_clms(){ 
-  		VEC_ID rtn = _clms++;
-  		return rtn; 
-  	}
-  	
-  	VEC_ID postinc_t(){
-	  	VEC_ID rtn = _t++;
-  		return rtn; 
-  	}
-
-  	void set_clms(VEC_ID clms){  _clms=clms; }
-  	void set_t(VEC_ID t){  _t=t; }
-
-  	void add_eles(size_t add ){  _eles+=add; }
-  	void set_ele_end(size_t eles){ _ele_end=eles; }
-  	void set_eles(size_t eles){ _eles=eles; }
-  	void set_end(VEC_ID end){ _end=end; }
-
-  	void dec_eles(){  _eles--; }
-*/
- 
-//void set_fname(char *fname){  _fname=fname; }
-
- // void set_buf(QUEUE_INT *buf){ _buf = buf; }
-
- //void union_flag(int flag){ _flag |= flag;}
-
-	//void _flie_load(FILE2 *fp);
-	//void end ();
-  //char *_cwfname, *_rwfname;     // weight file name
-	//void print (FILE *fp);
-	//void print_weight (FILE *fp);
-	//void setvvByPos(PERM pos){ _v[pos].set_v( _v[pos-1].end() +1);}
-	//void setwByIW(PERM i,WEIGHT w){ _w[i][_v[i].get_t()]=w;}
-	//void *getvec ( int i){ return &_v[i]; }
-	//void allvvInitByT(void){ for(int i=0 ; i< _t;i++){ _v[i].set_v( _v[i].get_t() , _t);}}
-
-// smatを使うならふっかつさせる
-//	void SMAT_alloc (VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
-
-//セットされない
-//  WEIGHT *_cw,
-// 		 	_cw(NULL),
-//			mfree (_buf2, _rw, _cw, _wbuf, _w, _cperm);
-//char  *_wfname;      //weight file name
-//_wfname(NULL),
-//void set_wfname(char *wfname){  _wfname=wfname; }
-//_cwfname(NULL),_rwfname(NULL),
+		//readFile(IFILE2 &fp, IFILE2 &fp2, int flag);

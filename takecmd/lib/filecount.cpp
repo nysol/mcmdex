@@ -52,7 +52,7 @@ QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 	_rw.realloc2(kk+1);
 
 	wfp.reset();
-	wfp.VARY_Read(_rw, kk);
+	wfp.VARY_Read(_rw, kk); // << = 0からセットされるので２回読み込まれるとおかしなる
 
 	if ( _rw.min(0, kk) < 0 ) {
 		_negaFLG = true;
@@ -236,38 +236,6 @@ int FILE_COUNT::_file_count(IFILE2 &fp, char *wf){
 
 }
 
-// call from trsact 
-// wf2は未実装
-int FILE_COUNT::file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2){
-
-	if(flg){ // TPOSE
-
-		if( _file_count_T(fp, wf) ) { return 1; }	
-		_end1 = _rows_org;
-
-		if( fp2.exist() ){
-			if( _file_count_T ( fp2, NULL) ) { return 1; }
-		}
-		// swap variables in the case of transpose
-		_tpose();
-
-	}
-	else{
-		if( _file_count( fp, wf) ){ return 1;	}
-		_end1 = _rows_org;
-
-		if( fp2.exist() ){
-			if( _file_count(fp2, NULL) ) { return 1;	}
-		}
-
-	}
-
-	_limVal.setBoundsbyRate(_rows_org,_clms_org);
-
-	return 0;
-
-}
-
 // ###############################
 // SSPC
 // ###############################
@@ -302,6 +270,39 @@ int FILE_COUNT::fileCount( IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2){
 }
 
 
+
+
+// call from trsact 
+// wf2は未実装
+int FILE_COUNT::file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf, char *wf2){
+
+	if(flg){ // TPOSE
+
+		if( _file_count_T(fp, wf) ) { return 1; }	
+		_end1 = _rows_org;
+
+		if( fp2.exist() ){
+			if( _file_count_T ( fp2, NULL) ) { return 1; }
+		}
+		// swap variables in the case of transpose
+		_tpose();
+
+	}
+	else{
+		if( _file_count( fp, wf) ){ return 1;	}
+		_end1 = _rows_org;
+
+		if( fp2.exist() ){
+			if( _file_count(fp2, NULL) ) { return 1;	}
+		}
+
+	}
+
+	_limVal.setBoundsbyRate(_rows_org,_clms_org);
+
+	return 0;
+
+}
 
 
 

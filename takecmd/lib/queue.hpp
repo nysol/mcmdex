@@ -284,7 +284,6 @@ class QUEUE {
 	void set_t(QUEUE_ID v){ _t=v;}
 	void set_s(QUEUE_ID v){ _s=v;}
 
-	//void cp_s2t(){ _t=_s; }
 
 	void set_v(QUEUE_ID *v){ _v=v; }
 	void set_v(int i,QUEUE_ID v){ _v[i]=v;}
@@ -483,9 +482,8 @@ class QUEUE {
 					if( f ){ pw[*x] += tpw[t]; }
 				}
 			}
-			
 	}
-
-	
 };
+
+	//void cp_s2t(){ _t=_s; }
 

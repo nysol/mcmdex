@@ -43,8 +43,9 @@ struct LimitVal{
 	// calc only
   VEC_ID _clm_lb;
   VEC_ID _clm_ub; 
-
-
+  
+  //bool _tposeF; // FILE_COUNTに入れと方がいい
+  
 	LimitVal():
 		_w_lb(-WEIGHTHUGE) , _w_ub(WEIGHTHUGE) ,
 		_clm_lb_(0.0),_clm_ub_(0.0),
@@ -65,15 +66,10 @@ struct LimitVal{
 	bool clmOK(WEIGHT s,QUEUE_INT k){
 		return  ( RANGE( _w_lb, s, _w_ub) && RANGE (_clm_lb, k, _clm_ub) );
 	}
-
-
-		//if(RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) ){
-
+	//if(RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) ){
 	bool rowOK(QUEUE_INT k){
 		return ( RANGE (_row_lb, k, _row_ub) );
 	}
-
-
 
 };
 
@@ -94,8 +90,6 @@ class FILE_COUNT{
   VEC_ID _end1; //2nd-trsact position
 
 	QUEUE_INT _clms_end; // trsact org
-
-
   // Limit 
   // lower/upper bound of #elements in a column/row. 
   // colunmn or row of out of range will be ignored
@@ -159,12 +153,17 @@ class FILE_COUNT{
 			{}
 	
 	
+	
 		// call from trsact.cpp
 		int file_count(int flg, IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 
 		int fileCountT(IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 		int fileCount (IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 
+//		int fileCountA(IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL){
+//			if(_limVal._tposeF)	{ return fileCountT( fp, fp2, wf ,wf2); }
+//			else 					 			{ return fileCount ( fp, fp2, wf ,wf2); }
+//		}
 
 		// call from sgraph.cpp 
 		void countSG (IFILE2 *rfp, int flag);
@@ -172,6 +171,18 @@ class FILE_COUNT{
 
 		// call from fstar.cpp
 		void countFS (IFILE2 *rfp, int flag, int int_clms);
+
+		size_t OptimalEleSize(bool tpose){
+			if( _r_eles > _c_eles  &&  !tpose  ){
+				return _c_eles;
+			}
+			else{
+				return _r_eles;
+			}
+		}
+
+		bool rGTc(bool tpose){ return ( _r_eles > _c_eles  &&  !tpose ); }
+//		bool isTPOSE{ return _limVal._tposeF; }
 
 		 // 仮
 		size_t c_clms(){ return _c_clms; }
@@ -258,29 +269,3 @@ class FILE_COUNT{
 		
 
 };
-
-
-
-//  WEIGHT   _w_lb , _w_ub ;
-//  VEC_ID   _clm_lb , _clm_ub; 
-//	QUEUE_ID _row_lb , _row_ub;
-//	double   _row_lb_, _row_ub_;
-//	double   _clm_lb_, _clm_ub_;
-//void makePerm(char *pfname,int tflag,int tflag2);
-//  	void setLimit(
-//  		WEIGHT w_lb , WEIGHT w_ub ,
-//  		double clm_lb_  = 0.0 , double clm_ub_  = 0.0, 
-//  		QUEUE_ID row_lb = 0   , QUEUE_ID row_ub = QUEUE_IDHUGE,
-//  		double row_lb_  = 0.0 , double row_ub_  = 0.0
-//  	){
-// 		 	_w_lb    = w_lb;
-// 		 	_w_ub    = w_ub;
-//	  	_clm_lb_ = clm_lb_; 
-//	  	_clm_ub_ = clm_ub_; 
-//			_row_lb  = row_lb;
-//			_row_ub  = row_ub;
-//			_row_lb_ = row_lb_;
-//			_row_ub_ = row_ub_;
-//
-// 	};
-

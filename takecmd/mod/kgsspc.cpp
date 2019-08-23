@@ -21,6 +21,8 @@
 //#define MULTI_CORE
 
 #define WEIGHT_DOUBLE
+
+
 typedef struct {
 
 #ifdef MULTI_CORE
@@ -55,6 +57,224 @@ WEIGHT KGSSPC::_comp ( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq)
   return (-WEIGHTHUGE);
 }
 
+
+/*******************************************************************/
+/* output at the termination of the algorithm */
+/* print #of itemsets of size k, for each k */
+/*******************************************************************/
+void KGSSPC::_last_output (){
+
+  QUEUE_ID i;
+  LONG n=0, nn=0;
+  WEIGHT w;
+  unsigned char c;
+
+  OFILE2 *fp = &_multi_fp[0];
+
+  _merge_counters();
+
+  if ( !(_P._showFlag) ) return;  // "no message" is specified
+
+  if ( _itemtopk.size() > 0 ){  // output values of the kth-best solution for each item
+
+		for(n=0; n < _itemtopk.size() ;n++){
+
+      c = 0;
+			for(nn=0;nn<_itemtopk.end(n);nn++){ //FLOOP
+
+        i = _itemtopk.findmin_head(n);
+        w = _itemtopk.H(n,i);
+
+        if ( w == -WEIGHTHUGE) break;
+
+        if ( _P._iflag & ITEMSET_PRE_FREQ ){ fp->print_real ( w, 8, c); c = _P._separator; }
+        fp->print_int (  _perm? _perm[_itemtopk_ary[n][i]]: _itemtopk_ary[n][i], c);
+        c = _P._separator;
+        if ( _P._iflag & ITEMSET_FREQ ){ 
+        	fp->print_real ( w, 8, c); 
+        	c = _P._separator; 
+        }
+				_itemtopk.chg(n,i, WEIGHTHUGE);
+
+      }
+      fp->putch('\n');
+      fp->flush();
+    }
+    fp->flush_last ();
+    goto END;
+  }
+
+  if ( _P._topk_k > 0 ){  // output value of the kth-best solution
+		OFILE2 ofp(stdout);
+		i = _topk.findmin_head();
+		ofp.print(_topk.H(i)); 
+		ofp.print("\n");
+    goto END;
+  }
+
+	for(i=0;i<_itemset.get_end()+1;i++){ //FLOOP
+    n += _sc[i];
+    if ( _sc[i] != 0 ) nn = i;
+  }
+
+  if ( n!=0 ){ //OK?
+    printf (LONGF "\n", n);
+		for(i=0;i<nn+1;i++){ //FLOOP
+			printf (LONGF "\n", _sc[i]);
+		}
+  }
+  
+  END:;
+  fprintf(stderr,"iters=" LONGF, _iters);
+  fprintf(stderr,"\n");
+  
+}
+
+/* output frequency, coverage */
+void KGSSPC::_output_frequency ( WEIGHT frq, int core_id){
+
+  OFILE2 *fp = &_multi_fp[core_id];
+  if ( _P._iflag&(ITEMSET_FREQ+ITEMSET_PRE_FREQ) ){
+	  if ( _P._iflag&ITEMSET_FREQ ) fp->putch(' ');
+  	fp->print_WEIGHT (frq, _P._digits, '(');
+  	fp->putch( ')');
+  	if ( _P._iflag&ITEMSET_PRE_FREQ ) fp->putch(' ');
+  }
+
+}
+
+/* output an itemset to the output file for sspc -k */
+void KGSSPC::_output_itemset_k (
+	QUEUE *itemset, WEIGHT frq,
+	QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, 
+	int core_id)
+{
+
+  QUEUE_ID i;
+  QUEUE_INT e;
+
+  int flush_flag = 0;
+  OFILE2 *fp = &_multi_fp[core_id];
+  
+  _multi_outputs[core_id]++;
+
+	if ( (_P._progressFlag ) && (_multi_outputs[core_id]%(ITEMSET_INTERVAL) == 0) ){
+		fprintf(stderr,"---- " LONGF " solutions in " LONGF " candidates\n",
+                  _multi_solutions[core_id], _multi_outputs[core_id]);
+	}
+
+
+	if ( frq < _frq_lb ) return;
+
+  _multi_solutions[core_id]++;
+
+  if ( _P._max_solutions > 0 && _multi_solutions[core_id] > _P._max_solutions ){
+    _last_output();
+    fprintf(stderr,"reached to maximum number of solutions\n");
+    EXIT;
+  }
+
+  SPIN_LOCK(_multi_core, _lock_sc);
+
+  _sc[itemset->get_t()]++;
+
+  SPIN_UNLOCK(_multi_core, _lock_sc);
+
+ 	// _params._itemtopk_end > 0
+	e = _itemtopk.findmin_head(itemtopk_item);
+
+
+  if ( frq > _itemtopk.H(itemtopk_item,e) ){
+  	SPIN_LOCK(_multi_core, _lock_sc);
+		_itemtopk.chg(itemtopk_item,e, frq );
+		if ( _itemtopk_ary ) _itemtopk_ary[itemtopk_item][e] = itemtopk_item2;
+		SPIN_UNLOCK(_multi_core, _lock_sc);
+	}
+	
+	return;
+
+}
+
+void KGSSPC::_output_itemset_ (
+	QUEUE *itemset, WEIGHT frq, int core_id)
+{
+
+  QUEUE_ID i;
+  QUEUE_INT e;
+
+  int flush_flag = 0;
+  OFILE2 *fp = &_multi_fp[core_id];
+  
+  _multi_outputs[core_id]++;
+
+	if ( (_P._progressFlag ) && (_multi_outputs[core_id]%(ITEMSET_INTERVAL) == 0) ){
+		fprintf(stderr,"---- " LONGF " solutions in " LONGF " candidates\n",
+                  _multi_solutions[core_id], _multi_outputs[core_id]);
+	}
+
+	if ( frq < _frq_lb ) return;
+
+  _multi_solutions[core_id]++;
+
+  if ( _P._max_solutions > 0 && _multi_solutions[core_id] >  _P._max_solutions ){
+    _last_output();
+    fprintf(stderr,"reached to maximum number of solutions\n");
+    EXIT;
+  }
+
+  SPIN_LOCK(_multi_core, _lock_sc);
+
+  _sc[itemset->get_t()]++;
+
+  SPIN_UNLOCK(_multi_core, _lock_sc);
+
+  if ( _P._topk_k > 0 ){
+  
+		e = _topk.findmin_head();
+		if ( frq  > _topk.H(e) ){
+
+			SPIN_LOCK(_multi_core, _lock_sc);
+			_topk.chg( e, frq );
+			e = _topk.findmin_head ();
+			_frq_lb = _topk.H(e) ;
+
+
+			SPIN_UNLOCK(_multi_core, _lock_sc);
+
+		}
+    return;
+  }
+
+  if ( fp ){
+
+    if ( _P._iflag&ITEMSET_PRE_FREQ ) _output_frequency ( frq, core_id);
+
+
+		for(i=0;i<itemset->get_t();i++){ //FLOOP
+
+			e = itemset->get_v(i);
+			fp->print_int ( _perm? _perm[e]: e, i==0? 0:_P._separator);
+
+			if ( fp->needFlush() ){
+				SPIN_LOCK(_multi_core, _lock_output);
+				flush_flag = 1;
+				fp->flush_ ();
+			}
+		}
+
+    if ( !(_P._iflag&ITEMSET_PRE_FREQ) ) _output_frequency ( frq, core_id);
+		//((_params._flag & ITEMSET_NOT_ITEMSET) == 0) || 
+		//(_params._flag & ITEMSET_FREQ) || (_params._flag & ITEMSET_PRE_FREQ) )
+
+    fp->putch('\n');
+
+    if ( flush_flag ){
+      fp->flush_ ();
+      SPIN_UNLOCK(_multi_core, _lock_output);
+    }
+  }
+}
+
 void KGSSPC::_output(
 	QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, 
 	QUEUE *itemset, WEIGHT frq, int core_id
@@ -69,7 +289,7 @@ void KGSSPC::_output(
 		// store the solution
 		if ( _P._problem & SSPC_POLISH2 ){  
 
-			SPIN_LOCK (_II.get_multi_core(), _II.get_lock_counter());
+			SPIN_LOCK (_P._multi_core, _lock_counter);
 
 			// use deleted cell
 			if ( (b = _itemary[_T.get_clms()]) ){
@@ -84,7 +304,7 @@ void KGSSPC::_output(
 			_buf[b+1] = ii;
 			_itemary[i] = b;
 
-			SPIN_UNLOCK (_II.get_multi_core(), _II.get_lock_counter());
+			SPIN_UNLOCK (_P._multi_core, _lock_counter);
     }
 	} 
 	else if ( _P._problem & SSPC_COUNT ){
@@ -93,8 +313,8 @@ void KGSSPC::_output(
 	else {
 
 		if ( _P._problem & SSPC_OUTPUT_INTERSECT ){
-			_II.print_int(core_id, _siz, 0);
-			_II.putc(core_id,' ');
+			_multi_fp[core_id].print_int(_siz, 0);
+			_multi_fp[core_id].putch(' ');
 		}
 
 		if ( _P._table_fname ){ 
@@ -111,12 +331,13 @@ void KGSSPC::_output(
 			if ( ii >= _sep ) itemset->minus_v(1,_root);
 		}
     */
+
 		if ( _P._itemtopk_end > 0 ){
-			_II.output_itemset_k ( itemset, frq, frq,  i, ii, core_id);
-			_II.output_itemset_k ( itemset, frq, frq,  ii, i, core_id);
+			_output_itemset_k ( itemset, frq, i, ii, core_id);
+			_output_itemset_k ( itemset, frq, ii, i, core_id);
 		}
 		else{
-			_II.output_itemset_ ( itemset, frq, frq,  core_id);
+			_output_itemset_ ( itemset, frq,  core_id); //_II.output_itemset_
 		}
 	}
 }
@@ -154,21 +375,21 @@ void KGSSPC::_comp2 (
 
     if ( frq == -WEIGHTHUGE ) return;
 
-    if ( frq >= _II.get_frq_lb() ) _output( cnt, x, i, itemset, frq, core_id);
+    if ( frq >= _P._frq_lb ) _output( cnt, x, i, itemset, frq, core_id);
 
     if ( _P._output_fname2 && frq >= _P._th2 ){
 
-      SPIN_LOCK(_II.get_multi_core(), _II._lock_output);
+      SPIN_LOCK(_P._multi_core, _lock_output);
       fp->print("%d %d\n", x_, i_);
-      SPIN_UNLOCK(_II.get_multi_core(), _II._lock_output);
+      SPIN_UNLOCK(_P._multi_core, lock_output);
 
     }
   } 
   else {
 
 		// size of i and x
-    f1 = wi * _II.get_frq_lb(); 
-    f2 = wx * _II.get_frq_lb();  
+    f1 = wi * _P._frq_lb; 
+    f2 = wx * _P._frq_lb;  
 
     if ( _P._output_fname2 ){ 
     	f1_ = wi*_P._th2; 
@@ -195,9 +416,9 @@ void KGSSPC::_comp2 (
 
       if ( _P._output_fname2 ){
         if ( c >= f2_ ){
-          SPIN_LOCK(_II.get_multi_core(), _II.get_lock_output());
+          SPIN_LOCK(_P._multi_core, _lock_output);
           fp->print("%d %d\n", x_, i_);
-          SPIN_UNLOCK(_II.get_multi_core(), _II.get_lock_output());
+          SPIN_UNLOCK(_P._multi_core, _lock_output);
         }
         f_ = (c >= f1_);
       }
@@ -211,9 +432,9 @@ void KGSSPC::_comp2 (
     }
 
     if ( _P._output_fname2 && f_ ){
-      SPIN_LOCK(_II.get_multi_core(), _II.get_lock_output());
+      SPIN_LOCK(_P._multi_core, _lock_output);
       fp->print("%d %d\n", i_, x_);
-      SPIN_UNLOCK(_II.get_multi_core(), _II.get_lock_output());
+      SPIN_UNLOCK(_P._multi_core, _lock_output);
     }
 
   }
@@ -238,7 +459,6 @@ void *KGSSPC::_iter (void *p){
   //QUEUE_INT cnt = ((_problem&SSPC_COMP_ITSELF) && _dir == 0)?1:0;
 	QUEUE_INT cnt = ( _P._problem&SSPC_COMP_ITSELF )?1:0;
 
-
   WEIGHT *occ_w,  c, *y;
   WEIGHT yy=0, wi=0, wx=0;
 
@@ -261,10 +481,10 @@ void *KGSSPC::_iter (void *p){
 
       i_ = 100000000 / (_T.get_eles() / _T.get_clms());
 			
-      SPIN_LOCK (_II.get_multi_core(), _II.get_lock_counter());  // lock!!
+      SPIN_LOCK (_P._multi_core, _lock_counter);  // lock!!
 
       if ( (i = *(SM->_lock_i)) >= _T.get_clms() ){
-        SPIN_UNLOCK (_II.get_multi_core(), _II.get_lock_counter());  // unlock!!
+        SPIN_UNLOCK (_P._multi_core, _lock_counter);  // unlock!!
         break;
       }
 
@@ -275,7 +495,7 @@ void *KGSSPC::_iter (void *p){
         if ( (int)((i-1)*100/_T.get_clms()) < (int)(i*100/_T.get_clms()) )
             fprintf (stderr, "%d%%\n", (int)(i*100/_T.get_clms()));
       }
-      SPIN_UNLOCK (_II.get_multi_core(), _II.get_lock_counter());  // unlock!!
+      SPIN_UNLOCK (_P._multi_core, _lock_counter);  // unlock!!
 
     }
 
@@ -403,19 +623,19 @@ void *KGSSPC::_iter (void *p){
 					}
         }
         if ( ff ){
-          _II.print_int(core_id, *iq , f);
-          f = _II.get_separator();
+					_multi_fp[core_id].print_int(*iq, f);
+          _multi_fp[core_id].putch(' ');
+          f = _P._separator;
         }
       }
-
-     	_II.putc(core_id,'\n');
-			_II.flush(core_id);
+      
+     	_multi_fp[core_id].putch('\n');
+     	_multi_fp[core_id].flush();
 
       jump.clrMark( _vecchr );
 
-			// data polish;  clear OQ, and marks
       if ( _P._problem & SSPC_POLISH2 ){  
-
+				// data polish;  clear OQ, and marks
         for (b=_itemary[i] ; b ; b=bb){ // insert cells to deleted cell queue
           bb = _buf[b];
           _vecchr[_buf[b+1]] = 0;
@@ -433,16 +653,15 @@ void *KGSSPC::_iter (void *p){
 		_OQ.endClr(i);
 
     if ( _P._problem & SSPC_COUNT ){
-      //while ( ii<_II.get_perm(i) ){
       while ( ii < _positPERM[i] ){
-				_II.putc(core_id,'\n');
-				_II.flush(core_id);
+				_multi_fp[core_id].putch('\n');
+				_multi_fp[core_id].flush();
         ii++;
       }
-      _II.print_int(core_id,cnt, 0);
-      _II.putc(core_id,'\n');
-      _II.flush(core_id);
-      _II.add_sc(2,cnt);
+			_multi_fp[core_id].print_int(cnt, 0);
+			_multi_fp[core_id].putch('\n');
+			_multi_fp[core_id].flush();
+      _sc[2]+=cnt;
       ii++;
     }
     i++;
@@ -465,9 +684,8 @@ void KGSSPC::_SspcCore(){
   	void *tr;
 	#endif
 
-  SSPC_MULTI_CORE *SM = NULL;
+	SSPC_MULTI_CORE *SM = NULL;
   OFILE2 fp;  // file pointer for the second output file
-
 
   // QUEUE_ID i; 
   //QUEUE_ID begin = (_problem&(SSPC_POLISH+SSPC_POLISH2))?0:(_dir>0?_sep:0);
@@ -492,7 +710,6 @@ void KGSSPC::_SspcCore(){
 			}
   	}
 
-	  //_TT.delivery( w, w+_T.get_clms(), NULL, _T.get_clms());
 	  _jump.setEndByStart();
   	for(VEC_ID t=0 ; t<_T.get_t(); t++){
     	_T.delivery_iter( 
@@ -564,10 +781,10 @@ void KGSSPC::_SspcCore(){
   }
 
   // for multi-core
-	SM = new SSPC_MULTI_CORE[_II.get_multi_core()]; //malloc2
+	SM = new SSPC_MULTI_CORE[_P._multi_core]; //malloc2
 
 
-	for (int i=_II.get_multi_core(); (i--) > 0 ; ){
+	for (int i=_P._multi_core; (i--) > 0 ; ){
     SM[i]._o = o;
     SM[i]._w = w;
     SM[i]._fp = &fp;
@@ -584,7 +801,7 @@ void KGSSPC::_SspcCore(){
   // wait until all-created-threads terminate
 #ifdef MULTI_CORE
 
-	for(int i=1 ; i < _II.get_multi_core(); i++){
+	for(int i=1 ; i < _P._multi_core; i++){
 		pthread_join(SM[i]._thr, &tr);
 	}
 
@@ -616,9 +833,11 @@ int KGSSPC::_runMain(){
 
   IFILE2 fp(_P._fname) , fp2(_P._fname2) ;
   
-  
 	// count file 	
-	if( _P._tflag&LOAD_TPOSE ){
+	
+	//_C.fileCountA(fp ,fp2 ,_P._wfname);
+
+	if( _P._tposeF ){
 		_C.fileCountT(fp ,fp2 ,_P._wfname);
 	}
 	else{
@@ -631,17 +850,10 @@ int KGSSPC::_runMain(){
 	if (cperm==NULL) { throw ("there is no frequent item"); }
 	PERM *rperm = _C.makeRperm(_P._rowSortDecFlag);
 
-	// f は 
-  // (_T.get_eles() > _C.c_eles() && !(_flag & LOAD_TPOSE) );
-	// (row eles ＞clm eles かつ TOPOSEでない (row eles == Tra No))
-  // の内容　
-  // fがセットさていない場合は　  _T.setVBufferが動くのでバッファが_Tにセットされている？
 
-	int f = ( _C.r_eles() > _C.c_eles() && !(_P._tflag&LOAD_TPOSE));
-
-
+ 
 	// _Tのバッファ _v _bufもセットされる
-	_T.setSize4sspc(_C,_P._tflag&LOAD_TPOSE); 
+	_T.setSize4sspc(_C,_P._tposeF); 
 
   _w.malloc2( _T.get_end());
 
@@ -666,6 +878,9 @@ int KGSSPC::_runMain(){
 
   size_t pos = 0; 
   // set variables w.r.t rows
+  // (r_eles c_elesは基本同じ：制約にひっかかると数が変わってくる)
+	int fflag = _C.rGTc(_P._tposeF);
+
 	for( VEC_ID t =0 ; t < _C.rows(); t++ ){
 
 		if(	rperm[t] <= _C.rows() ) {
@@ -676,7 +891,7 @@ int KGSSPC::_runMain(){
       _w[tt]   = _C.get_rw(t);
       if ( _pw ) {  _pw[tt] = MAX (_w[tt], 0); }
 
-      if ( !f ){ // elementのチェック 多分
+      if ( !fflag ){ // elementのチェック 多分
         _T.setVBuffer(tt,pos); // _T の_v ,_buf連動させる)
         pos += _C.get_rowt(t)+1;
       }
@@ -695,22 +910,22 @@ int KGSSPC::_runMain(){
   VEC_ID t=0;
 
 	// _v _bufの連動
-  if ( f ) {  _T.setVBuffer(0, 0); }
+  if ( fflag ) {  _T.setVBuffer(0, 0); }
 
   fp.reset();	  
   if( _P._iwfname ){ // sspcでitem weightを指定した時のみ
 	  IFILE2 wfp(_P._iwfname);
-		_T.file_read( fp , wfp, _C , &t , f , _P._tflag);
+		_T.file_read( fp , wfp, _C , &t , fflag , _P._tflag);
   	
   }
   else{
-		_T.file_read( fp , _C , &t ,f , _P._tflag);
-	}
+		_T.file_read( fp , _C , &t ,fflag, _P._tflag);
+	}	
 
 	// fp2にアイテムファイルは指定できないようになってたので
 	if( fp2.exist() ){
 		fp2.reset();
-		_T.file_read( fp2 , _C , &t , f , _P._tflag);
+		_T.file_read( fp2 , _C , &t , fflag , _P._tflag);
 	}
 
 	_T.initQUEUEs();
@@ -732,8 +947,6 @@ int KGSSPC::_runMain(){
 	//if(_tflag&LOAD_TPOSE){ _sep = _C.adjust_ClmSep(_sep);}
 	//else                 { _sep = _C.adjust_RowSep(_sep);}
 
-
-
   if ( _P._len_ub < INTHUGE ){ 
  	  for (VEC_ID i=0 ; i<_T.get_t() ; i++){
     	if ( _T.get_vt(i) <= _P._len_ub ){ _P._len_lb = i; break; }
@@ -741,8 +954,6 @@ int KGSSPC::_runMain(){
   }	
 
   if ( _P._itemtopk_item > 0 ){  _P._itemtopk_end= _T.get_clms(); }
-
-	_II.setParams( _P._ipara );
 
 	QUEUE_ID siz  = _T.get_clms();
 	QUEUE_ID siz2 = _T.get_t();
@@ -770,33 +981,89 @@ int KGSSPC::_runMain(){
     }
 	} 
 
-	_II.alloc(_P._output_fname, _perm, siz, 0, _P._itemtopk_end,_P._itemtopk_item,_P._itemtopk_item2);
+	// II alloc
+  size_t isiz = siz+2;
+
+  int j;
+
+  _itemset.alloc((QUEUE_ID)isiz,(QUEUE_ID)isiz);
+
+	_sc = new LONG[siz+2]();
+
+	// allocate topk heap
+  if ( _P._topk_k > 0 ){
+		_topk.alloc( _P._topk_k ,-WEIGHTHUGE);
+		_frq_lb = -WEIGHTHUGE ;
+  }
+
+	// allocate topkheap for each element
+  if ( _P._itemtopk_end > 0 ){ 
+
+    _itemtopk.setSize(_P._itemtopk_end,_P._itemtopk_item,-WEIGHTHUGE);
+
+    if ( _P._itemtopk_item2 > 0 ){
+			_itemtopk_ary = new QUEUE_INT*[_itemtopk.size()];
+	    for(LONG i = 0 ; i<_P._itemtopk_end ; i++){
+        _itemtopk_ary[i] = new QUEUE_INT[_P._itemtopk_item];   
+      }
+    }
+  }
+
+  _iters = _solutions = 0; //_iters2 =
+  _item_max = siz;
+
+  if ( _P._output_fname ){
+  	// バッファ確保しないほうがいい？
+    if ( strcmp (_P._output_fname, "-") == 0 ) _ofp.open(stdout);
+    else{
+    	if(_P._iflag&ITEMSET_APPEND){ _ofp.openA( _P._output_fname);}
+    	else                     { _ofp.open( _P._output_fname);}
+    }
+  } 
+
+  _total_weight = 1;
+
+  j = MAX(_P._multi_core,1);
+
+  _multi_iters = new LONG[j*3](); 
+  _multi_outputs = _multi_iters + j;
+  _multi_solutions = _multi_outputs + j;
+  _multi_fp = OFILE2::makeMultiFp(j,_ofp);
+
+
+#ifdef MULTI_CORE
+  if ( _params._multi_core > 0 ){
+    pthread_spin_init (_lock_counter, PTHREAD_PROCESS_PRIVATE);
+    pthread_spin_init (_lock_sc, PTHREAD_PROCESS_PRIVATE);
+    pthread_spin_init (_lock_output, PTHREAD_PROCESS_PRIVATE);
+  }
+#endif
+
+  // II alloc
+
 
 	VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
 	_w.realloc2(size);
 
 	for(size_t i=0; i<size;i++){ _w[i] = 1;}
 
-  _buf_end = 2;
-  _positPERM = _II.get_perm();
+  _positPERM = _perm; // _positPERM = _II.get_perm(); 
+  _perm=NULL;
 
-  _II.set_perm(NULL);
-  
   if ( _T.get_clms()>1 ){  
   	_SspcCore(); 
   }
+	_perm = _positPERM; // -K _P._itemtopk_end時必要
+  //_II.set_perm(_positPERM);
+  _merge_counters();
 
-  _II.set_perm(_positPERM);
-
-  _II.merge_counters();
-
-  if ( _II.get_topk_end() > 0 || _P._itemtopk_end > 0 ){
-  	 _II.last_output();
+  if ( _topk.end() > 0 || _P._itemtopk_end > 0 ){
+		_last_output();
   }
   else{
-  	fprintf(stderr , LONGF " pairs are found\n" , _II.get_sc(2));
+  	fprintf(stderr , LONGF " pairs are found\n" , _sc[2]);
   }
-	_II.close();
+	_oclose();
 
   return 0;
 
@@ -842,7 +1109,3 @@ std::vector<LONG> KGSSPC::mrun(int argc ,char* argv[]){
 
 
 }
-
-
-
-

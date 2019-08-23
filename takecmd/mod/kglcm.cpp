@@ -455,7 +455,7 @@ void KGLCM::LCMCORE (int item, QUEUE *occ, WEIGHT frq, WEIGHT pfrq){
 
     if ( !_pRatioFlg || (rposi<=_rposi_ub && rposi>=_rposi_lb) ){
     			
-      _II.check_all_rule ( _occ_w, occ, _TT.getp_jump(), _TT.get_total_pw_org(), 0);     
+      _II.check_all_rule ( _occ_w, occ, _TT.getp_jump(), _TT.get_total_pw_org() );     
 
     }
   } 

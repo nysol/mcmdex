@@ -423,7 +423,7 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
   }
 
   if ( output_flag ){
-      _II.check_all_rule (_occ_w, occ, &_itemcand, _TT.get_total_pw_org(), 0);
+      _II.check_all_rule (_occ_w, occ, &_itemcand, _TT.get_total_pw_org());
   }
 
 	for( x = _itemcand.begin();x < _itemcand.end() ;x++){

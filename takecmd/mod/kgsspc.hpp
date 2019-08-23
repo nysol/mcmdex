@@ -30,12 +30,25 @@
 #define SSPC_OUTPUT_INTERSECT 131072
 #define SSPC_COMP_ITSELF 262144
 
+// 後で除く
+#define ITEMSET_PRE_FREQ 8  // output frequency preceding to each itemset
+#define ITEMSET_FREQ 16  // output frequency following to each itemset
+#define ITEMSET_APPEND 268435456   // append the output to the fiile
+
+
+#ifndef ITEMSET_INTERVAL
+#define ITEMSET_INTERVAL 500000
+#endif
+
 #include <vector>
 //#include "trsact.hpp"
 #include"vec.hpp"
 #include"oqueue.hpp"
 #include "problem.hpp"
-#include "itemset.hpp"
+#define AHEAP_KEY_WEIGHT
+#include"aheap.hpp"
+
+//#include "itemset.hpp"
 #include"file2.hpp"
 #include"filecount.hpp"
 
@@ -62,9 +75,18 @@ struct kgSspcParams {
 	LONG _itemtopk_item2;
 	LONG _itemtopk_end;
 
-	ItemSetParams _ipara;
+	// ItemSetParams _ipara;	
+	int _iflag;
+	LONG _topk_k;
+	int _multi_core;
+	LONG _max_solutions;
+	char _separator;
+	WEIGHT _frq_lb;	
+	int _digits; //4固定?
 
+	
 	LimitVal _limVal;
+	bool _tposeF;
 	char *_wfname;
 	char *_iwfname;
 	char *_fname2;
@@ -83,14 +105,16 @@ struct kgSspcParams {
 	char *_table_name;
 
 	kgSspcParams():
-		_problem(0),_th(0),_th2(0),_progressFlag(false),_showFlag(false),
+		_problem(0),_th(0),_th2(0),_progressFlag(false),_showFlag(false),_tposeF(false),
 		_output_fname(NULL),_output_fname2(NULL),
 		_outperm_fname(NULL),_table_fname(NULL),
 		_rowSortDecFlag(false),_tflag(LOAD_INCSORT),_rmDupFlag(false),
 		_wfname(NULL),_iwfname(NULL),_fname2(NULL),_fname(NULL),_table_name(NULL),
-		_len_ub(INTHUGE),_len_lb(0),
+		_len_ub(INTHUGE),_len_lb(0),_digits(4),_separator(' '),
 		_itemtopk_item(0),_itemtopk_item2(0),_itemtopk_end(0),
-		_root(0),_dir(0),	_sep(0){}
+		_root(0),_dir(0),	_sep(0),_multi_core(1),
+		_iflag(0),_max_solutions(0),	
+		_topk_k(0),_frq_lb(-WEIGHTHUGE){}
 
 
 	int setArgs(int argc, char *argv[]){
@@ -100,8 +124,8 @@ struct kgSspcParams {
 
 		if ( argc < c+3 ){ return 1; }
 
-		if ( !strchr (argv[c], '_') ){ iflag |= SHOW_MESSAGE;  _showFlag= true; }
-		if ( strchr (argv[c], '%') ) { iflag |= SHOW_PROGRESS; _progressFlag= true;}
+		if ( !strchr (argv[c], '_') ){  _showFlag= true; }
+		if ( strchr (argv[c], '%') ) {  _progressFlag= true;}
 		if ( strchr (argv[c], '+') ) iflag |= ITEMSET_APPEND;
 		if ( strchr (argv[c], 'f') ) iflag |= ITEMSET_FREQ;
 		if ( strchr (argv[c], 'Q') ) iflag |= ITEMSET_PRE_FREQ;
@@ -126,7 +150,7 @@ struct kgSspcParams {
 		if ( strchr (argv[c], 'Y') ) _problem |= SSPC_POLISH;
 		if ( strchr (argv[c], 'y') ) _problem |= SSPC_POLISH2;
 
-		if ( !strchr (argv[c], 't') ) _tflag |= LOAD_TPOSE;
+		if ( !strchr (argv[c], 't') ){ _tposeF = true; _tflag |= LOAD_TPOSE;}//仮
 		if ( strchr (argv[c], 'E') )  _tflag |= LOAD_ELE;
 		if ( strchr (argv[c], 'w') )  _tflag |= LOAD_EDGEW;
 		if ( strchr (argv[c], '1') ){ _rmDupFlag = true ; }// _tflag |= LOAD_RM_DUP;
@@ -136,8 +160,8 @@ struct kgSspcParams {
   
 		while ( argv[c][0] == '-' ){
 			switch (argv[c][1]){
-				case 'K': 
-					_ipara._topk_k = atoi(argv[c+1]);
+				case 'K': //_ipara
+					_topk_k = atoi(argv[c+1]);
 				break; case 'k': 
 					_itemtopk_item  = atoi(argv[c+1]); 
 					_itemtopk_item2 = 1;
@@ -178,6 +202,9 @@ struct kgSspcParams {
 
 	      break; case 'P': 
 	      	_table_fname = argv[c+1];
+	      	//_limVal._tposeF = !_limVal._tposeF;
+	      	_tposeF = !_tposeF;
+	      	//仮
           if ( _tflag & LOAD_TPOSE ){ _tflag -= LOAD_TPOSE;}
           else{                       _tflag |= LOAD_TPOSE;}
 
@@ -196,13 +223,13 @@ struct kgSspcParams {
 						fprintf(stderr,"number of cores has to be in 1 to: %d\n",atoi(argv[c+1]));
 						return 1;
 					}
-					_ipara._multi_core = atoi(argv[c+1]);
+					_multi_core = atoi(argv[c+1]); //_ipara.
           	
 				break; case '#': 
-					_ipara._max_solutions = atoi(argv[c+1]);
+					_max_solutions = atoi(argv[c+1]); //_ipara.
 
 				break; case ',': 
-					_ipara._separator = argv[c+1][0];
+					_separator = argv[c+1][0]; //_ipara.
 
 				break; case 'Q': 
 					_outperm_fname = argv[c+1];
@@ -219,11 +246,11 @@ struct kgSspcParams {
 		NEXT:;
 	
 		_fname = argv[c];
-		_ipara._frq_lb = atof(argv[c+1]);
+		_frq_lb = atof(argv[c+1]);//		_ipara.
 	
 		if ( argc>c+2 ) _output_fname = argv[c+2];
 
-		_ipara._flag = iflag;
+		_iflag = iflag;
 
 		// using -b -B  :ignore pairs whose maximum/minimum common item
 		if ( _len_ub < INTHUGE || _len_lb > 0 ){ 
@@ -234,14 +261,40 @@ struct kgSspcParams {
 	}
 };
 
-
-
-
 class KGSSPC{
+
+#ifdef MULTI_CORE
+  pthread_spinlock_t _lock_counter;   // couneter locker for jump counter
+  pthread_spinlock_t _lock_sc;   // couneter locker for score counter
+  pthread_spinlock_t _lock_output;   // couneter locker for #output 
+#endif
+
 
 	// パラメータ
 	kgSspcParams _P;
 
+
+	// org ITEMSET
+	//double _prob;
+	//double _ratio;
+	QUEUE _itemset;   // current operating itemset
+	LONG *_sc;
+  AHEAP _topk; 
+	AHEAPARY _itemtopk;   // heap for topk mining. valid if topk->h is not NULL
+  QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
+  LONG _iters;         // iterations
+  LONG _solutions;     // number of solutions output
+  WEIGHT _frq_lb;
+  QUEUE_INT _item_max;  // (original) maximum item
+  OFILE2 _ofp;    // file pointer to the output file
+  OFILE2 *_multi_fp;  // output file2 pointer for multi-core mode
+  WEIGHT _total_weight;  	// total weight of the input database
+
+
+	// counter
+  LONG *_multi_outputs;    // #calls of ITEMSET_output_itemset or ITEMSET_solusion
+  LONG *_multi_iters;   //iterations
+  LONG *_multi_solutions;  // number of solutions output
 
   FILE_COUNT _C;
   SETFAMILY _T;   // transaction
@@ -267,9 +320,7 @@ class KGSSPC{
 	// POLISH or POLISH2の時のみ
 	char  *_vecchr;  
 
-	ITEMSET _II;
-
-	void _output( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id);
+	// ITEMSET _II;
 
 	void *_iter(void *p);
 
@@ -284,8 +335,43 @@ class KGSSPC{
 
 	/* allocate arrays and structures */
 	void _preALLOC();
-	
+
 	int _runMain(void);
+
+	void _last_output(void);
+	void _output_frequency ( WEIGHT frq, int core_id);
+	void _output( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id);
+
+	void _output_itemset_(QUEUE *itemset, WEIGHT frq, int core_id);
+	void _output_itemset_k(
+		QUEUE *itemset, WEIGHT frq, 
+		QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, 
+		int core_id
+	);
+
+	/* sum the counters computed by each thread */
+	void _merge_counters(void){
+
+		for(size_t i=0 ; i<MAX(_P._multi_core,1) ; i++){ // FLOOP 
+	    _iters += _multi_iters[i];
+  	  _solutions += _multi_solutions[i];
+    	_multi_fp[i].flush_last();
+	  }
+  
+		for(size_t i =0 ;i<MAX(_P._multi_core,1)*3 ;i++){ 
+			_multi_iters[i] = 0; 
+		}
+	}
+
+	void _oclose(){
+	  // fpは共有してるのでcloseはしない
+	  if( _multi_fp ){
+	  	for(int i = 0 ; i < MAX(_P._multi_core,1) ; i++){
+	  		_multi_fp[i].clearbuf();
+	  	}
+		}
+	}
+
 
 	public :
 
@@ -293,14 +379,19 @@ class KGSSPC{
 		_siz(0),_trperm(NULL),_perm(NULL),
 		_positPERM(NULL),_vecchr(NULL),
 		_occ_w(NULL),_itemary(NULL),_pw(NULL),
-		_buf_end(0){}
+		_iters(0),_solutions(0),_total_weight(0),
+		_multi_outputs(NULL),_multi_iters(NULL),
+		_multi_solutions(NULL),_multi_fp(NULL),
+		_buf_end(2),_item_max(0),_sc(NULL),
+		_itemtopk_ary(NULL)
+		{}
 
 	int run(kgSspcParams para);
 	int run(int argc ,char* argv[]);
 
 	std::vector<LONG> iparam(){ 
 		std::vector<LONG> rtn(2);
-		rtn[0] = _II.get_solutions(); 
+		rtn[0] = _solutions; //_II.get_solutions(); 
 		rtn[1] = _C.clms();
 		return rtn;
 	}
@@ -308,5 +399,4 @@ class KGSSPC{
 	static std::vector<LONG> mrun(int argc ,char* argv[]);
 
 };
-
 
