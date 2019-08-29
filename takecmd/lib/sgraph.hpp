@@ -159,17 +159,16 @@ class SGRAPH {
 
 /*  initialization  */
 /*
-	char * initOQ(QUEUE *);
+//	char * initOQ(QUEUE *);
 // これは再考
 //void edge_union_flag(int flag){ _edge.union_flag(flag);} 
-
-void SGRAPH::alloc(QUEUE_ID nodes, size_t edge_num){
-
-  if ( edge_num > 0 ){
-    _edge.alloc(nodes, NULL, nodes, edge_num);
-    if ( _flag&LOAD_EDGEW && (!ERROR_MES) ) _edge.alloc_weight ( NULL);
-  }
-}
+//void SGRAPH::alloc(QUEUE_ID nodes, size_t edge_num){
+//
+//  if ( edge_num > 0 ){
+//    _edge.alloc(nodes, NULL, nodes, edge_num);
+//    if ( _flag&LOAD_EDGEW && (!ERROR_MES) ) _edge.alloc_weight ( NULL);
+//  }
+//}
 */
 
 

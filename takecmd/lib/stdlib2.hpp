@@ -305,15 +305,14 @@ void qsort_perm__(T *v, size_t siz, PERM *perm, int unit){
 template<typename T>
 PERM *qsort_perm_(T *v, size_t siz, int unit){
 
-	PERM *perm = new PERM[siz];  //	perm = malloc2(perm, siz);
+	PERM *perm = new PERM[siz]; 
 	for(size_t i=0 ; i<siz; i++){ perm[i]=i; }
 	qsort_perm__<T>(v, siz, perm, unit); 
 	return perm;
 }
 
 // ====================================================
-// vectorでいいようなきもするが独自ARAY一応つくる？
-// 
+// vectorでいいようなきもするが独自ARAY一応つくる 
 // ====================================================
 template<class T>
 class VECARY{
@@ -333,13 +332,10 @@ class VECARY{
 	//T* getp(){ return _v;}
 
 	void print(void){
-
 		for(size_t i=0;i<_end;i++){
-			printf("%g ",_v[i]);
+			printf("%d ",_v[i]);
 		}
 			printf("\n");
-		
-	
 	}
 
 	bool empty(){ return _end==0; }
@@ -397,8 +393,8 @@ class VECARY{
 	}
 
 	void reallocx(size_t i,T e){
-		// _endのみでいけるはず
-		if( i >= _end ){
+
+		if( i >= _end ){// 余分に割り当てる
 
 			size_t end2 = MAX((_end)*2+16,i+1);
 
@@ -408,7 +404,7 @@ class VECARY{
 			for(size_t j= _end ; j< end2  ; j++ ){
 				_v[j]=e;
 			}
-			_end=MAX((_end)*2,(i)+1); // << なぜ+16でない？
+			_end=end2;
 		}
 		return;
 	}
@@ -497,10 +493,23 @@ class VECARY{
 		return f;
 	}
 
-
-	
 };
 
+
+// _endのみでいけるはず
+//	void reallocx(size_t i,T e){
+//		if( i >= _end ){
+//			size_t end2 = MAX((_end)*2+16,i+1);
+//			if(!( _v = (T *) realloc(  _v , sizeof(T) * end2 ) ) ){
+//				fprintf(stderr,"memory allocation error: line %d (" LONGF " byte)\n",__LINE__,(LONG)(sizeof(T)*(end2)) );
+//			}
+//			for(size_t j= _end ; j< end2  ; j++ ){
+//				_v[j]=e;
+//			}
+//			_end=MAX((_end)*2,(i)+1); // << なぜ+16でない？
+//		}
+//		return;
+//	}
 
 
 

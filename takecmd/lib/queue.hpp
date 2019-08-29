@@ -234,6 +234,7 @@ class QUEUE {
 	void setStartByEnd(){ _s = _t; }
 
 	void setStopper(){ _v[_t] = -1; }
+	void setStopper(QUEUE_ID v){ _v[_t] = v; }
 
 
 	bool exist(){ 
@@ -241,8 +242,17 @@ class QUEUE {
 	}
 	
 	void queSort(int flag){
+	/*
+ 		std::cerr << "quesorts " << _t <<   std::endl;
+ 		for(int i=0;i<_t;i++){
+	 		std::cerr <<  _v[i] << " ";
+	 	}
+	 		std::cerr << std::endl;
+*/
 		 qsort_<QUEUE_INT>( _v, _t , flag); 
+
 	}
+
 
 	void queSortfromS(int flag){ 
 		qsort_<QUEUE_INT>( _v + _s, _t - _s , flag); 
@@ -268,8 +278,10 @@ class QUEUE {
 			_v[i]=i; 
 		}
 		_t = vt;
-
 	}
+
+
+
 	QUEUE_ID    get_t(){return _t;}
 	QUEUE_ID    get_s(){return _s;}
 	QUEUE_ID    get_end(){return _end;}

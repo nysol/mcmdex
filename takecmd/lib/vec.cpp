@@ -11,48 +11,6 @@
 
 /* allocate memory according to rows and rowt */
 /* if eles == 0, compute eles from rowt and rows */
-// void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
-void SETFAMILY::alloc (VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles){
-
-  VEC_ID i;
-
-  if ( eles == 0 ) { _ele_end =  fc.sumRow(0, rows);  }
-  else { _ele_end = eles; }
-
-  //calloc2 (buf, (_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)*_unit, EXIT);
-  _buf = new QUEUE_INT[
-  	(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +
-  	(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)
-  ]();
-
-  try {
-	 _v = new QUEUE[rows+1];
-	} catch(...){
-		free(_buf);
-		delete [] _buf;
-		throw;
-	}
-	for(size_t i =0 ;i<rows;i++){ 
-		_v[i] = QUEUE(); 
-	}
- 
-  _end = rows;
-  _clms = clms;
-	QUEUE_INT *pos = _buf;
-
-  if ( !fc.rowEmpty() ){
-  	for(i=0;i<rows;i++){
-      _v[i].set_v(pos);
-      _v[i].set_end( fc.get_rowt(i)+1 );
-      pos += (fc.get_rowt(i) + 1);
-    }
-  }
-
-
-}
-
-/* allocate memory according to rows and rowt */
-/* if eles == 0, compute eles from rowt and rows */
 //void SETFAMILY::alloc_weight ( QUEUE_ID *t){
 void SETFAMILY::alloc_weight (FILE_COUNT &fc){
 
@@ -61,7 +19,8 @@ void SETFAMILY::alloc_weight (FILE_COUNT &fc){
 	_w = new WEIGHT*[_end +1]();
 
 	try{
-	  _wbuf = new WEIGHT[_ele_end*((_flag&LOAD_DBLBUF)?2:1)+1]();
+	  //_wbuf = new WEIGHT[_ele_end*((_flag&LOAD_DBLBUF)?2:1)+1]();
+	  _wbuf = new WEIGHT[_eles*((_flag&LOAD_DBLBUF)?2:1)+1]();
 	}catch(...){
 		delete [] _w;
 		throw;
@@ -259,7 +218,7 @@ void SETFAMILY::load (IFILE2 &fp,  int flag)
 	// end mark これ意味ある？　どちらか一方でOK?
 	//	for(VEC_ID i=0;i<_t;i++){  _v[i].set_v(_v[i].get_t(),_clms); }
 
-  _eles = _ele_end;
+  //_eles = _ele_end;
 
 	// これ意味ある？ 　どちらか一方でOK?
 	for(int i=0 ; i< _t;i++){ 
@@ -283,8 +242,9 @@ void SETFAMILY::file_read(
   LONG x, y;
 
 	do{
-		if ( flag ){
+		if ( flag ){// 行が変わった時だけでOK?
     	if ( C.CheckRperm(*pos) ){ 
+				////_v[ C.rperm(*pos) ].set_v( _v[C.rperm(*pos)-1].end()+1 );
 				_v[ C.rperm(*pos) ].set_v( _v[C.rperm(*pos)-1].end()+1 );
     	}
     }
@@ -300,7 +260,7 @@ void SETFAMILY::file_read(
   		SWAP_<LONG>(&x, &y);
 	  }
 
-    if ( C.rperm(x)<=C.rows() && C.cperm(y) <= C.c_end() ){
+    if ( C.rperm(x)<=C.rows() && C.cperm(y) <= C.clms() ){
       _v[ C.rperm(x) ].push_back( C.cperm(y) );
     }
 
@@ -309,6 +269,12 @@ void SETFAMILY::file_read(
       (*pos)++;
     }
 	} while ( fp.NotEof() ); // (FILE_err&2)==0
+	// std::cerr << "_v show st f " << flag  << std::endl;
+	//	for(int i=0;i<_end;i++){
+	//	_v[i].show();
+	//}
+	//C.show_rperm();
+  //std::cerr << "_v show ed" << std::endl;
 
 	return;
 
@@ -327,7 +293,7 @@ void SETFAMILY::file_read(
 
 	do{
 
-		if ( flag ){
+		if ( flag ){ // 行が変わった時だけでOK?
     	if ( C.CheckRperm(*pos) ){ 
 				_v[ C.rperm(*pos) ].set_v( _v[C.rperm(*pos)-1].end()+1 );
     	}
@@ -337,7 +303,7 @@ void SETFAMILY::file_read(
 
     if ( fp.Null() ) goto LOOP_END; //FILE_err&4
 
-    if ( C.rperm(x)<=C.rows() && C.cperm(y) <= C.c_end() ){
+    if ( C.rperm(x)<=C.rows() && C.cperm(y) <= C.clms() ){
   		_w[ C.rperm(x) ][ _v[C.rperm(x)].get_t() ] = w;
       _v[ C.rperm(x) ].push_back( C.cperm(y) );
 
@@ -352,6 +318,13 @@ void SETFAMILY::file_read(
       FILE_err = 0; 
     }
 	} while ( fp.NotEof() ); // (FILE_err&2)==0
+
+  //std::cerr << "_v wshow st" << std::endl;
+	//for(int i=0;i<_end;i++){
+	//	_v[i].show();
+	//}
+	//C.show_rperm();
+  //std::cerr << "_v wshow ed" << std::endl;
 
 	return;
 
@@ -418,13 +391,15 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 
 	qsort_perm__( _v, _t, rperm, flag); 
 
+	//cmm_p = new char[_t]();
 	cmm_p = new char[_t]();
 
 	for(cmm_i=0;cmm_i<_t;cmm_i++){
 		if ( cmm_p[cmm_i]==0 ){ 
 			Q = _v[cmm_i]; 
-			do{ 
+			do{
 				cmm_i2=cmm_i; 
+				if(rperm[cmm_i] > _t){ break;} //これでOK? _v ,_w：いっしょでいいような。。
 				cmm_i=rperm[cmm_i]; 
 				_v[cmm_i2]=_v[cmm_i]; 
 				cmm_p[cmm_i2]=1; 
@@ -471,3 +446,42 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 	}
 }
 
+
+
+
+/* allocate memory according to rows and rowt */
+/* if eles == 0, compute eles from rowt and rows */
+// void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
+/*
+//void SETFAMILY::alloc (VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles){
+//
+// VEC_ID i;
+//  if ( eles == 0 ) { _ele_end =  fc.sumRow(0, rows);  }
+//  else { _ele_end = eles; }
+//	calloc2 (buf, (_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)*_unit, EXIT);
+//  _buf = new QUEUE_INT[
+//  	(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +
+//  	(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)
+//  ]();
+//  try {
+//	 _v = new QUEUE[rows+1];
+//	} catch(...){
+//		free(_buf);
+//		delete [] _buf;
+//		throw;
+//	}
+//	for(size_t i =0 ;i<rows;i++){ 
+//		_v[i] = QUEUE(); 
+//	} 
+//  _end = rows;
+//  _clms = clms;
+//	QUEUE_INT *pos = _buf;
+//  if ( !fc.rowEmpty() ){
+//  	for(i=0;i<rows;i++){
+//      _v[i].set_v(pos);
+//      _v[i].set_end( fc.get_rowt(i)+1 );
+//      pos += (fc.get_rowt(i) + 1);
+//    }
+//  }
+//}
+*/

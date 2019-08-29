@@ -158,7 +158,7 @@ void TRSACT::_alloc(){
 	
   // make the inverse perm of items
   for(VEC_ID t =0 ; t < _C.clms() ; t++ ){
-    if ( _C.cperm(t) <= _C.c_end() ){
+    if ( _C.cperm(t) <= _C.clms() ){
       _perm[_C.cperm(t)] = t;
     }
   }

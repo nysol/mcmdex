@@ -26,6 +26,8 @@
  #define TRSACT_MAXNUM 20000000LL
 #endif
 
+//bool _tposeF; // FILE_COUNTに入れと方がいい
+
 struct LimitVal{
 
 	//ALL
@@ -43,9 +45,7 @@ struct LimitVal{
 	// calc only
   VEC_ID _clm_lb;
   VEC_ID _clm_ub; 
-  
-  //bool _tposeF; // FILE_COUNTに入れと方がいい
-  
+
 	LimitVal():
 		_w_lb(-WEIGHTHUGE) , _w_ub(WEIGHTHUGE) ,
 		_clm_lb_(0.0),_clm_ub_(0.0),
@@ -55,7 +55,6 @@ struct LimitVal{
 
 	// set lower/upper bounds if it is given by the ratio
 	void setBoundsbyRate(VEC_ID rows,QUEUE_INT clms){
-
 	  if ( _row_lb_ ) _row_lb = rows * _row_lb_;
   	if ( _row_ub_ ) _row_ub = rows * _row_ub_;
   	if ( _clm_lb_ ) _clm_lb = clms * _clm_lb_;
@@ -66,7 +65,6 @@ struct LimitVal{
 	bool clmOK(WEIGHT s,QUEUE_INT k){
 		return  ( RANGE( _w_lb, s, _w_ub) && RANGE (_clm_lb, k, _clm_ub) );
 	}
-	//if(RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) ){
 	bool rowOK(QUEUE_INT k){
 		return ( RANGE (_row_lb, k, _row_ub) );
 	}
@@ -77,19 +75,20 @@ struct LimitVal{
 class FILE_COUNT{
 
 	// #rows, #column, #elements, minimum elements
+	// 元データの row(tra数),clm(item数),eles(要素数)
   VEC_ID    _rows_org;
   QUEUE_INT _clms_org;
   size_t    _eles_org;
   
-  // 分ける必要ある？
-  FILE_COUNT_INT _clms , _rows , _eles;
+  // 分ける必要ある？　FSのとき利用
+ // FILE_COUNT_INT _clms , _rows , _eles;
 
   WEIGHT    _total_w_org,_total_pw_org;
 
 
   VEC_ID _end1; //2nd-trsact position
 
-	QUEUE_INT _clms_end; // trsact org
+	//QUEUE_INT _clms_end; // trsact org
   // Limit 
   // lower/upper bound of #elements in a column/row. 
   // colunmn or row of out of range will be ignored
@@ -106,7 +105,7 @@ class FILE_COUNT{
 
 	bool _negaFLG;
 
-	// 仮
+	// 仮　制限を考慮した 要素数
 	size_t _c_eles;
 	size_t _c_clms;
 	size_t _r_eles;
@@ -143,12 +142,10 @@ class FILE_COUNT{
 	
 
 	public :
-
 		FILE_COUNT(void):
 			_clms_org(0) ,_rows_org(0) , 
 			_total_w_org(0) , _total_pw_org(0) ,
-			_eles_org(0) ,_clms(0) , _rows(0) , _eles(0),
-			 _rperm(NULL) , _cperm(NULL),_negaFLG(false),
+			_eles_org(0) , _rperm(NULL) , _cperm(NULL),_negaFLG(false),
 			_end1(0),_c_eles(0),_c_clms(0),_r_eles(0),_r_clms(0)
 			{}
 	
@@ -160,10 +157,6 @@ class FILE_COUNT{
 		int fileCountT(IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 		int fileCount (IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 
-//		int fileCountA(IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL){
-//			if(_limVal._tposeF)	{ return fileCountT( fp, fp2, wf ,wf2); }
-//			else 					 			{ return fileCount ( fp, fp2, wf ,wf2); }
-//		}
 
 		// call from sgraph.cpp 
 		void countSG (IFILE2 *rfp, int flag);
@@ -182,7 +175,6 @@ class FILE_COUNT{
 		}
 
 		bool rGTc(bool tpose){ return ( _r_eles > _c_eles  &&  !tpose ); }
-//		bool isTPOSE{ return _limVal._tposeF; }
 
 		 // 仮
 		size_t c_clms(){ return _c_clms; }
@@ -191,7 +183,7 @@ class FILE_COUNT{
 		size_t r_eles(){ return _r_eles; }
 
 
-		size_t c_end() { return _clms_end; }
+		//size_t c_end() { return _clms_end; }
 
 
 		bool rowEmpty(){ return _rowt.empty(); }
@@ -207,9 +199,6 @@ class FILE_COUNT{
 
 		VEC_ID    end1(void){return _end1; }
 
-		FILE_COUNT_INT get_clms(void){return _clms; }
-		FILE_COUNT_INT get_rows(void){return _rows; }
-		FILE_COUNT_INT get_eles(void){return _eles; }
 
 		size_t get_clmt(VEC_ID tt){ return _clmt[tt]; }
     size_t get_rowt(VEC_ID tt){ return _rowt[tt]; }
@@ -243,6 +232,13 @@ class FILE_COUNT{
     PERM* get_rperm(void){ return _rperm; }
     PERM* get_cperm(void){ return _cperm; }
 
+		void show_rperm(){
+			std::cerr << "rperm ";
+			for(int i=0;i<_rows_org;i++ ){ std::cerr << _rperm[i] <<  " ";}
+			std::cerr << std::endl;
+		
+		}
+
 
 		// _headとstrIDを使うなら再考
 		// (イマイチなにしたいのかわからん)
@@ -266,6 +262,19 @@ class FILE_COUNT{
 		bool CheckRperm(VEC_ID t){ 
 			return ( ( _rperm[t] < _rows_org ) && (  _rperm[t] > 0 ) );
 		}
-		
-
 };
+
+	//if(RANGE(_w_lb, _cw[tt], _w_ub) && RANGE (_clm_lb, _clmt[tt], _clm_ub) ){
+
+		// ,_clms(0) , _rows(0) , _eles(0),
+		//		bool isTPOSE{ return _limVal._tposeF; }
+
+//		int fileCountA(IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL){
+//			if(_limVal._tposeF)	{ return fileCountT( fp, fp2, wf ,wf2); }
+//			else 					 			{ return fileCount ( fp, fp2, wf ,wf2); }
+//		}
+
+
+		//FILE_COUNT_INT get_clms(void){return _clms; }
+		//FILE_COUNT_INT get_rows(void){return _rows; }
+		//FILE_COUNT_INT get_eles(void){return _eles; }

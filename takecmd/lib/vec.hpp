@@ -36,7 +36,7 @@ class SETFAMILY{
   VEC_ID _t;
   QUEUE_INT *_buf;
   VEC_ID _clms;
-  size_t _eles, _ele_end;
+  size_t _eles;  //, _ele_end;
   WEIGHT *_rw, **_w, *_wbuf;
 
   PERM *_rperm, *_cperm;  // row permutation
@@ -47,7 +47,7 @@ class SETFAMILY{
   
 	void _flie_load(IFILE2 &fp);
 
-	void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
+	//void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
 
 
 	void any_INVPERMUTE_rw(PERM * rperm){
@@ -73,10 +73,10 @@ class SETFAMILY{
 	}
 
 	public:
-
+		//,_ele_end(0),
 		SETFAMILY():
 			 _flag(0),_v(NULL),
-			_end(0),_t(0),_buf(NULL),_clms(0),_eles(0),_ele_end(0),
+			_end(0),_t(0),_buf(NULL),_clms(0),_eles(0),
 			_rw(NULL),_w(NULL),_wbuf(NULL),
   		_rperm(NULL),_cperm(NULL){}
 
@@ -102,6 +102,10 @@ class SETFAMILY{
 		// call from trsact.cpp
 		void file_read(IFILE2 &fp,             FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
 		void file_read(IFILE2 &fp,IFILE2 &wfp, FILE_COUNT &C , VEC_ID *pos ,int flag,int tflag);
+
+
+		void fileRead (IFILE2 &fp,IFILE2 &fp2, char *iwfname ,FILE_COUNT &C ,int flag,int tflag);
+
 
 		
 		void clrMark(int i,char* mark){
@@ -164,7 +168,10 @@ class SETFAMILY{
 
 		void initQUEUEs(void){
 			for(int i=0 ; i< _t;i++){
-				_v[i].set_v( _v[i].get_t() , _clms);
+				//std::cerr << "qinit " << i << " " << _v[i].get_t() << " " << _clms << std::endl;
+				//_v[i].set_v( _v[i].get_t() , _clms);
+				_v[i].setStopper(_clms);
+				//_v[i].set_v( _v[i].get_t() , _clms);
 			}
 		}
 
@@ -256,7 +263,8 @@ class SETFAMILY{
 			_clms = _C.c_clms(); 
 			_t    = _C.r_clms();
 			
-  		_ele_end = _eles;
+  		//_ele_end = _eles;
+
   		_end = _t * ( (flag&LOAD_DBLBUF) ? 2 : 1 ) + 1  ;
 
 		  _v   = new QUEUE[_end]; 
@@ -267,16 +275,27 @@ class SETFAMILY{
 		}
 
 		// _eles 要素数 TPOSEの場合はtraでの件数優先
-		void setSize4sspc(FILE_COUNT &_C,bool tpose){			
+  	//_ele_end = _eles;
+		void setSize4sspc(FILE_COUNT &_C,bool tpose,char *iwfname){			
 
 			_eles = _C.OptimalEleSize(tpose);
 			_clms = _C.c_clms(); 
 			_t    = _C.r_clms();
-  		_ele_end = _eles;
   		_end     = _t  + 1  ;
 
 		  _v   = new QUEUE[_end];
 		  _buf = new QUEUE_INT[_eles+_end+1];
+
+			if ( _w==NULL && iwfname ) {
+
+				_w    = new WEIGHT*[_end +1]();//();
+			  _wbuf = new WEIGHT [_eles+1]();
+			  _w[0] = _wbuf; 
+			  for(size_t i=1; i<_t ; i++){
+			  	_w[i] = _w[i-1] + _C.get_rowt(i-1);
+  			}
+
+		 	}
 
 		  return ;
 
@@ -286,9 +305,46 @@ class SETFAMILY{
 
 		  int wflag = flag&LOAD_EDGEW;
 
-			if ( _clms == 0 ) _clms = C.get_clms();
-			if ( _t == 0 ) _t = C.get_rows();
-			alloc ( _t, C, _clms, 0);
+			if ( _clms == 0 ) _clms = C.clms();
+			if ( _t == 0 )    _t = C.rows();
+
+			//alloc ( _t, C, _clms, 0);
+			//_ele_end =  C.sumRow(0, _t);
+			_eles = C.sumRow(0, _t);
+
+		  //_buf = new QUEUE_INT[
+  		//	(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +
+		  //	(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(_t,_clms):_t)+2)
+  		//]();
+
+		  _buf = new QUEUE_INT[
+  			(_eles*((_flag&LOAD_DBLBUF)?2:1) +
+		  	(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(_t,_clms):_t)+2)
+  		]();
+
+
+			try {
+	 			_v = new QUEUE[_t+1];
+			} catch(...){
+				delete [] _buf;
+				throw;
+			}
+			for(size_t i =0 ;i<_t;i++){ 
+				_v[i] = QUEUE(); 
+			}
+ 
+  		_end = _t;
+
+			QUEUE_INT *pos = _buf;
+
+		  if ( !C.rowEmpty() ){
+  			for(VEC_ID i=0 ; i<_t ; i++){
+      		_v[i].set_v(pos);
+      		_v[i].set_end( C.get_rowt(i)+1 );
+      		pos += (C.get_rowt(i) + 1);
+    		}
+		  }
+
 			if ( wflag ) alloc_weight ( C );
 
 		  return ;
@@ -298,7 +354,9 @@ class SETFAMILY{
 		void queueSortALL(int flag){
 
 			for(size_t t=0 ; t < _t ; t++){
+				//std::cerr << "st " << t << "/" << _t << std::endl;
 				_v[t].queSort(flag);
+				//std::cerr << "et " << t << "/" << _t << std::endl;
 			}
 
 		}

@@ -38,6 +38,8 @@ VEC_ID FILE_COUNT::adjust_RowSep(VEC_ID sep){
   return sep;
 }
     
+// ２回動くことを想定するなら
+// VARY_Readを変更
 QUEUE_INT FILE_COUNT::_weight_Scan(char *wf){
 
 	IFILE2 wfp;
@@ -231,7 +233,6 @@ int FILE_COUNT::_file_count(IFILE2 &fp, char *wf){
 			_total_pw_org += MAX(_rw[i0],0);
 		}
 	}
-	
 	return 0;
 
 }
@@ -321,61 +322,53 @@ void FILE_COUNT::countFS(IFILE2 *rfp,int flag, int int_clms)
 	int ft = flag&LOAD_TPOSE;  
 
 	if ( flag & (FILE_COUNT_GRAPHNUM) ){
-
-		_clms = (FILE_COUNT_INT) rfp->read_int ();
-		_rows = _clms; //?
-		_eles = (FILE_COUNT_INT) rfp->read_int();
-
+		_clms_org = rfp->read_int ();
+		_rows_org = _clms_org;
+		_eles_org = rfp->read_int(); //(FILE_COUNT_INT) 
   	rfp->read_until_newline ();
 	}
 
 	do {
 		
-		if ( fe ){
-			
-			x = (FILE_COUNT_INT)rfp->read_int ();
+		if ( fe ){ // EDGE形式
+			x = rfp->read_int (); 
 			if ( rfp->EolOrEof() ) goto ROW_END; //  FILE_err&3 
-			
-      y = (FILE_COUNT_INT)rfp->read_int (); 
+      y = rfp->read_int (); 
 			if ( rfp->Null() ) goto ROW_END; //  FILE_err&4 ここあってる？
-
       rfp->read_until_newline ();
 
     }
 		else{
-    	
 			x = t;
-			y = (FILE_COUNT_INT)rfp->read_int (); 
-
+			y = rfp->read_int (); 
 			if ( rfp->Null() ) goto ROW_END; // FILE_err&4  ここあってる？
-
 			for(int i0=0 ; i0 <int_clms ; i0++){
 				rfp->read_double (); 
-				if ( rfp->EolOrEof() ){  break; }//FILE_err&3
+				if ( rfp->EolOrEof() ){ break; }//FILE_err&3
       }
 		}
 
 		if ( ft ){ SWAP_<FILE_COUNT_INT>(&x, &y); }
 
-		if ( y >= _clms ){
-			_clms = y+1;
-			if ( fc ) {_clmt.reallocx(_clms, 0);}
+		if ( y >= _clms_org ){
+			_clms_org = y+1;
+			if ( fc ) {_clmt.reallocx(_clms_org, 0);}
 		}
 			
-		if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && x >= _clms ){
-			_clms = x+1;
-			if ( fc ) { _clmt.reallocx (_clms, 0); }
+		if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && x >= _clms_org ){
+			_clms_org = x+1;
+			if ( fc ) { _clmt.reallocx (_clms_org, 0); }
 	  }
 
-		if ( x >= _rows ){
-			_rows = x+1;
-			if ( fr ) { _rowt.reallocx(_rows, 0); }
+		if ( x >= _rows_org ){
+			_rows_org = x+1;
+			if ( fr ) { _rowt.reallocx(_rows_org, 0); }
 		}
 
 		// for undirected edge version	
-		if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && y >= _rows ){ 
-			_rows = y+1;
-			if ( fr ) { _rowt.reallocx(_rows, 0); }
+		if ( (flag&(LOAD_RC_SAME+LOAD_EDGE)) && y >= _rows_org ){ 
+			_rows_org = y+1;
+			if ( fr ) { _rowt.reallocx(_rows_org, 0); }
 		}
 
     if ( fc ) { _clmt[y]++; }
@@ -385,7 +378,7 @@ void FILE_COUNT::countFS(IFILE2 *rfp,int flag, int int_clms)
     	if ( flag&LOAD_EDGE && x != y ){ _rowt[y]++; }
     }	
 
-		_eles++;
+		_eles_org++;
 
 		ROW_END:;
 
@@ -394,18 +387,18 @@ void FILE_COUNT::countFS(IFILE2 *rfp,int flag, int int_clms)
 			t++;
 
 			if ( flag&(LOAD_RC_SAME+LOAD_EDGE) ){
-				ENMAX (_clms, t); 
-				ENMAX (_rows, t);
+				ENMAX (_clms_org, t); 
+				ENMAX (_rows_org, t);
 			}
-			else if ( ft ) { _clms = t; } 
-      else { _rows = t; }
+			else if ( ft ) { _clms_org = t; } 
+      else           { _rows_org = t; }
       
     } 
 
   } while ( rfp->NotEof());
 
-  if ( fc ){ _clmt.reallocx(_clms, 0); }
-  if ( fr ){ _rowt.reallocx(_rows, 0); }
+  if ( fc ){ _clmt.reallocx(_clms_org, 0); }
+  if ( fr ){ _rowt.reallocx(_rows_org, 0); }
 
   END:;
 
@@ -431,34 +424,34 @@ void FILE_COUNT::countFST( IFILE2 *rfp, int ft )
 	do {
 
 		x = t;
-		y = (FILE_COUNT_INT)rfp->read_int (); 
+		y = rfp->read_int (); 
 
 		if ( rfp->Null() ) goto ROW_END; // FILE_err&4  ここあってる？
 
     	
 	  if ( ft ){ SWAP_<FILE_COUNT_INT>(&x, &y); }
 
-	  if ( y >= _clms ){ _clms = y+1; }
-		if ( x >= _rows ){
-    	_rows = x+1;
-			_rowt.reallocx(_rows, 0);
+	  if ( y >= _clms_org ){ _clms_org = y+1; }
+		if ( x >= _rows_org ){
+    	_rows_org = x+1;
+			_rowt.reallocx(_rows_org, 0);
 		}
 
 		_rowt[x]++; 
-    _eles++;
+    _eles_org++;
 
 	  ROW_END:;
 
   	if ( rfp->NL() ){ // !fe && (FILE_err&1)
 
     	t++;
-      if ( ft ) { _clms = t; } 
-     	else { _rows = t; }
+      if ( ft ) { _clms_org = t; } 
+     	else      { _rows_org = t; }
 	  } 
 
   } while ( rfp->NotEof());
 
- 	_rowt.reallocx( _rows, 0);
+ 	_rowt.reallocx( _rows_org, 0);
 
   END:;
 
@@ -480,51 +473,47 @@ void FILE_COUNT::countSG(IFILE2 *rfp,int fe)
 	do{
 
 		if ( fe ){
-
-			x = (FILE_COUNT_INT)rfp->read_int ();
+			x = rfp->read_int ();
 			if ( rfp->EolOrEof() ) goto ROW_END; //  FILE_err&3 ここあってる？
-			
-			y = (FILE_COUNT_INT) rfp->read_int (); 
+			y = rfp->read_int (); 
 			if ( rfp->Null() ) goto ROW_END; //  FILE_err&4 ここあってる？
-
 			rfp->read_until_newline ();
-
 		}
 		else{
 			x = t;
-			y = (FILE_COUNT_INT)rfp->read_int(); 
+			y = rfp->read_int(); 
 			if ( rfp->Null() ) goto ROW_END; // FILE_err&4  ここあってる？
 		}
 
-		if ( y >= _clms ){ _clms = y+1; }
-		if ( x >= _clms ){ _clms = x+1; }
+		if ( y >= _clms_org ){ _clms_org = y+1; }
+		if ( x >= _clms_org ){ _clms_org = x+1; }
  
-		if ( x >= _rows ){
-			_rows = x+1;
-			_rowt.reallocx(_rows, 0);
+		if ( x >= _rows_org ){
+			_rows_org = x+1;
+			_rowt.reallocx(_rows_org, 0);
 		}
 
-		if ( y >= _rows ){  // for undirected edge version	
-			_rows = y+1;
-			_rowt.reallocx(_rows, 0);
+		if ( y >= _rows_org ){  // for undirected edge version	
+			_rows_org = y+1;
+			_rowt.reallocx(_rows_org, 0);
 		}
 		
 		_rowt[x]++; 
 		if ( x != y ){ _rowt[y]++; }
 
-		_eles++;
+		_eles_org++;
 
 		ROW_END:;
 
 		if ( !fe && rfp->NL() ){ // !fe && (FILE_err&1)
 			t++;
-			ENMAX (_clms, t); 
-			ENMAX (_rows, t);
+			ENMAX (_clms_org, t); 
+			ENMAX (_rows_org, t);
 		} 
 
 	} while ( rfp->NotEof());
 
-	_rowt.reallocx( _rows, 0);
+	_rowt.reallocx( _rows_org, 0);
 
   return ;
 
@@ -554,7 +543,7 @@ void FILE_COUNT::initCperm(int tflag,int tflag2){
 		}
 	}
 	
-	_clms_end = MAX(_clms_org, ttt_max);
+	//_clms_end = MAX(_clms_org, ttt_max);
 
 	_cperm = new PERM[_clms_org+1]; // malloc2
 	for(size_t i =0 ;i<_clms_org;i++){ 
@@ -570,7 +559,7 @@ void FILE_COUNT::initCperm(int tflag,int tflag2){
 			_cperm[tt] = _c_clms++ ;
 		}
 		else{
-			_cperm[tt] = _clms_end+1 ;
+			_cperm[tt] = _clms_org+1 ;
 		}
 	}
 	delete [] p;
@@ -610,7 +599,7 @@ PERM *FILE_COUNT::makeCperm(){
 	// ttt :perm Size 
 	VEC_ID ttt_max = _clms_org;
 	VEC_ID ttt     = _clms_org;
-	_clms_end = _clms_org;
+	//_clms_end = _clms_org;
 
   PERM *cperm = new PERM[_clms_org+1]; 
 
@@ -628,7 +617,7 @@ PERM *FILE_COUNT::makeCperm(){
 			cperm[tt] = _c_clms++ ;
 		}
 		else{
-			cperm[tt] = _clms_end+1 ;
+			cperm[tt] = _clms_org+1 ;
 		}
 	}
 	if(_c_clms == 0){
@@ -637,6 +626,12 @@ PERM *FILE_COUNT::makeCperm(){
 	}
 	//_Cで管理したほうがいい？
 	_cperm = cperm;
+	
+//	for(size_t j=0; j < _clms_org; j++){
+//		printf("%d ",_cperm[j]);
+//	}
+//		printf("\n");
+
 	return cperm;
 }
 
@@ -665,6 +660,10 @@ PERM* FILE_COUNT::makeRperm(bool sflag){
 	//_Cで管理したほうがいい？
 
 	_rperm = rperm;
+//	for(size_t j=0; j < _rows_org; j++){
+//		printf("%d ",_rperm[j]);
+//	}
+//		printf("\n");
 
 	return rperm;
 }

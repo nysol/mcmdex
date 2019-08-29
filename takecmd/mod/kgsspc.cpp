@@ -811,7 +811,6 @@ void KGSSPC::_SspcCore(){
 	if ( _P._rowSortDecFlag ){
 		for(int i=1 ; i < _T.get_clms(); i++){
   	  _OQ.prefin(i,o[i]);
-
     }
   }
 
@@ -844,35 +843,35 @@ int KGSSPC::_runMain(){
 		_C.fileCount(fp ,fp2 ,_P._wfname);
 	}
 
-
 	// Make PERM
 	PERM *cperm = _C.makeCperm();
 	if (cperm==NULL) { throw ("there is no frequent item"); }
-	PERM *rperm = _C.makeRperm(_P._rowSortDecFlag);
+	PERM *rperm = _C.makeRperm(_P._rowSortDecFlag); 	// 多いものから順番並べるいみある？_trperm使い方に寄りそう
 
 
+	// _C.show_rperm();
+
+	// make SPace
+  _jump.alloc( _C.c_clms()+1 );
+	_w.malloc2 ( _C.r_clms()+1 );
+   if ( _C.existNegative() ){
+  	_pw = new WEIGHT[_C.r_clms()+1 ];
+  }
+  _perm   = new PERM[_C.c_clms()+1]();
+  _trperm = new PERM[_C.r_clms()]; 
+
+  // make the inverse perm of items
+  for(VEC_ID t =0 ; t < _C.clms() ; t++ ){
+    if ( cperm[t] <= _C.clms() ){
+      _perm[cperm[t]] = t;
+    }
+  }
+ 
  
 	// _Tのバッファ _v _bufもセットされる
-	_T.setSize4sspc(_C,_P._tposeF); 
-
-  _w.malloc2( _T.get_end());
-
-  if ( _C.existNegative() ){
-  	_pw = new WEIGHT[_T.get_end()];
-  }
-
-  _perm = new PERM[_T.get_clms()+1]();
-
-  _jump.alloc(_T.get_clms()+1);
-
-  if ( (!_T.exist_w()) && _P._iwfname ) {
-		 _T.alloc_weight(_C); 
-	}
-
+	_T.setSize4sspc(_C,_P._tposeF,_P._iwfname); 
 
 	// ============================この辺から _T .loadでまとめる===================================
-
-  _trperm = new PERM[_T.get_t()];   //malloc2 
 
 	VEC_ID tt=0 ;
 
@@ -887,36 +886,33 @@ int KGSSPC::_runMain(){
 
       _T.init_v(tt);
 			_trperm[tt] = t;
-			rperm[t] = tt;
+			//rperm[t] = tt;  
+			_C.set_rperm(t,tt);  //ここでrpemが変わる。。もどる？
       _w[tt]   = _C.get_rw(t);
       if ( _pw ) {  _pw[tt] = MAX (_w[tt], 0); }
 
-      if ( !fflag ){ // elementのチェック 多分
-        _T.setVBuffer(tt,pos); // _T の_v ,_buf連動させる)
+      if ( !fflag ){ 
+        _T.setVBuffer(tt,pos);
         pos += _C.get_rowt(t)+1;
       }
 			tt++;
 		}
 	}
-
-  // make the inverse perm of items
-  for(VEC_ID t =0 ; t < _C.clms() ; t++ ){
-    if ( cperm[t] <= _C.c_end() ){
-      _perm[cperm[t]] = t;
-    }
-  }
-
-	// _file_read
-  VEC_ID t=0;
-
-	// _v _bufの連動
+	//cerr << "trperm " ;
+	//for(int ii = 0 ;ii<tt;ii++){
+	//	cerr << _trperm[ii] << " " ;
+	//}
+	//cerr << endl;
   if ( fflag ) {  _T.setVBuffer(0, 0); }
 
+
+	// _file_read
+	//_T.fileRead( fp ,fp2, _P._iwfname , _C , fflag , _P._tflag)
+	 VEC_ID t =0;
   fp.reset();	  
   if( _P._iwfname ){ // sspcでitem weightを指定した時のみ
 	  IFILE2 wfp(_P._iwfname);
 		_T.file_read( fp , wfp, _C , &t , fflag , _P._tflag);
-  	
   }
   else{
 		_T.file_read( fp , _C , &t ,fflag, _P._tflag);
@@ -932,7 +928,7 @@ int KGSSPC::_runMain(){
 
 	// sort rows for the case 
 	// that some columns are not read
-  if ( _P._rowSortDecFlag ){  _T.setInvPermute( rperm, _trperm , -1); }
+  if ( _P._rowSortDecFlag ){  _T.setInvPermute( _C.get_rperm(), _trperm , -1); }
 
 	 _T.queueSortALL(1); 
 
@@ -1013,7 +1009,7 @@ int KGSSPC::_runMain(){
   _item_max = siz;
 
   if ( _P._output_fname ){
-  	// バッファ確保しないほうがいい？
+  	// 出力バッファ確保しないほうがいい？
     if ( strcmp (_P._output_fname, "-") == 0 ) _ofp.open(stdout);
     else{
     	if(_P._iflag&ITEMSET_APPEND){ _ofp.openA( _P._output_fname);}
@@ -1040,8 +1036,6 @@ int KGSSPC::_runMain(){
 #endif
 
   // II alloc
-
-
 	VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
 	_w.realloc2(size);
 
@@ -1109,3 +1103,21 @@ std::vector<LONG> KGSSPC::mrun(int argc ,char* argv[]){
 
 
 }
+
+
+/*
+
+  //_w.malloc2( _T.get_end());
+
+  //if ( _C.existNegative() ){
+  //	_pw = new WEIGHT[_T.get_end()];
+  //}
+
+  //_perm = new PERM[_T.get_clms()+1]();
+
+  //_jump.alloc(_T.get_clms()+1);
+
+  //if ( (!_T.exist_w()) && _P._iwfname ) {
+	//	 _T.alloc_weight(_C); 
+	//}
+*/

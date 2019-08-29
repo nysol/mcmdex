@@ -150,6 +150,7 @@ struct kgSspcParams {
 		if ( strchr (argv[c], 'Y') ) _problem |= SSPC_POLISH;
 		if ( strchr (argv[c], 'y') ) _problem |= SSPC_POLISH2;
 
+		// E,w:(LOAD_ELE)はとりあえず無視は,wはEがある時のみ有効
 		if ( !strchr (argv[c], 't') ){ _tposeF = true; _tflag |= LOAD_TPOSE;}//仮
 		if ( strchr (argv[c], 'E') )  _tflag |= LOAD_ELE;
 		if ( strchr (argv[c], 'w') )  _tflag |= LOAD_EDGEW;

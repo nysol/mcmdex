@@ -182,9 +182,9 @@ void FSTAR::_scan_file(IFILE2 *fp){
   	(_flag&LOAD_EDGEW)?1:0 
   );
 
-  _xmax = C.get_rows(); 
-  _ymax = C.get_clms(); 
-  _edge_num_org = C.get_eles();
+  _xmax = C.rows(); 
+  _ymax = C.clms(); 
+  _edge_num_org = C.eles();
 
   j = alloc_deg ();
 
@@ -192,7 +192,7 @@ void FSTAR::_scan_file(IFILE2 *fp){
     _fstar[i] = C.get_rowt(i);
     if ( _out_deg ) _out_deg[i] = C.get_rowt(i);
   }
-  for(i=0;i<C.get_clms();i++){
+  for(i=0 ; i < _ymax ; i++){
   	if ( _in_deg ) _in_deg[i] = C.get_clmt(i);
   }
 }
@@ -428,10 +428,9 @@ int FSTAR::loadMed(){
 	IFILE2 fp(_fname);
   C.countFST(&fp, _flag&LOAD_TPOSE);
 
-  _xmax = C.get_rows();
-  _ymax = C.get_clms(); 
-
-  _edge_num_org = C.get_eles();
+  _xmax = C.rows();
+  _ymax = C.clms(); 
+  _edge_num_org = C.eles();
 
   //j = alloc_deg ();
   {
