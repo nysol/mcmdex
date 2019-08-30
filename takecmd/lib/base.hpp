@@ -39,8 +39,10 @@ class BASE {
 	  for(int i = 0 ; i < _block_end;i++){ 
 		  delete[] _base[i];
 		}
-  	free2 (_base);
-  	//delete _base;
+		if(_base){ // _base <= calloc reallocつかってるので 
+			free(_base);
+			_base = NULL;
+		}
 	}
 
 

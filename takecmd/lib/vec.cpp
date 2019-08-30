@@ -11,7 +11,9 @@
 
 /* allocate memory according to rows and rowt */
 /* if eles == 0, compute eles from rowt and rows */
+//_wbuf = new WEIGHT[_ele_end*((_flag&LOAD_DBLBUF)?2:1)+1]();
 //void SETFAMILY::alloc_weight ( QUEUE_ID *t){
+
 void SETFAMILY::alloc_weight (FILE_COUNT &fc){
 
   VEC_ID i;
@@ -19,7 +21,6 @@ void SETFAMILY::alloc_weight (FILE_COUNT &fc){
 	_w = new WEIGHT*[_end +1]();
 
 	try{
-	  //_wbuf = new WEIGHT[_ele_end*((_flag&LOAD_DBLBUF)?2:1)+1]();
 	  _wbuf = new WEIGHT[_eles*((_flag&LOAD_DBLBUF)?2:1)+1]();
 	}catch(...){
 		delete [] _w;
@@ -31,60 +32,9 @@ void SETFAMILY::alloc_weight (FILE_COUNT &fc){
   }
 }
 
-
-/* sort and duplication check */
-void SETFAMILY::sort(){
-  VEC_ID i;
-  PERM *p;
-  WEIGHT *ww, w;
-  QUEUE Q;
-	
-  int flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0);
-  // sort items in each row
-
-  if ( flag ){   
-    p = new PERM[_clms];
-    for(i=0;i<_t;i++){
-      _v[i].perm_WEIGHT( _w?_w[i]:NULL, p, flag);
-    }
-    delete [] p;
-    p=NULL;
-  }
-
-  flag = ((_flag&(LOAD_SIZSORT+LOAD_WSORT))? ((_flag&LOAD_DECROWSORT)? -1: 1): 0);
-
-  if ( flag ){  
-		// sort the rows
-		if ( _flag & LOAD_SIZSORT ) {
-			p = qsort_perm_(_v, _t, flag);
-		}
-    else{
-    	p = qsort_perm_(_rw, _t, flag);
-    }
-
-		//_rperm = malloc2(_rperm,_t);
-		_rperm = new PERM[_t];
-
-		for(size_t st=0; st<_t ;st++){ _rperm[st]=-1; }
-
-		for(int i=0;i<_t;i++){
-			if(p[i]>=0 && p[i]<_t){ _rperm[p[i]]=i; }
-		}
-
-    if ( _rw ){ any_INVPERMUTE_rw(p); }
-    if ( _w ) { any_INVPERMUTE_w(p);  }
-    ary_INVPERMUTE_(p,Q);
-
-    delete [] p;
-  }
-
-
-  if (_flag&LOAD_RM_DUP){  // unify the duplicated edges
-    for(i=0;i<_t;i++){
-			_v[i].rm_dup_WEIGHT( _w?_w[i]:NULL);
-		}
-  }
-}
+//  flag = ((_flag&(LOAD_SIZSORT+LOAD_WSORT))? ((_flag&LOAD_DECROWSORT)? -1: 1): 0);
+//	if ( _flag & LOAD_SIZSORT ) { p = qsort_perm_(_v, _t, flag); }
+//	else{ p = qsort_perm_(_rw, _t, flag); }
 
 void SETFAMILY::sort(int sflag){
 	
@@ -99,9 +49,7 @@ void SETFAMILY::sort(int sflag){
 
   // sort items in each row
   if ( flag ){   
-    
-    p = new PERM[_clms]; // p = malloc2 (p, _clms);
-
+    p = new PERM[_clms];
     for(i=0;i<_t;i++){
       _v[i].perm_WEIGHT( _w?_w[i]:NULL, p, flag);
     }
@@ -109,36 +57,30 @@ void SETFAMILY::sort(int sflag){
     p = NULL;
   }
 
-  flag = ((_flag&(LOAD_SIZSORT+LOAD_WSORT))? ((_flag&LOAD_DECROWSORT)? -1: 1): 0);
-
+  flag = ((_flag&LOAD_SIZSORT)? ((_flag&LOAD_DECROWSORT)? -1: 1): 0);
   if ( flag ){  
+
 		// sort the rows
-		if ( _flag & LOAD_SIZSORT ) { p = qsort_perm_(_v, _t, flag); }
-    else{ p = qsort_perm_(_rw, _t, flag); }
+		//if ( _flag & LOAD_SIZSORT ) { p = qsort_perm_(_v, _t, flag); }
+    //else{ p = qsort_perm_(_rw, _t, flag); }
+		p = qsort_perm_(_v, _t, flag);
 
-		_rperm = new PERM[_t]; // malloc2
-
+		_rperm = new PERM[_t];
 		for(size_t st=0; st<_t ;st++){ _rperm[st]=-1; }
-
 		for(int i=0;i<_t;i++){
 			if(p[i]>=0 && p[i]<_t){ _rperm[p[i]]=i; }
 		}
-
-    if ( _rw ){ any_INVPERMUTE_rw(p); }
+    // if ( _rw ){ any_INVPERMUTE_rw(p); }
     if ( _w ) { any_INVPERMUTE_w(p) ; }
-    
     ary_INVPERMUTE_(p,Q);
-
     delete [] p;
   }
-
 
   if (_flag&LOAD_RM_DUP){  // unify the duplicated edges
     for(i=0;i<_t;i++){
 			_v[i].rm_dup_WEIGHT( _w?_w[i]:NULL);
 		}
   }
-
 }
 
 // sgraphに移行?
@@ -204,6 +146,7 @@ void SETFAMILY::_flie_load(IFILE2 &fp){
 
 /* scan file and load the data from file to SMAT structure */
 // call from sgraph.ccp loadEDGE// sgraphに移行
+//  //_eles = _ele_end;
 void SETFAMILY::load (IFILE2 &fp,  int flag)
 {
 
@@ -217,13 +160,9 @@ void SETFAMILY::load (IFILE2 &fp,  int flag)
 
 	// end mark これ意味ある？　どちらか一方でOK?
 	//	for(VEC_ID i=0;i<_t;i++){  _v[i].set_v(_v[i].get_t(),_clms); }
-
-  //_eles = _ele_end;
-
-	// これ意味ある？ 　どちらか一方でOK?
 	for(int i=0 ; i< _t;i++){ 
 		_v[i].set_v( _v[i].get_t() , _t);
-	} 	// allvvInitByT();
+	}
 
   sort(); //なくせる？
 
@@ -244,8 +183,7 @@ void SETFAMILY::file_read(
 	do{
 		if ( flag ){// 行が変わった時だけでOK?
     	if ( C.CheckRperm(*pos) ){ 
-				////_v[ C.rperm(*pos) ].set_v( _v[C.rperm(*pos)-1].end()+1 );
-				_v[ C.rperm(*pos) ].set_v( _v[C.rperm(*pos)-1].end()+1 );
+				_v[ C.rperm(*pos) ].set_v( _v[C.rperm(*pos)-1].end()+1 ); 
     	}
     }
     x = *pos;
@@ -254,9 +192,7 @@ void SETFAMILY::file_read(
 
     if ( fp.Null() ) goto LOOP_END; //FILE_err&4
 
-//	  if ( (tflag & LOAD_TPOSE) || ((tflag&LOAD_EDGE) && x > y) ){
 	  if ( (tflag & LOAD_TPOSE) || ((tflag&LOAD_EDGE) && x > y) ){
-
   		SWAP_<LONG>(&x, &y);
 	  }
 
@@ -269,13 +205,6 @@ void SETFAMILY::file_read(
       (*pos)++;
     }
 	} while ( fp.NotEof() ); // (FILE_err&2)==0
-	// std::cerr << "_v show st f " << flag  << std::endl;
-	//	for(int i=0;i<_end;i++){
-	//	_v[i].show();
-	//}
-	//C.show_rperm();
-  //std::cerr << "_v show ed" << std::endl;
-
 	return;
 
 }
@@ -318,13 +247,6 @@ void SETFAMILY::file_read(
       FILE_err = 0; 
     }
 	} while ( fp.NotEof() ); // (FILE_err&2)==0
-
-  //std::cerr << "_v wshow st" << std::endl;
-	//for(int i=0;i<_end;i++){
-	//	_v[i].show();
-	//}
-	//C.show_rperm();
-  //std::cerr << "_v wshow ed" << std::endl;
 
 	return;
 
@@ -386,62 +308,59 @@ void SETFAMILY::replace_index(PERM *perm, PERM *invperm)
 void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 {
 	QUEUE Q;	
-	char  *cmm_p=NULL;
-	int cmm_i,cmm_i2;
+	char  *p=NULL;
+	int i,j;
 
 	qsort_perm__( _v, _t, rperm, flag); 
 
-	//cmm_p = new char[_t]();
-	cmm_p = new char[_t]();
+	p = new char[_t]();
 
-	for(cmm_i=0;cmm_i<_t;cmm_i++){
-		if ( cmm_p[cmm_i]==0 ){ 
-			Q = _v[cmm_i]; 
+	for(i=0; i<_t ; i++){
+		if ( p[i]==0 ){ 
+			Q = _v[i]; 
 			do{
-				cmm_i2=cmm_i; 
-				if(rperm[cmm_i] > _t){ break;} //これでOK? _v ,_w：いっしょでいいような。。
-				cmm_i=rperm[cmm_i]; 
-				_v[cmm_i2]=_v[cmm_i]; 
-				cmm_p[cmm_i2]=1; 
-			}while( cmm_p[cmm_i]==0 ); 
-			_v[cmm_i2] = Q; 
+				j = i; 
+				if(rperm[i] > _t){ break;} //これでOK? 
+				i=rperm[i]; 
+				_v[j]=_v[i]; 
+				p[j]=1; 
+			}while( p[i]==0 ); 
+			_v[j] = Q; 
 		}
 	}
-	delete [] cmm_p; 
+	delete [] p; 
 			
-	if(_w){
+	if(_w){//_v ,_w：いっしょに処理でいいような。。
 
 		WEIGHT *ww;
-		char  *cmm_p = new char[_t]();
+		p = new char[_t]();
 
-		for(cmm_i=0;cmm_i<_t;cmm_i++){
-			if ( cmm_p[cmm_i]==0 ){ 
-				ww = _w[cmm_i]; 
+		for(i=0 ; i<_t ; i++){
+			if ( p[i]==0 ){ 
+				ww = _w[i]; 
 				do{ 
-					cmm_i2=cmm_i; 
-					cmm_i=rperm[cmm_i]; 
-					_w[cmm_i2]=_w[cmm_i]; 
-					cmm_p[cmm_i2]=1; 
-				}while( cmm_p[cmm_i]==0 ); 
-				_w[cmm_i2] = (ww); 
+					j = i; 
+					i=rperm[i]; 
+					_w[j]=_w[i]; 
+					p[j]=1; 
+				}while( p[i]==0 ); 
+				_w[j] = ww; 
 			}
 		}
-		delete [] cmm_p; 
+		delete [] p; 
 	} 
-			
-	PERM pp;
 
-	for(cmm_i=0;cmm_i<_t;cmm_i++){
+	for(i=0;i<_t;i++){
 
-		if ( rperm[cmm_i]< _t ){ 
-			pp = trperm[cmm_i]; 
+		if ( rperm[i]< _t ){ 
+			PERM pp = trperm[i]; 
 			do { 
-				cmm_i2=cmm_i; 
-				cmm_i=rperm[cmm_i]; 
-				trperm[cmm_i2]=trperm[cmm_i]; 
-				rperm[cmm_i2]=_t; //?
-			}while ( rperm[cmm_i]< _t ); 
-			trperm[cmm_i2] = pp;
+				j = i; 
+				i=rperm[i]; 
+				trperm[j]=trperm[i]; 
+				rperm[j]=_t; //?
+			}while ( rperm[i]< _t ); 
+			trperm[j] = pp;
 		}
 	}
 }
@@ -449,39 +368,49 @@ void SETFAMILY::setInvPermute(PERM *rperm,PERM *trperm,int flag)
 
 
 
-/* allocate memory according to rows and rowt */
-/* if eles == 0, compute eles from rowt and rows */
-// void SETFAMILY::alloc (VEC_ID rows, VEC_ID *rowt, VEC_ID clms, size_t eles){
-/*
-//void SETFAMILY::alloc (VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles){
-//
-// VEC_ID i;
-//  if ( eles == 0 ) { _ele_end =  fc.sumRow(0, rows);  }
-//  else { _ele_end = eles; }
-//	calloc2 (buf, (_ele_end*((_flag&LOAD_DBLBUF)?2:1) +(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)*_unit, EXIT);
-//  _buf = new QUEUE_INT[
-//  	(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +
-//  	(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(rows,clms):rows)+2)
-//  ]();
-//  try {
-//	 _v = new QUEUE[rows+1];
-//	} catch(...){
-//		free(_buf);
-//		delete [] _buf;
-//		throw;
-//	}
-//	for(size_t i =0 ;i<rows;i++){ 
-//		_v[i] = QUEUE(); 
-//	} 
-//  _end = rows;
-//  _clms = clms;
-//	QUEUE_INT *pos = _buf;
-//  if ( !fc.rowEmpty() ){
-//  	for(i=0;i<rows;i++){
-//      _v[i].set_v(pos);
-//      _v[i].set_end( fc.get_rowt(i)+1 );
-//      pos += (fc.get_rowt(i) + 1);
+//  flag = ((_flag&(LOAD_SIZSORT+LOAD_WSORT))? ((_flag&LOAD_DECROWSORT)? -1: 1): 0);
+/* sort and duplication check */
+//		if ( _flag & LOAD_SIZSORT ) { p = qsort_perm_(_v, _t, flag);}
+//    else{ p = qsort_perm_(_rw, _t, flag);}
+//void SETFAMILY::sort(){
+//  VEC_ID i;
+//  PERM *p;
+//  WEIGHT *ww, w;
+//  QUEUE Q;
+//  int flag = (_flag&LOAD_INCSORT)? 1: ((_flag&LOAD_DECSORT)? -1: 0);
+// // sort items in each row
+//  if ( flag ){   
+//    p = new PERM[_clms];
+//    for(i=0;i<_t;i++){
+//      _v[i].perm_WEIGHT( _w?_w[i]:NULL, p, flag);
 //    }
+//    delete [] p;
+//    p=NULL;
+// }
+//  flag = ((_flag&LOAD_SIZSORT)? ((_flag&LOAD_DECROWSORT)? -1: 1): 0);
+
+//  if ( flag ){  
+		// sort the rows
+//		p = qsort_perm_(_v, _t, flag);
+
+		//_rperm = malloc2(_rperm,_t);
+//		_rperm = new PERM[_t];
+
+//		for(size_t st=0; st<_t ;st++){ _rperm[st]=-1; }
+
+//		for(int i=0;i<_t;i++){
+//			if(p[i]>=0 && p[i]<_t){ _rperm[p[i]]=i; }
+//		}
+
+    // if ( _rw ){ any_INVPERMUTE_rw(p); }
+ //   if ( _w ) { any_INVPERMUTE_w(p);  }
+ //   ary_INVPERMUTE_(p,Q);
+
+//    delete [] p;
+//  }
+//  if (_flag&LOAD_RM_DUP){  // unify the duplicated edges
+//    for(i=0;i<_t;i++){
+//			_v[i].rm_dup_WEIGHT( _w?_w[i]:NULL);
+//		}
 //  }
 //}
-*/

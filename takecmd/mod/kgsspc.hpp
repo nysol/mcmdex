@@ -274,10 +274,7 @@ class KGSSPC{
 	// パラメータ
 	kgSspcParams _P;
 
-
-	// org ITEMSET
-	//double _prob;
-	//double _ratio;
+	//org itemset
 	QUEUE _itemset;   // current operating itemset
 	LONG *_sc;
   AHEAP _topk; 
@@ -289,7 +286,6 @@ class KGSSPC{
   QUEUE_INT _item_max;  // (original) maximum item
   OFILE2 _ofp;    // file pointer to the output file
   OFILE2 *_multi_fp;  // output file2 pointer for multi-core mode
-  WEIGHT _total_weight;  	// total weight of the input database
 
 
 	// counter
@@ -321,7 +317,6 @@ class KGSSPC{
 	// POLISH or POLISH2の時のみ
 	char  *_vecchr;  
 
-	// ITEMSET _II;
 
 	void *_iter(void *p);
 
@@ -344,6 +339,7 @@ class KGSSPC{
 	void _output( QUEUE_INT *cnt, QUEUE_INT i, QUEUE_INT ii, QUEUE *itemset, WEIGHT frq, int core_id);
 
 	void _output_itemset_(QUEUE *itemset, WEIGHT frq, int core_id);
+
 	void _output_itemset_k(
 		QUEUE *itemset, WEIGHT frq, 
 		QUEUE_INT itemtopk_item, QUEUE_INT itemtopk_item2, 
@@ -364,23 +360,21 @@ class KGSSPC{
 		}
 	}
 
-	void _oclose(){
-	  // fpは共有してるのでcloseはしない
+ 	// fpは共有してるのでcloseはしない
+ 	void _oclose(){ 
 	  if( _multi_fp ){
 	  	for(int i = 0 ; i < MAX(_P._multi_core,1) ; i++){
 	  		_multi_fp[i].clearbuf();
 	  	}
 		}
 	}
-
-
 	public :
 
 	KGSSPC():
 		_siz(0),_trperm(NULL),_perm(NULL),
 		_positPERM(NULL),_vecchr(NULL),
 		_occ_w(NULL),_itemary(NULL),_pw(NULL),
-		_iters(0),_solutions(0),_total_weight(0),
+		_iters(0),_solutions(0),
 		_multi_outputs(NULL),_multi_iters(NULL),
 		_multi_solutions(NULL),_multi_fp(NULL),
 		_buf_end(2),_item_max(0),_sc(NULL),
@@ -392,7 +386,7 @@ class KGSSPC{
 
 	std::vector<LONG> iparam(){ 
 		std::vector<LONG> rtn(2);
-		rtn[0] = _solutions; //_II.get_solutions(); 
+		rtn[0] = _solutions; 
 		rtn[1] = _C.clms();
 		return rtn;
 	}
@@ -401,3 +395,10 @@ class KGSSPC{
 
 };
 
+	// org ITEMSET
+	// ITEMSET _II;
+	//double _prob;
+	//double _ratio;
+  //WEIGHT _total_weight;  	// total weight of the input database
+	//_total_weight(0),
+	//_II.get_solutions(); 

@@ -594,78 +594,72 @@ void FILE_COUNT::initRperm(int tflag){
 	
 
 
-PERM *FILE_COUNT::makeCperm(){
+void FILE_COUNT::makeCperm(){
 
+	//_Cで管理したほうがいい？
 	// ttt :perm Size 
 	VEC_ID ttt_max = _clms_org;
 	VEC_ID ttt     = _clms_org;
 	//_clms_end = _clms_org;
 
-  PERM *cperm = new PERM[_clms_org+1]; 
+  _cperm = new PERM[_clms_org+1]; 
 
 	for(size_t i =0 ;i<_clms_org;i++){ 
-		cperm[i] = _clms_org+1; 
+		_cperm[i] = _clms_org+1; 
 	}
-
-
 	for(size_t tt=0; tt < ttt; tt++){
 
 		if ( tt >= _clms_org ) continue;
 		    
 		if( _limVal.clmOK(_cw[tt],_clmt[tt]) ){
 			_c_eles += _clmt[tt];
-			cperm[tt] = _c_clms++ ;
+			_cperm[tt] = _c_clms++ ;
 		}
 		else{
-			cperm[tt] = _clms_org+1 ;
+			_cperm[tt] = _clms_org+1 ;
 		}
 	}
 	if(_c_clms == 0){
-		delete [] cperm;
-		return NULL;
+		delete [] _cperm;
+		return;
 	}
-	//_Cで管理したほうがいい？
-	_cperm = cperm;
-	
-//	for(size_t j=0; j < _clms_org; j++){
-//		printf("%d ",_cperm[j]);
-//	}
-//		printf("\n");
 
-	return cperm;
+  _cInvperm = new PERM[_c_clms+1](); 
+
+  for(VEC_ID t =0 ; t < _clms_org ; t++ ){
+    if ( _cperm[t] <= _clms_org ){
+      _cInvperm[_cperm[t]] = t;
+    }
+  }
+  return;
+
 }
 
-PERM* FILE_COUNT::makeRperm(bool sflag){
+void FILE_COUNT::makeRperm(bool sflag){
 
   PERM *p=NULL;
 
+	//_Cで管理したほうがいい？
 	// SSPCのみ len 指定のみ
 	if( sflag ){ p = _rowt_perm_sort(-1); }
 
-	PERM *rperm = new PERM[_rows_org];//malloc2
+	_rperm = new PERM[_rows_org];//malloc2
 			
 	// compute #elements according to rowt, and set rperm
 	VEC_ID tt=0;
 	for( VEC_ID t=0 ; t<_rows_org ; t++){
 		tt = p? p[t]: t; 
 		if(_limVal.rowOK(_rowt[tt])){
-			rperm[tt] = _r_clms++;
+			_rperm[tt] = _r_clms++;
 			_r_eles += _rowt[tt];
 		}
 		else{
-			rperm[tt] = _rows_org+1;
+			_rperm[tt] = _rows_org+1;
 		}
 	}
 	delete [] p;
-	//_Cで管理したほうがいい？
-
-	_rperm = rperm;
-//	for(size_t j=0; j < _rows_org; j++){
-//		printf("%d ",_rperm[j]);
-//	}
-//		printf("\n");
-
-	return rperm;
+  _rInvperm = new PERM[_r_clms+1](); 
+	return ;
 }
 	
 

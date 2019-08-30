@@ -843,10 +843,12 @@ int KGSSPC::_runMain(){
 		_C.fileCount(fp ,fp2 ,_P._wfname);
 	}
 
-	// Make PERM
-	PERM *cperm = _C.makeCperm();
-	if (cperm==NULL) { throw ("there is no frequent item"); }
-	PERM *rperm = _C.makeRperm(_P._rowSortDecFlag); 	// 多いものから順番並べるいみある？_trperm使い方に寄りそう
+	// Make PERM &inverse perm 
+	//PERM *cperm = 
+	_C.makeCperm();
+	if (_C.c_clms()==0) { throw ("there is no frequent item"); }
+	//PERM *rperm = 
+	_C.makeRperm(_P._rowSortDecFlag); 	// 多いものから順番並べるいみある？_trperm使い方に寄りそう
 
 
 	// _C.show_rperm();
@@ -857,15 +859,6 @@ int KGSSPC::_runMain(){
    if ( _C.existNegative() ){
   	_pw = new WEIGHT[_C.r_clms()+1 ];
   }
-  _perm   = new PERM[_C.c_clms()+1]();
-  _trperm = new PERM[_C.r_clms()]; 
-
-  // make the inverse perm of items
-  for(VEC_ID t =0 ; t < _C.clms() ; t++ ){
-    if ( cperm[t] <= _C.clms() ){
-      _perm[cperm[t]] = t;
-    }
-  }
  
  
 	// _Tのバッファ _v _bufもセットされる
@@ -873,21 +866,20 @@ int KGSSPC::_runMain(){
 
 	// ============================この辺から _T .loadでまとめる===================================
 
-	VEC_ID tt=0 ;
 
-  size_t pos = 0; 
   // set variables w.r.t rows
   // (r_eles c_elesは基本同じ：制約にひっかかると数が変わってくる)
 	int fflag = _C.rGTc(_P._tposeF);
 
+	VEC_ID tt=0 ;
+  size_t pos = 0; 
 	for( VEC_ID t =0 ; t < _C.rows(); t++ ){
 
-		if(	rperm[t] <= _C.rows() ) {
+		if(	_C.rperm(t) <= _C.rows() ) {
 
       _T.init_v(tt);
-			_trperm[tt] = t;
-			//rperm[t] = tt;  
-			_C.set_rperm(t,tt);  //ここでrpemが変わる。。もどる？
+      _C.replaceRperm(tt,t); //ここでrpemが変わる。。もどる？
+
       _w[tt]   = _C.get_rw(t);
       if ( _pw ) {  _pw[tt] = MAX (_w[tt], 0); }
 
@@ -898,17 +890,12 @@ int KGSSPC::_runMain(){
 			tt++;
 		}
 	}
-	//cerr << "trperm " ;
-	//for(int ii = 0 ;ii<tt;ii++){
-	//	cerr << _trperm[ii] << " " ;
-	//}
-	//cerr << endl;
   if ( fflag ) {  _T.setVBuffer(0, 0); }
 
 
 	// _file_read
 	//_T.fileRead( fp ,fp2, _P._iwfname , _C , fflag , _P._tflag)
-	 VEC_ID t =0;
+	VEC_ID t =0;
   fp.reset();	  
   if( _P._iwfname ){ // sspcでitem weightを指定した時のみ
 	  IFILE2 wfp(_P._iwfname);
@@ -928,7 +915,7 @@ int KGSSPC::_runMain(){
 
 	// sort rows for the case 
 	// that some columns are not read
-  if ( _P._rowSortDecFlag ){  _T.setInvPermute( _C.get_rperm(), _trperm , -1); }
+  if ( _P._rowSortDecFlag ){  _T.setInvPermute( _C.get_rperm(), _C.get_rInvperm() , -1); }
 
 	 _T.queueSortALL(1); 
 
@@ -949,42 +936,25 @@ int KGSSPC::_runMain(){
     }
   }	
 
-  if ( _P._itemtopk_item > 0 ){  _P._itemtopk_end= _T.get_clms(); }
+  if ( _P._itemtopk_item > 0 ){  _P._itemtopk_end= _C.c_clms(); }
 
-	QUEUE_ID siz  = _T.get_clms();
-	QUEUE_ID siz2 = _T.get_t();
-
-	_occ_w = new WEIGHT[siz+2]();
-	_vecchr = new char[siz2+2]();
+	_occ_w  = new WEIGHT[_C.c_clms()+2]();
+	_vecchr = new char  [_C.r_clms()+2]();
 
 	if(_P._problem&SSPC_POLISH2) {
-		_itemary = new QUEUE_INT[siz+2]();
+		_itemary = new QUEUE_INT[_C.c_clms()+2]();
 	}
 
 	if ( _P._outperm_fname ){
-
 		PERM *p = NULL;
-
 		IFILE2::ARY_Load( p ,_P._outperm_fname);
-		if ( _perm ){
-			for(int j =0 ;j < _T.get_clms() ; j++){
-				_perm[j] = p[_perm[j]];
-     	}
-	    delete [] p;
-	  }
-		else {
-    	_perm = p;
-    }
+		_C.replacecInvperm(p);
+	  delete [] p;
 	} 
 
-	// II alloc
-  size_t isiz = siz+2;
+  _itemset.alloc(_C.c_clms()+2 , _C.c_clms()+2);
 
-  int j;
-
-  _itemset.alloc((QUEUE_ID)isiz,(QUEUE_ID)isiz);
-
-	_sc = new LONG[siz+2]();
+	_sc = new LONG[_C.c_clms()+2]();
 
 	// allocate topk heap
   if ( _P._topk_k > 0 ){
@@ -1006,7 +976,7 @@ int KGSSPC::_runMain(){
   }
 
   _iters = _solutions = 0; //_iters2 =
-  _item_max = siz;
+  _item_max = _C.c_clms();
 
   if ( _P._output_fname ){
   	// 出力バッファ確保しないほうがいい？
@@ -1017,10 +987,7 @@ int KGSSPC::_runMain(){
     }
   } 
 
-  _total_weight = 1;
-
-  j = MAX(_P._multi_core,1);
-
+  int j = MAX(_P._multi_core,1);
   _multi_iters = new LONG[j*3](); 
   _multi_outputs = _multi_iters + j;
   _multi_solutions = _multi_outputs + j;
@@ -1035,20 +1002,21 @@ int KGSSPC::_runMain(){
   }
 #endif
 
+
   // II alloc
-	VEC_ID size =  MAX(_T.get_t(),_T.get_clms())+1;
-	_w.realloc2(size);
+	VEC_ID maxsize =  MAX( _C.r_clms() , _C.c_clms() )+1;
+	_w.realloc2(maxsize);
 
-	for(size_t i=0; i<size;i++){ _w[i] = 1;}
+	for(size_t i=0; i<maxsize;i++){ _w[i] = 1;}
 
-  _positPERM = _perm; // _positPERM = _II.get_perm(); 
+  _positPERM = _C.get_cInvperm();
   _perm=NULL;
 
   if ( _T.get_clms()>1 ){  
   	_SspcCore(); 
   }
-	_perm = _positPERM; // -K _P._itemtopk_end時必要
-  //_II.set_perm(_positPERM);
+	_perm = _C.get_cInvperm(); // -K _P._itemtopk_end時必要
+
   _merge_counters();
 
   if ( _topk.end() > 0 || _P._itemtopk_end > 0 ){

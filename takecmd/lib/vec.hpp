@@ -28,69 +28,59 @@
 #endif
 
 
+//void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
+//,_ele_end(0),
+//			_rw(NULL),
+//	WEIGHT *_rw;
+// どっちか一方でいい？
+// sgraph _edge.sort(flag) とprivate  load
+//mfree ( _rw, _wbuf, _w, _cperm);
+// *_cperm;
+//,_cperm(NULL)
+
+//setsize_sg
+//alloc ( _t, C, _clms, 0);
+//_ele_end =  C.sumRow(0, _t);
+//_buf = new QUEUE_INT[
+//	(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +
+//	(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(_t,_clms):_t)+2)
+//]();
+//, _ele_end;
+//  PERM *_sortPerm;
+
 class SETFAMILY{
 
   int _flag;
-
   VEC_ID _end;
   VEC_ID _t;
-  QUEUE_INT *_buf;
   VEC_ID _clms;
-  size_t _eles;  //, _ele_end;
-  WEIGHT *_rw, **_w, *_wbuf;
-
-  PERM *_rperm, *_cperm;  // row permutation
-  
-  PERM *_sortPerm;
+  size_t _eles;  
 
   QUEUE *_v;
+  QUEUE_INT *_buf;
+  WEIGHT  **_w, *_wbuf;
+
+  PERM *_rperm;  // row permutation
   
 	void _flie_load(IFILE2 &fp);
-
-	//void alloc(VEC_ID rows, FILE_COUNT &fc, VEC_ID clms, size_t eles);
-
-
-	void any_INVPERMUTE_rw(PERM * rperm){
-
-		WEIGHT w;
-
-		int i1,i2;
-		char  *cmm_p =  new char[_t](); //calloc2
-
-		for(i1=0; i1 < _t ; i1++){
-			if ( cmm_p[i1]==0 ){ 
-				w = _rw[i1]; 
-				do{ 
-					i2 = i1;
-					i1 = rperm[i1];
-					_rw[i2] = _rw[i1];
-					cmm_p[i2] = 1 ;
-				} while(cmm_p[i1]==0) ;
-				_rw[i2] = w; 
-			}
-		}
-		delete [] cmm_p; 
-	}
-
+	
 	public:
-		//,_ele_end(0),
 		SETFAMILY():
 			 _flag(0),_v(NULL),
 			_end(0),_t(0),_buf(NULL),_clms(0),_eles(0),
-			_rw(NULL),_w(NULL),_wbuf(NULL),
-  		_rperm(NULL),_cperm(NULL){}
+			_w(NULL),_wbuf(NULL),
+  		_rperm(NULL){}
 
 		~SETFAMILY(){
-			mfree ( _rw, _wbuf, _w, _cperm);
 			delete []  _rperm;
 			delete []  _buf;
 			delete []  _v;
+			delete [] _w;
+			delete [] _wbuf;
 		}
 
-		// どっちか一方でいい？
-		// sgraph _edge.sort(flag) とprivate  load
-		void sort();
-		void sort(int flag);
+		//void sort();
+		void sort(int flag=0);
 
 		void alloc_w (){  _w = new WEIGHT*[_end](); }
 
@@ -130,7 +120,7 @@ class SETFAMILY{
 
 		VEC_ID * counting(){
 
-			VEC_ID * p = new VEC_ID[_clms](); // calloc2
+			VEC_ID * p = new VEC_ID[_clms]();
 
 			for (VEC_ID iv=0 ; iv< _t ; iv++){
 
@@ -168,10 +158,7 @@ class SETFAMILY{
 
 		void initQUEUEs(void){
 			for(int i=0 ; i< _t;i++){
-				//std::cerr << "qinit " << i << " " << _v[i].get_t() << " " << _clms << std::endl;
-				//_v[i].set_v( _v[i].get_t() , _clms);
 				_v[i].setStopper(_clms);
-				//_v[i].set_v( _v[i].get_t() , _clms);
 			}
 		}
 
@@ -263,7 +250,6 @@ class SETFAMILY{
 			_clms = _C.c_clms(); 
 			_t    = _C.r_clms();
 			
-  		//_ele_end = _eles;
 
   		_end = _t * ( (flag&LOAD_DBLBUF) ? 2 : 1 ) + 1  ;
 
@@ -274,8 +260,7 @@ class SETFAMILY{
 
 		}
 
-		// _eles 要素数 TPOSEの場合はtraでの件数優先
-  	//_ele_end = _eles;
+
 		void setSize4sspc(FILE_COUNT &_C,bool tpose,char *iwfname){			
 
 			_eles = _C.OptimalEleSize(tpose);
@@ -308,14 +293,8 @@ class SETFAMILY{
 			if ( _clms == 0 ) _clms = C.clms();
 			if ( _t == 0 )    _t = C.rows();
 
-			//alloc ( _t, C, _clms, 0);
-			//_ele_end =  C.sumRow(0, _t);
 			_eles = C.sumRow(0, _t);
 
-		  //_buf = new QUEUE_INT[
-  		//	(_ele_end*((_flag&LOAD_DBLBUF)?2:1) +
-		  //	(((_flag&LOAD_DBLBUF)||(_flag&LOAD_ARC))?MAX(_t,_clms):_t)+2)
-  		//]();
 
 		  _buf = new QUEUE_INT[
   			(_eles*((_flag&LOAD_DBLBUF)?2:1) +
@@ -344,7 +323,6 @@ class SETFAMILY{
       		pos += (C.get_rowt(i) + 1);
     		}
 		  }
-
 			if ( wflag ) alloc_weight ( C );
 
 		  return ;
@@ -352,13 +330,9 @@ class SETFAMILY{
 		}
 
 		void queueSortALL(int flag){
-
 			for(size_t t=0 ; t < _t ; t++){
-				//std::cerr << "st " << t << "/" << _t << std::endl;
 				_v[t].queSort(flag);
-				//std::cerr << "et " << t << "/" << _t << std::endl;
 			}
-
 		}
 
 		void rmDup(){
@@ -383,7 +357,7 @@ class SETFAMILY{
 
 		  QUEUE Q;
 			int i1,i2;
-			char * cmm_p = new char[_t](); //calloc2( cmm_p ,_t);
+			char * cmm_p = new char[_t](); 
 
 			for(i1=0; i1 < _t ; i1++){
 				if ( cmm_p[i1]==0 ){ 
@@ -405,7 +379,7 @@ class SETFAMILY{
 		void ary_INVPERMUTE( PERM *invperm ,QUEUE& Q,VEC_ID num){
 
 			int i1,i2;
-			char  * cmm_p = new char[num](); //calloc2(cmm_p,num);
+			char  * cmm_p = new char[num]();
 
 			for(i1=0; i1 < num ; i1++){
 
@@ -471,6 +445,7 @@ class SETFAMILY{
 		}
 
 		void any_INVPERMUTE_(PERM * trperm,PERM * rperm){
+
 			PERM pp;
 			int i1,i2;
 			
@@ -489,13 +464,11 @@ class SETFAMILY{
 		}
 
   	bool exist_w(){ return _w!=NULL; }
-  	bool exist_rw(){ return _rw!=NULL; }
 
   	WEIGHT **get_w(){ return _w; }
   	WEIGHT *get_w(int i){ return _w[i]; }
   	WEIGHT get_w(int i,int j){ return _w[i][j]; }
 
-  	WEIGHT get_rw(int i){ return _rw[i]; }
 
   	PERM *get_rperm(){ return _rperm;}
 
@@ -509,8 +482,6 @@ class SETFAMILY{
 
   	void set_w(int i,int j,WEIGHT w){ _w[i][j]=w;}
   	void set_w(int i,WEIGHT *w){ _w[i]=w;}
-  	void set_rw(int i,WEIGHT w){ _rw[i]=w;}
-  	void set_rw(WEIGHT *w){ _rw=w;}
   	void set_rperm(PERM *rperm){ _rperm=rperm;}
 
 		void setInvPermute(PERM *rperm,PERM *trperm,int flag);
@@ -518,4 +489,33 @@ class SETFAMILY{
 
 };
 
+
+		// _eles 要素数 TPOSEの場合はtraでの件数優先
+  	//_ele_end = _eles;
+  		//_ele_end = _eles;
+
+  	//bool exist_rw(){ return _rw!=NULL; }
+  	//WEIGHT get_rw(int i){ return _rw[i]; }
+  	//void set_rw(int i,WEIGHT w){ _rw[i]=w;}
+  	//void set_rw(WEIGHT *w){ _rw=w;}
 		//readFile(IFILE2 &fp, IFILE2 &fp2, int flag);
+		
+//	void any_INVPERMUTE_rw(PERM * rperm){
+//		WEIGHT w;
+//		int i1,i2;
+//		char  *cmm_p =  new char[_t](); //calloc2
+//		for(i1=0; i1 < _t ; i1++){
+//			if ( cmm_p[i1]==0 ){ 
+//				w = _rw[i1]; 
+//				do{ 
+//					i2 = i1;
+//					i1 = rperm[i1];
+//					_rw[i2] = _rw[i1];
+//					cmm_p[i2] = 1 ;
+//				} while(cmm_p[i1]==0) ;
+//				_rw[i2] = w; 
+//			}
+//		}
+//		delete [] cmm_p; 
+//	}
+

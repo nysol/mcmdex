@@ -101,7 +101,9 @@ class FILE_COUNT{
 	VECARY <WEIGHT> _rw;
 	VECARY <WEIGHT> _cw;
 
-  PERM *_rperm, *_cperm;   // permutation (original->internal) of rows and columns
+  PERM *_rperm, *_cperm;       // permutation (original->internal) of rows and columns
+  PERM *_rInvperm, *_cInvperm; // Inverse permutation (original->internal) of rows and columns
+
 
 	bool _negaFLG;
 
@@ -143,9 +145,11 @@ class FILE_COUNT{
 
 	public :
 		FILE_COUNT(void):
-			_clms_org(0) ,_rows_org(0) , 
-			_total_w_org(0) , _total_pw_org(0) ,
-			_eles_org(0) , _rperm(NULL) , _cperm(NULL),_negaFLG(false),
+			_clms_org(0) ,_rows_org(0) , _eles_org(0) ,
+			_total_w_org(0) , _total_pw_org(0) , 
+			_rperm(NULL) , _cperm(NULL),
+			_rInvperm(NULL) , _cInvperm(NULL),
+			_negaFLG(false),
 			_end1(0),_c_eles(0),_c_clms(0),_r_eles(0),_r_clms(0)
 			{}
 	
@@ -231,6 +235,20 @@ class FILE_COUNT{
 
     PERM* get_rperm(void){ return _rperm; }
     PERM* get_cperm(void){ return _cperm; }
+    PERM* get_rInvperm(void){ return _rInvperm; }
+    PERM* get_cInvperm(void){ return _cInvperm; }
+
+		void replaceRperm(VEC_ID tt,VEC_ID t){
+			_rInvperm[tt] = t;
+			_rperm[t] = tt;  
+		}
+
+		void replacecInvperm(PERM* p){
+			for(int j =0 ;j < _c_clms ; j++){
+				_cInvperm[j] = p[_cInvperm[j]];
+     	}
+		}
+
 
 		void show_rperm(){
 			std::cerr << "rperm ";
@@ -247,10 +265,8 @@ class FILE_COUNT{
 
 
 		void makePerm(int tflag,int tflag2);
-		PERM * makeCperm(void);
-		PERM * makeRperm(bool sflag);
-
-
+		void makeCperm(void);
+		void makeRperm(bool sflag);
 
 		//void initCperm(char *pfname,int tflag,int tflag2);
 		void initCperm(int tflag,int tflag2);

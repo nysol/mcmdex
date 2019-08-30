@@ -11,21 +11,7 @@
 
 #include"stdlib2.hpp"
 
-//char *common_pnt;
-//INT common_INT;
-
 #ifdef MULTI_CORE
 int SPIN_LOCK_dummy;
 #endif
 
-void mfree_(void *x, ...){
-  va_list argp;
-  void *a;
-  va_start (argp, x);
-  while((a = va_arg(argp, void *)) != (void*)1){ 
-		if(a){
-			free(a); a=NULL;
-		}
-	}
-  va_end (argp);
-}

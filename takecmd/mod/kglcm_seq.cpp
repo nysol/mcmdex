@@ -515,7 +515,9 @@ void KGLCMSEQ::LCMseq (QUEUE_INT item, KGLCMSEQ_QUE *occ){
     _II.item_dec_t();
 
   }
-  free2 (Q);
+	if(Q){	// freeしてOK?
+		free(Q); (Q)=NULL;
+	}  
 
 	_TT.setBaseSts(bStsSave);
 

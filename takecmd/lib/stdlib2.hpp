@@ -203,16 +203,6 @@
 template<typename T>
 void SWAP_(T *a,T *b){ T stmp = *a; *a=*b; *b=stmp; }
 
-
-/* macros for allocating memory with exiting if an error occurs */
-#define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
-
-// free many pointers 
-void mfree_(void *x, ...);
-
-#define mfree(...)          mfree_(NULL, __VA_ARGS__, (void *)1)
-
-
 // ==============================
 // template For ARRAY 
 // ==============================
@@ -266,7 +256,6 @@ int gqqsort_cmp__r(const void *x, const void *y,void * v){
 
 }
 
-
 template<typename T>
 int qqsort_cmp_r(void * v,const void *x,const void *y){
 
@@ -297,10 +286,6 @@ void qsort_perm__(T *v, size_t siz, PERM *perm, int unit){
  else        qsort_r(perm, siz, sizeof(PERM), v, qqsort_cmp_r<T>);
 #endif
 } 
-
-
-
-
 
 template<typename T>
 PERM *qsort_perm_(T *v, size_t siz, int unit){
@@ -445,9 +430,6 @@ class VECARY{
 
 	}
 
-
-
-
 	PERM* qsort_perm(size_t size,int flg){
     return qsort_perm_<T>(_v, size, flg);
 	}
@@ -511,5 +493,7 @@ class VECARY{
 //		return;
 //	}
 
+/// macros for allocating memory with exiting if an error occurs */
+//#define free2(a)   do{if(a){free(a);(a)=NULL;}}while(0)
 
 
