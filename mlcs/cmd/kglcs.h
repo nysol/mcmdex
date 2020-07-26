@@ -97,6 +97,7 @@ class kgLcs : public kgModIncludeSort {
 	kgArgFld _kField; // k=
 	kgCSVkey _iFile;  // i=
 	kgCSVout _oFile;  // o=
+	double _th;
 
 
 	// 引数セット

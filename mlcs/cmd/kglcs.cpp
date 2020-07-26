@@ -64,7 +64,7 @@ kgLcs::kgLcs(void){
 // -----------------------------------------------------------------------------
 void kgLcs::setArgs(void){
 	// unknown parameter check
-	_args.paramcheck("k=,f=,i=,o=,-q");
+	_args.paramcheck("k=,f=,i=,o=,th=,-q");
 
 	// 入出力ファイルオープン
 	_iFile.open(_args.toString("i=",false), _env,_nfn_i);
@@ -86,6 +86,10 @@ void kgLcs::setArgs(void){
 		ss << "f= takes only one field name when using k=.";	
 		throw kgError(ss.str());
 	}
+
+	kgstr_t th_s = _args.toString("th=",false);
+	if(th_s.empty())	{	_th=0;}
+	else	{ _th = atof(th_s.c_str()); }
 
 	_iFile.read_header();
 
@@ -274,6 +278,7 @@ int kgLcs::run(void) try {
 		outfld.push_back("diff1Size");
 		outfld.push_back("diff2");
 		outfld.push_back("diff2Size");
+		outfld.push_back("JC");
 		_oFile.writeFldNameCHK(outfld);
 	}
 	
@@ -282,18 +287,30 @@ int kgLcs::run(void) try {
 		 //cerr << "========= data  S =============" <<  endl;
 		 //cerr <<  _iFile.getNewVal(_fField.num(0)) << " | " << _iFile.getNewVal(_fField.num(1)) << endl;
 		 //cerr << "========= data  E =============" <<  endl;
+		 // same size rls[0].size()
+		 // diff1 size rls[1].size()
+		 // diff2 size rls[2].size()
+
 			wstring f0 = toWcs(_iFile.getNewVal(_fField.num(0)) );
 			wstring f1 = toWcs(_iFile.getNewVal(_fField.num(1)) );
 			vector<wstring>rls = dolcs(f0.c_str(),f0.size(),f1.c_str(),f1.size());
+			
+			if( rls[0].size() == 0 ){ continue ;}
+				// JC計算
+			double jcval = (double)(rls[0].size())/(double)(rls[0].size()+ rls[1].size() +rls[2].size());
+			if(jcval >= _th){
 
-			_oFile.writeStr(_iFile.getNewVal(_fField.num(0)),false);
-			_oFile.writeStr(_iFile.getNewVal(_fField.num(1)),false);
-			_oFile.writeStr(toMbs(rls[0]).c_str(),false);
-			_oFile.writeSizeT(rls[0].size(),false);
-			_oFile.writeStr(toMbs(rls[1]).c_str(),false);
-			_oFile.writeSizeT(rls[1].size(),false);
-			_oFile.writeStr(toMbs(rls[2]).c_str(),false);
-			_oFile.writeSizeT(rls[2].size(),true);
+				_oFile.writeStr(_iFile.getNewVal(_fField.num(0)),false);
+				_oFile.writeStr(_iFile.getNewVal(_fField.num(1)),false);
+				_oFile.writeStr(toMbs(rls[0]).c_str(),false);
+				_oFile.writeSizeT(rls[0].size(),false);
+				_oFile.writeStr(toMbs(rls[1]).c_str(),false);
+				_oFile.writeSizeT(rls[1].size(),false);
+				_oFile.writeStr(toMbs(rls[2]).c_str(),false);
+				_oFile.writeSizeT(rls[2].size(),false);
+				_oFile.writeDbl(jcval,true);
+			}
+				
 		}
 	}else{ //k=あり時f=は1"
 		vector<wstring> fld_stock;
@@ -304,14 +321,22 @@ int kgLcs::run(void) try {
 			  	for (size_t i=0 ;i<fld_stock.size() ;i++){
 				  for (size_t j=i+1 ;j<fld_stock.size() ;j++){
 						vector<wstring>rls = dolcs(fld_stock[i].c_str(),fld_stock[i].size(),fld_stock[j].c_str(),fld_stock[j].size());
-						_oFile.writeStr(toMbs(fld_stock[i]).c_str(),false);
-						_oFile.writeStr(toMbs(fld_stock[j]).c_str(),false);
-						_oFile.writeStr(toMbs(rls[0]).c_str(),false);
-						_oFile.writeSizeT(rls[0].size(),false);
-						_oFile.writeStr(toMbs(rls[1]).c_str(),false);
-						_oFile.writeSizeT(rls[1].size(),false);
-						_oFile.writeStr(toMbs(rls[2]).c_str(),false);
-						_oFile.writeSizeT(rls[2].size(),true);
+						if( rls[0].size() == 0 ){ continue ;}
+						// JC計算
+						double jcval = (double)(rls[0].size())/(double)(rls[0].size()+ rls[1].size() +rls[2].size());
+						if(jcval >= _th){
+
+							_oFile.writeStr(toMbs(fld_stock[i]).c_str(),false);
+							_oFile.writeStr(toMbs(fld_stock[j]).c_str(),false);
+							_oFile.writeStr(toMbs(rls[0]).c_str(),false);
+							_oFile.writeSizeT(rls[0].size(),false);
+							_oFile.writeStr(toMbs(rls[1]).c_str(),false);
+							_oFile.writeSizeT(rls[1].size(),false);
+							_oFile.writeStr(toMbs(rls[2]).c_str(),false);
+							_oFile.writeSizeT(rls[2].size(),false);
+							_oFile.writeDbl(jcval,true);
+						}
+
 				  }}
 			  } 
 				if((_iFile.status() & kgCSV::End )) break;
