@@ -348,7 +348,10 @@ void FILE_COUNT::countFS(IFILE2 *rfp,int flag, int int_clms)
       }
 		}
 
-		if ( ft ){ SWAP_<FILE_COUNT_INT>(&x, &y); }
+		if ( ft ){ 
+			//SWAP_<FILE_COUNT_INT>(&x, &y); 
+			SWAP_(&x, &y); 
+		}
 
 		if ( y >= _clms_org ){
 			_clms_org = y+1;
@@ -429,7 +432,10 @@ void FILE_COUNT::countFST( IFILE2 *rfp, int ft )
 		if ( rfp->Null() ) goto ROW_END; // FILE_err&4  ここあってる？
 
     	
-	  if ( ft ){ SWAP_<FILE_COUNT_INT>(&x, &y); }
+	  if ( ft ){ 
+	  	//SWAP_<FILE_COUNT_INT>(&x, &y); 
+	  	SWAP_(&x, &y); 
+	  }
 
 	  if ( y >= _clms_org ){ _clms_org = y+1; }
 		if ( x >= _rows_org ){

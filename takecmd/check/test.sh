@@ -186,6 +186,13 @@ function sspcminiRUN() {
 ${preCMD} ${MSSPC} Rft  ${smallSAMP} 0.1 ${rDPATH0}outmsspcnw.dat 
 ${preCMD} ${TSSPC} Rft  ${smallSAMP} 0.1 ${rDPATH0}outtsspcnw.dat 
 
+${preCMD} ${MSSPC} Rft -l 5 ${smallSAMP} 0.1 ${rDPATH0}outmsspcnwl5.dat 
+${preCMD} ${TSSPC} Rft -l 5 ${smallSAMP} 0.1 ${rDPATH0}outtsspcnwl5.dat 
+
+${preCMD} ${MSSPC} Rft -l 5 -k 2  ${smallSAMP} 0.1 ${rDPATH0}outmsspcnwl5k2.dat 
+${preCMD} ${TSSPC} Rft -l 5 -k 2  ${smallSAMP} 0.1 ${rDPATH0}outtsspcnwl5k2.dat 
+
+
 ${preCMD} ${MSSPC} Rf  ${smallSAMPT} 0.1 ${rDPATH0}outmsspcntw.dat 
 ${preCMD} ${TSSPC} Rf  ${smallSAMPT} 0.1 ${rDPATH0}outtsspcntw.dat 
 
@@ -302,7 +309,8 @@ diff ${DIFFSIMPLE} ${rDPATH0}outmsspce0.dat ${rDPATH0}outtsspce0.dat
 
 function sspcminiCHK() {
 
-
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcnwl5.dat ${rDPATH0}outtsspcnwl5.dat
+diff ${DIFFSIMPLE} ${rDPATH0}outmsspcnwl5k2.dat ${rDPATH0}outtsspcnwl5k2.dat
 diff ${DIFFSIMPLE} ${rDPATH0}outmsspcw.dat ${rDPATH0}outtsspcw.dat 
 diff ${DIFFSIMPLE} ${rDPATH0}outmsspcnw.dat ${rDPATH0}outtsspcnw.dat 
 diff ${DIFFSIMPLE} ${rDPATH0}outmsspcntw.dat ${rDPATH0}outtsspcntw.dat 
@@ -362,11 +370,51 @@ simsetCHK
 
 }
 
+
+function shrtest(){
+
+
+${preCMD} ${MSSPC} Rft# ${smallSAMP} 0.1 ${rDPATH0}01
+${preCMD} ${MSSPC} Rft#  -b 2  ${smallSAMP} 0.1 ${rDPATH0}02
+
+${preCMD} ${TSSPC} Rft# ${smallSAMP} 0.1 ${rDPATH0}11
+${preCMD} ${TSSPC} Rft#  -b 2  ${smallSAMP} 0.1 ${rDPATH0}12
+
+exit
+
+
+${preCMD} ${MSSPC} RftE ${smallSAMP} 0.1 ${rDPATH0}05
+${preCMD} ${TSSPC} RftE ${smallSAMP} 0.1 ${rDPATH0}15
+
+${preCMD} ${MSSPC} Rf ${smallSAMP} 0.1 ${rDPATH0}06
+${preCMD} ${TSSPC} Rf ${smallSAMP} 0.1 ${rDPATH0}16
+${preCMD} ${MSSPC} RfE ${smallSAMP} 0.1 ${rDPATH0}07
+${preCMD} ${TSSPC} RfE ${smallSAMP} 0.1 ${rDPATH0}17
+
+
+exit
+
+
+${preCMD} ${MSSPC} Rft  -L 3 -l 3  ${smallSAMP} 0.1 ${rDPATH0}03
+${preCMD} ${MSSPC} Rft  -L 3 -b 2  ${smallSAMP} 0.1 ${rDPATH0}04
+
+
+${preCMD} ${TSSPC} Rft  -L 3 -l 3  ${smallSAMP} 0.1 ${rDPATH0}13
+${preCMD} ${TSSPC} Rft  -L 3 -b 2  ${smallSAMP} 0.1 ${rDPATH0}14
+
+}
+
+#${preCMD} ${TSSPC} Rft -w ${sDPATH1}weight.dat -b 2  ${smallSAMP} 0.1 ${rDPATH0}outmsspcw.dat 
+
+
+#${preCMD} ${TSSPC} Rft -w ${sDPATH1}weight.dat -L 3 -l 3 -b 2  ${smallSAMP} 0.1 ${rDPATH0}outmsspcw.dat 
+
+#${preCMD} ${MSSPC} Rf -W ${sDPATH1}weightt.dat ${smallSAMPT} 0.1 ${rDPATH0}outmsspcwt.dat 
 #${preCMD} ${MSSPC} Rt -k 3 -K 3 ${smallSAMP} 0.1 ${rDPATH0}outmsspcRb10Kk.dat 
 #${preCMD} ${TSSPC} Rt -k 3 -K 3 ${smallSAMP} 0.1 ${rDPATH0}outtsspcRb10Kk.dat 
 
 sspcminiRUN
-allRUN
+#allRUN
 #lcmminiRUN
 #lcmRUN
 #lcmseqRUN
@@ -375,8 +423,8 @@ allRUN
 #simsetRUN
 
 echo vvvvvvvv1
-#sspcminiCHK
-allCHK
+sspcminiCHK
+#allCHK
 #lcmminiCHK
 #lcmCHK
 #lcmseqCHK

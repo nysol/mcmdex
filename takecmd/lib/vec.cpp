@@ -193,7 +193,10 @@ void SETFAMILY::file_read(
     if ( fp.Null() ) goto LOOP_END; //FILE_err&4
 
 	  if ( (tflag & LOAD_TPOSE) || ((tflag&LOAD_EDGE) && x > y) ){
-  		SWAP_<LONG>(&x, &y);
+  		//SWAP_<LONG>(&x, &y);
+  		SWAP_(&x, &y);
+
+
 	  }
 
     if ( C.rperm(x)<=C.rows() && C.cperm(y) <= C.clms() ){

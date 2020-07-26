@@ -161,6 +161,29 @@ class FILE_COUNT{
 		int fileCountT(IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 		int fileCount (IFILE2 &fp, IFILE2 &fp2, char *wf,char *wf2=NULL);
 
+		// sspc
+		void fileCount(
+			IFILE2 &fp ,IFILE2 &fp2 ,
+			char * wfname,
+			LimitVal limVal,
+			bool tposeF, bool rowSortDecFlag
+		){
+	  	_limVal = limVal;
+
+			if( tposeF ){
+				fileCountT(fp ,fp2 ,wfname);
+			}
+			else{
+				fileCount (fp ,fp2 , wfname);
+			}
+
+			makeCperm();
+			if (_c_clms == 0) { throw ("there is no frequent item"); }
+			makeRperm(rowSortDecFlag); 	// 多いものから順番並べるいみある？_trperm使い方に寄りそう
+		}
+		
+
+
 
 		// call from sgraph.cpp 
 		void countSG (IFILE2 *rfp, int flag);
@@ -186,8 +209,6 @@ class FILE_COUNT{
 		size_t r_clms(){ return _r_clms; }
 		size_t r_eles(){ return _r_eles; }
 
-
-		//size_t c_end() { return _clms_end; }
 
 
 		bool rowEmpty(){ return _rowt.empty(); }
@@ -249,7 +270,7 @@ class FILE_COUNT{
      	}
 		}
 
-
+		// DEBUG
 		void show_rperm(){
 			std::cerr << "rperm ";
 			for(int i=0;i<_rows_org;i++ ){ std::cerr << _rperm[i] <<  " ";}
@@ -290,6 +311,8 @@ class FILE_COUNT{
 //			else 					 			{ return fileCount ( fp, fp2, wf ,wf2); }
 //		}
 
+
+		//size_t c_end() { return _clms_end; }
 
 		//FILE_COUNT_INT get_clms(void){return _clms; }
 		//FILE_COUNT_INT get_rows(void){return _rows; }

@@ -62,7 +62,7 @@ WEIGHT KGSSPC::_comp ( WEIGHT c, WEIGHT wi, WEIGHT wx, WEIGHT sq)
 /* output at the termination of the algorithm */
 /* print #of itemsets of size k, for each k */
 /*******************************************************************/
-void KGSSPC::_last_output (){
+void KGSSPC::_last_output(){
 
   QUEUE_ID i;
   LONG n=0, nn=0;
@@ -826,32 +826,17 @@ void KGSSPC::_SspcCore(){
 /*************************************************************************/
 int KGSSPC::_runMain(){
 
-	// boundary set
-	_C.setLimit(_P._limVal);
-
 
   IFILE2 fp(_P._fname) , fp2(_P._fname2) ;
-  
-	// count file 	
-	
-	//_C.fileCountA(fp ,fp2 ,_P._wfname);
 
-	if( _P._tposeF ){
-		_C.fileCountT(fp ,fp2 ,_P._wfname);
-	}
-	else{
-		_C.fileCount(fp ,fp2 ,_P._wfname);
-	}
+	_C.fileCount(
+		fp ,fp2 ,
+		_P._wfname,
+		_P._limVal,
+		_P._tposeF,
+		_P._rowSortDecFlag
+	);
 
-	// Make PERM &inverse perm 
-	//PERM *cperm = 
-	_C.makeCperm();
-	if (_C.c_clms()==0) { throw ("there is no frequent item"); }
-	//PERM *rperm = 
-	_C.makeRperm(_P._rowSortDecFlag); 	// 多いものから順番並べるいみある？_trperm使い方に寄りそう
-
-
-	// _C.show_rperm();
 
 	// make SPace
   _jump.alloc( _C.c_clms()+1 );
@@ -880,8 +865,9 @@ int KGSSPC::_runMain(){
       _T.init_v(tt);
       _C.replaceRperm(tt,t); //ここでrpemが変わる。。もどる？
 
-      _w[tt]   = _C.get_rw(t);
-      if ( _pw ) {  _pw[tt] = MAX (_w[tt], 0); }
+      //_w[tt]   = _C.get_rw(t);
+      //if ( _pw ) {  _pw[tt] = MAX (_w[tt], 0); }
+			if ( _pw ) {  _pw[tt] = MAX (_C.get_rw(t), 0); }
 
       if ( !fflag ){ 
         _T.setVBuffer(tt,pos);
@@ -925,6 +911,16 @@ int KGSSPC::_runMain(){
 
 	_OQ.alloc(_T);
 
+	_occ_w  = new WEIGHT[_C.c_clms()+2]();
+	_vecchr = new char  [_C.r_clms()+2]();
+	_sc     = new LONG  [_C.c_clms()+2]();
+
+  _itemset.alloc(_C.c_clms()+2 , _C.c_clms()+2);
+	if(_P._problem&SSPC_POLISH2) {
+		_itemary = new QUEUE_INT[_C.c_clms()+2]();
+	}
+
+
 	//_sep -cの指定がある時に利用される ここでOK？もとはTT.alloc
 	//_sep = _TT.adjust_sep(_sep); // 
 	//if(_tflag&LOAD_TPOSE){ _sep = _C.adjust_ClmSep(_sep);}
@@ -934,17 +930,8 @@ int KGSSPC::_runMain(){
  	  for (VEC_ID i=0 ; i<_T.get_t() ; i++){
     	if ( _T.get_vt(i) <= _P._len_ub ){ _P._len_lb = i; break; }
     }
-  }	
-
-  if ( _P._itemtopk_item > 0 ){  _P._itemtopk_end= _C.c_clms(); }
-
-	_occ_w  = new WEIGHT[_C.c_clms()+2]();
-	_vecchr = new char  [_C.r_clms()+2]();
-
-	if(_P._problem&SSPC_POLISH2) {
-		_itemary = new QUEUE_INT[_C.c_clms()+2]();
-	}
-
+  }
+  
 	if ( _P._outperm_fname ){
 		PERM *p = NULL;
 		IFILE2::ARY_Load( p ,_P._outperm_fname);
@@ -952,9 +939,8 @@ int KGSSPC::_runMain(){
 	  delete [] p;
 	} 
 
-  _itemset.alloc(_C.c_clms()+2 , _C.c_clms()+2);
-
-	_sc = new LONG[_C.c_clms()+2]();
+	// ======= topk  関連 ========= 
+  if ( _P._itemtopk_item > 0 ){  _P._itemtopk_end= _C.c_clms(); }
 
 	// allocate topk heap
   if ( _P._topk_k > 0 ){
@@ -974,9 +960,8 @@ int KGSSPC::_runMain(){
       }
     }
   }
+  // ========================= 
 
-  _iters = _solutions = 0; //_iters2 =
-  _item_max = _C.c_clms();
 
   if ( _P._output_fname ){
   	// 出力バッファ確保しないほうがいい？
@@ -1002,17 +987,19 @@ int KGSSPC::_runMain(){
   }
 #endif
 
-
   // II alloc
 	VEC_ID maxsize =  MAX( _C.r_clms() , _C.c_clms() )+1;
-	_w.realloc2(maxsize);
 
+	//再利用？　1で初期化？
+	_w.print();
+	_w.realloc2(maxsize); 
 	for(size_t i=0; i<maxsize;i++){ _w[i] = 1;}
+	_w.print();
 
   _positPERM = _C.get_cInvperm();
-  _perm=NULL;
+  _perm = NULL;
 
-  if ( _T.get_clms()>1 ){  
+  if ( _T.get_clms()>1 ){ //ここでlistcomp  
   	_SspcCore(); 
   }
 	_perm = _C.get_cInvperm(); // -K _P._itemtopk_end時必要
@@ -1059,16 +1046,14 @@ int KGSSPC::run(int argc ,char* argv[]){
 		return _runMain();
 	}
 	return 1;
-		
+
 }
 
 
 std::vector<LONG> KGSSPC::mrun(int argc ,char* argv[]){
 	KGSSPC mod;
 	mod.run(argc,argv);
-
 	return mod.iparam();
-
 
 }
 
@@ -1089,3 +1074,30 @@ std::vector<LONG> KGSSPC::mrun(int argc ,char* argv[]){
 	//	 _T.alloc_weight(_C); 
 	//}
 */
+
+
+	// ここから
+
+	// ここから
+	/*
+	// boundary set
+	_C.setLimit(_P._limVal);
+
+	// count file 	
+	if( _P._tposeF ){
+		_C.fileCountT(fp ,fp2 ,_P._wfname);
+	}
+	else{
+		_C.fileCount(fp ,fp2 ,_P._wfname);
+	}
+
+	// Make PERM &inverse perm 
+	//PERM *cperm = 
+	_C.makeCperm();
+	if (_C.c_clms()==0) { throw ("there is no frequent item"); }
+	//PERM *rperm = 
+	_C.makeRperm(_P._rowSortDecFlag); 	// 多いものから順番並べるいみある？_trperm使い方に寄りそう
+*/	
+	//ここまで
+
+	// _C.show_rperm();

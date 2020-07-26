@@ -318,7 +318,7 @@ class VECARY{
 
 	void print(void){
 		for(size_t i=0;i<_end;i++){
-			printf("%d ",_v[i]);
+			printf("%g ",_v[i]);
 		}
 			printf("\n");
 	}

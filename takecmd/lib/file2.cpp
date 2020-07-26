@@ -270,7 +270,10 @@ int IFILE2::read_pair ( LONG *x, LONG *y, WEIGHT *w, int flag){
   if ( flag & LOAD_ID1 ){ (*x)--; (*y)--; }
   if ( flag & LOAD_EDGEW ) *w = read_double ();
   read_until_newline ();
-  if ( (flag & LOAD_TPOSE) || ((flag&LOAD_EDGE) && *x > *y) ) SWAP_<LONG>(x, y);
+  if ( (flag & LOAD_TPOSE) || ((flag&LOAD_EDGE) && *x > *y) ) {
+  	//SWAP_<LONG>(x, y);
+  	SWAP_(x, y);
+  }
   return (0);
 }
 
@@ -312,7 +315,8 @@ int IFILE2::read_item (IFILE2 *wfp, LONG *x, LONG *y, WEIGHT *w, int fc, int fla
   }
 
   if ( (flag & LOAD_TPOSE) || ((flag&LOAD_EDGE) && *x > *y) ){
-  	SWAP_<LONG>(x, y);
+  	//SWAP_<LONG>(x, y);
+  	SWAP_(x, y);
   }
 
   return (ff);
@@ -330,7 +334,8 @@ int IFILE2::read_item(LONG *x, LONG *y, int flag){
   if ( _FILE_err&4 ) return (0);
 
   if ( (flag & LOAD_TPOSE) || ((flag&LOAD_EDGE) && *x > *y) ){
-  	SWAP_<LONG>(x, y);
+  	//SWAP_<LONG>(x, y);
+  	SWAP_(x, y);
   }
 
   return (ff);

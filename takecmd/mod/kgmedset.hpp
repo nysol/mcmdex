@@ -100,7 +100,10 @@ class kgClusterForCC{
 				_set .reallocSeq(_xmax);
 		    _cnt .reallocx(_xmax, (UNIONFIND_ID)0);
 
-	      if ( _cnt[x] < _cnt[y] ) SWAP_<LONG> (&x, &y);
+	      if ( _cnt[x] < _cnt[y] ) {
+	      	//SWAP_<LONG> (&x, &y);
+	      	SWAP_(&x, &y);
+	      }
 
   	    if ( _mark[x] == x && _mark[y] == y ){
 

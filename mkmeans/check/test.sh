@@ -1,5 +1,5 @@
 CMDDIR="../cmd"
-$CMDDIR/mkmeans n=5 f=val1,val2,val3 i=dat.csv a=cls d=0 o=rls1.csv
+$CMDDIR/mkmeans n=5 f=val1,val2,val3 i=dat.csv a=cls d=0 o=rls1.csv S=1
 $CMDDIR/mkmeans f=val1,val2 n=2 i=dat1.csv a=cls d=0 o=rls2.csv
 $CMDDIR/mkmeans f=val1,val2 n=2 i=dat2.csv a=cls d=0 o=rls3.csv
 $CMDDIR/mkmeans f=val1,val2 n=2 i=dat3.csv a=cls d=0 o=rls4.csv

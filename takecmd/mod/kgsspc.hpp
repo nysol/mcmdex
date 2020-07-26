@@ -40,15 +40,16 @@
 #define ITEMSET_INTERVAL 500000
 #endif
 
-#include <vector>
 //#include "trsact.hpp"
+//#include "itemset.hpp"
+
+#include <vector>
 #include"vec.hpp"
 #include"oqueue.hpp"
 #include "problem.hpp"
 #define AHEAP_KEY_WEIGHT
 #include"aheap.hpp"
 
-//#include "itemset.hpp"
 #include"file2.hpp"
 #include"filecount.hpp"
 
@@ -277,15 +278,16 @@ class KGSSPC{
 	//org itemset
 	QUEUE _itemset;   // current operating itemset
 	LONG *_sc;
-  AHEAP _topk; 
-	AHEAPARY _itemtopk;   // heap for topk mining. valid if topk->h is not NULL
-  QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
   LONG _iters;         // iterations
   LONG _solutions;     // number of solutions output
   WEIGHT _frq_lb;
-  QUEUE_INT _item_max;  // (original) maximum item
   OFILE2 _ofp;    // file pointer to the output file
   OFILE2 *_multi_fp;  // output file2 pointer for multi-core mode
+
+
+  AHEAP _topk; 
+	AHEAPARY _itemtopk;   // heap for topk mining. valid if topk->h is not NULL
+  QUEUE_INT **_itemtopk_ary;  // topk solutions for each item
 
 
 	// counter
@@ -294,9 +296,9 @@ class KGSSPC{
   LONG *_multi_solutions;  // number of solutions output
 
   FILE_COUNT _C;
-  SETFAMILY _T;   // transaction
-  VECARY<WEIGHT> _w;
-  WEIGHT *_pw;    // weight/positive-weight of transactions
+  SETFAMILY _T;   		// transaction
+  VECARY<WEIGHT> _w; 	// weight of transactions
+  WEIGHT *_pw;    		// positive-weight of transactions
 
 	PERM *_perm,*_trperm;
   QUEUE _jump;
@@ -329,9 +331,6 @@ class KGSSPC{
 
 	void _SspcCore();
 
-	/* allocate arrays and structures */
-	void _preALLOC();
-
 	int _runMain(void);
 
 	void _last_output(void);
@@ -349,7 +348,7 @@ class KGSSPC{
 	/* sum the counters computed by each thread */
 	void _merge_counters(void){
 
-		for(size_t i=0 ; i<MAX(_P._multi_core,1) ; i++){ // FLOOP 
+		for(size_t i=0 ; i<MAX(_P._multi_core,1) ; i++){
 	    _iters += _multi_iters[i];
   	  _solutions += _multi_solutions[i];
     	_multi_fp[i].flush_last();
@@ -377,7 +376,7 @@ class KGSSPC{
 		_iters(0),_solutions(0),
 		_multi_outputs(NULL),_multi_iters(NULL),
 		_multi_solutions(NULL),_multi_fp(NULL),
-		_buf_end(2),_item_max(0),_sc(NULL),
+		_buf_end(2),_sc(NULL),
 		_itemtopk_ary(NULL)
 		{}
 
@@ -395,6 +394,13 @@ class KGSSPC{
 
 };
 
+
+// allocate arrays and structures 
+// void _preALLOC();
+
+//  QUEUE_INT _item_max;  // (original) maximum item
+//_item_max
+//_item_max(0),
 	// org ITEMSET
 	// ITEMSET _II;
 	//double _prob;
