@@ -19,51 +19,37 @@
 // =============================================================================
 /// kgedistHelp.h : kgedist help
 // =============================================================================
-_title="編集距離計算";
+_title="最長共通部分列の計算";
 _doc="\
-medist k=field s=field f=field [w=field] [-norm] [i=infile] [o=outfile]\n\
-k=,s=の項目順にレコードが並んでいる必要がある。\n\
-k= : ここで指定された項目をシーケンスの単位とする\n\
-s= : シーケンスID\n\
-w= : 重み項目\n\
-f= : アイテム\n\
--norm: シーケンス長で規格化(0〜1.0)する。\n\
+\n\
+与えられた2つの文字列から最長共通部分列を計算し、共通部分を積集合として、2つの文字列の和集合から\n\
+計算されたJaccard係数を出力する。\n\
+\n\
+mlcs f=field [w=field] [-norm] [i=infile] [o=outfile]\n\
+f= : 比較したい2つの項目を指定する\n\
+th= : 与えれたJaccard係数以上のペアを出力する\n\
 \n\
 例)\n\
 \n\
 dat.csvの内容\n\
-aid,seq,item\n\
-id1,1,a\n\
-id1,2,a\n\
-id1,3,b\n\
-id1,3,c\n\
-id2,3,a\n\
-id2,4,c\n\
-id2,5,a\n\
-id3,3,a\n\
-id3,4,a\n\
-id3,5,c\n\
-id4,3,x\n\
-id4,4,y\n\
-id4,5,z\n\
+text1,text2\n\
+ABCDEFR,ADCER\n\
+ABCDER,ABCDER\n\
+ABCDER,ZZZZZZ\n\
+AAACCC,ZZZCCC\n\
 \n\
-$ medist k=aid s=seq f=item i=dat.csv\n\
-key1,key2,distance\n\
-id1,id2,3\n\
-id1,id3,1.5\n\
-id1,id4,7\n\
-id2,id3,2\n\
-id2,id4,6\n\
-id3,id4,6\n\
+text1とtext2の最長共通部分列を計算する。\n\
+$ mlcs f=text1,text2 i=dat.csv\n\
+text1,text2,comSeq,comSeqSize,diff1,diff1Size,diff2,diff2Size,JC\n\
+ABCDEFR,ADCER,ADER,4,BCF,3,C,1,0.5\n\
+ABCDER,ABCDER,ABCDER,6,,0,,0,1\n\
+AAACCC,ZZZCCC,CCC,3,AAA,3,ZZZ,3,0.3333333333\n\
 \n\
-$ medist k=aid s=seq f=item -norm i=dat.csv\n\
-key1,key2,distance\n\
-id1,id2,0.4166666667\n\
-id1,id3,0.2083333333\n\
-id1,id4,1\n\
-id2,id3,0.3333333333\n\
-id2,id4,1\n\
-id3,id4,1\n\
+閾値(th=)を指定した場合。jaccard係数で0.5以上のペアだけが出力される。\n\
+$ mlcs f=text1,text2 th=0.5 i=dat.csv\n\
+text1,text2,comSeq,comSeqSize,diff1,diff1Size,diff2,diff2Size,JC\n\
+ABCDEFR,ADCER,ADER,4,BCF,3,C,1,0.5\n\
+ABCDER,ABCDER,ABCDER,6,,0,,0,1\n\
 \n\
 ";
 
