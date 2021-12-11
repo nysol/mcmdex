@@ -25,6 +25,7 @@
 #include <kgEnv.h>
 //#include <kgmodincludesort.h>
 #include <cmath>
+#include <cfloat>
 #include <kgmod.h>
 #include <kgError.h>
 #include <kgArgs.h>
